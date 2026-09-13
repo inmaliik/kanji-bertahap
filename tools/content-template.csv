@@ -1,0 +1,4 @@
+level_id,kanji,level_meaning,jlpt_level,level_chapter,bushu_char,bushu_name,bushu_meaning,bushu_variants,bushu_options,kunyomi,onyomi,production_prompt,word,word_reading,reading_type,pos,word_meaning,word_chapter,word_note,reading_distractors,example_ja,example_blank,example_translation,example_distractors
+L01,食,makan,N5,6,食,shoku,makan / makanan,飠,食;人;米;皿,た(べる);く(う),ショク,Buat satu kalimat memakai salah satu kotoba di level ini.,食べます,たべます,kunyomi,verb,makan,6,,,[毎朝|まいあさ]パンを[食|た]べます。,食べます,Setiap pagi saya makan roti.,
+L01,食,makan,N5,6,食,shoku,makan / makanan,飠,食;人;米;皿,た(べる);く(う),ショク,Buat satu kalimat memakai salah satu kotoba di level ini.,食べます,たべます,kunyomi,verb,makan,6,,,[今晩|こんばん][何|なに]を[食|た]べますか。,食べます,Malam ini (Anda) makan apa?,
+L01,食,makan,N5,6,食,shoku,makan / makanan,飠,食;人;米;皿,た(べる);く(う),ショク,Buat satu kalimat memakai salah satu kotoba di level ini.,食事,しょくじ,onyomi,noun,makan / bersantap,13,,,[家族|かぞく]と[食事|しょくじ]をします。,食事,Saya bersantap bersama keluarga.,

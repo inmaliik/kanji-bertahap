@@ -1,0 +1,18 @@
+# macOS / editor clutter
+.DS_Store
+Thumbs.db
+
+# Participant data must never be committed.
+# Log exports from the Settings screen, and any other CSV except the content template.
+*.csv
+!tools/content-template.csv
+exports/
+logs/
+
+# Temporary test folders (e.g. 30-level dummy content)
+tmp/
+.tmp/
+test-data/
+
+# In case someone runs npm by habit; the app itself has no dependencies.
+node_modules/

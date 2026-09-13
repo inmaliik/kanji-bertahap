@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "draft-0",
+  "levels": [
+    {
+      "id": "L01",
+      "kanji": "食",
+      "meaning": "makan",
+      "jlptLevel": "N5",
+      "chapter": 6,
+      "bushu": { "char": "食", "name": "shoku", "meaning": "makan / makanan", "variants": ["飠"] },
+      "bushuOptions": ["食", "人", "米", "皿"],
+      "readings": {
+        "kunyomi": ["た(べる)", "く(う)"],
+        "onyomi": ["ショク"]
+      },
+      "kotoba": [
+        {
+          "word": "食べます",
+          "reading": "たべます",
+          "readingType": "kunyomi",
+          "pos": "verb",
+          "meaning": "makan",
+          "chapter": 6,
+          "note": "",
+          "readingDistractors": [],
+          "examples": [
+            {
+              "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
+              "blank": "食べます",
+              "translation": "Setiap pagi saya makan roti.",
+              "distractors": []
+            },
+            {
+              "ja": "[今晩|こんばん][何|なに]を[食|た]べますか。",
+              "blank": "食べます",
+              "translation": "Malam ini (Anda) makan apa?",
+              "distractors": []
+            }
+          ]
+        },
+        {
+          "word": "食事",
+          "reading": "しょくじ",
+          "readingType": "onyomi",
+          "pos": "noun",
+          "meaning": "makan / bersantap",
+          "chapter": 13,
+          "note": "",
+          "readingDistractors": [],
+          "examples": [
+            {
+              "ja": "[家族|かぞく]と[食事|しょくじ]をします。",
+              "blank": "食事",
+              "translation": "Saya bersantap bersama keluarga.",
+              "distractors": []
+            }
+          ]
+        }
+      ],
+      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+    },
+    {
+      "id": "L02",
+      "kanji": "飲",
+      "meaning": "minum",
+      "jlptLevel": "N5",
+      "chapter": 6,
+      "bushu": { "char": "飠", "name": "shokuhen", "meaning": "makan / makanan", "variants": ["食"] },
+      "bushuOptions": ["飠", "欠", "氵", "口"],
+      "readings": {
+        "kunyomi": ["の(む)"],
+        "onyomi": ["イン"]
+      },
+      "kotoba": [
+        {
+          "word": "飲みます",
+          "reading": "のみます",
+          "readingType": "kunyomi",
+          "pos": "verb",
+          "meaning": "minum",
+          "chapter": 6,
+          "note": "",
+          "readingDistractors": [],
+          "examples": [
+            {
+              "ja": "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。",
+              "blank": "飲みます",
+              "translation": "Setiap malam saya minum teh.",
+              "distractors": []
+            },
+            {
+              "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
+              "blank": "飲みます",
+              "translation": "Pagi hari saya minum susu.",
+              "distractors": []
+            }
+          ]
+        }
+      ],
+      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+    },
+    {
+      "id": "L03",
+      "kanji": "気",
+      "meaning": "semangat / udara / perasaan",
+      "jlptLevel": "N5",
+      "chapter": 8,
+      "bushu": { "char": "气", "name": "kigamae", "meaning": "uap / udara", "variants": [] },
+      "bushuOptions": ["气", "厂", "乙", "人"],
+      "readings": {
+        "kunyomi": [],
+        "onyomi": ["キ", "ケ"]
+      },
+      "kotoba": [
+        {
+          "word": "元気",
+          "reading": "げんき",
+          "readingType": "onyomi",
+          "pos": "na-adj",
+          "meaning": "sehat / bersemangat",
+          "chapter": 8,
+          "note": "",
+          "readingDistractors": [],
+          "examples": [
+            {
+              "ja": "お[元気|げんき]ですか。",
+              "blank": "元気",
+              "translation": "Apa kabar? (Apakah Anda sehat?)",
+              "distractors": []
+            }
+          ]
+        },
+        {
+          "word": "天気",
+          "reading": "てんき",
+          "readingType": "onyomi",
+          "pos": "noun",
+          "meaning": "cuaca",
+          "chapter": 12,
+          "note": "",
+          "readingDistractors": [],
+          "examples": [
+            {
+              "ja": "きょうはいい[天気|てんき]ですね。",
+              "blank": "天気",
+              "translation": "Hari ini cuacanya bagus, ya.",
+              "distractors": []
+            }
+          ]
+        }
+      ],
+      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+    }
+  ]
+}

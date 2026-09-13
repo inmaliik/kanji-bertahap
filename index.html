@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1e3a8a">
+  <title>Kanji Bertahap</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <noscript>
+    <div class="boot">
+      <h1>JavaScript nonaktif</h1>
+      <p>Aplikasi ini membutuhkan JavaScript. Aktifkan JavaScript di pengaturan browser, lalu muat ulang halaman.</p>
+    </div>
+  </noscript>
+
+  <!-- Shown by the inline script below when the page is opened from disk. -->
+  <div id="file-protocol-help" class="boot" hidden>
+    <h1>Buka lewat server lokal</h1>
+    <p>
+      Aplikasi ini tidak bisa dibuka dengan klik ganda pada <code>index.html</code>.
+      Browser memblokir pemuatan file materi (<code>data/content.json</code>) langsung dari disk.
+      Pilih salah satu cara berikut.
+    </p>
+
+    <h2>Cara 1 — VS Code + Live Server</h2>
+    <ol>
+      <li>Buka folder proyek ini di VS Code (<em>File → Open Folder…</em>).</li>
+      <li>Buka panel <em>Extensions</em> (Ctrl+Shift+X, di Mac Cmd+Shift+X), cari <strong>Live Server</strong> (pembuat: Ritwick Dey), lalu klik <em>Install</em>.</li>
+      <li>Klik kanan <code>index.html</code> di panel Explorer, pilih <strong>Open with Live Server</strong>.</li>
+      <li>Browser terbuka otomatis di alamat seperti <code>http://127.0.0.1:5500</code>.</li>
+    </ol>
+
+    <h2>Cara 2 — Terminal (Python)</h2>
+    <ol>
+      <li>Buka Terminal di folder proyek, yaitu folder yang berisi <code>index.html</code>.</li>
+      <li>Jalankan perintah ini:
+        <pre><code>python3 -m http.server 8000</code></pre>
+        Di Windows, jika perintah di atas tidak dikenal, gunakan <code>python -m http.server 8000</code>.
+      </li>
+      <li>Buka <code>http://localhost:8000</code> di browser.</li>
+      <li>Untuk berhenti, tekan Ctrl+C di Terminal.</li>
+    </ol>
+
+    <h2>Cara 3 — Versi online</h2>
+    <p>Jika aplikasi sudah di-deploy ke Netlify, cukup buka tautan Netlify-nya.</p>
+  </div>
+
+  <div id="boot-failed" class="boot" hidden>
+    <h1>Aplikasi gagal dimuat</h1>
+    <p>Browser tidak bisa menjalankan aplikasi. Coba muat ulang halaman. Jika masih gagal, gunakan Chrome, Safari, Firefox, atau Edge versi terbaru.</p>
+  </div>
+
+  <main id="app"></main>
+
+  <script>
+    // Classic inline script: module scripts never run from file://, so this
+    // check has to live outside js/main.js.
+    (function () {
+      if (location.protocol === "file:") {
+        document.getElementById("file-protocol-help").hidden = false;
+        return;
+      }
+      setTimeout(function () {
+        if (!window.__kanjiAppBooted) document.getElementById("boot-failed").hidden = false;
+      }, 8000);
+    })();
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
