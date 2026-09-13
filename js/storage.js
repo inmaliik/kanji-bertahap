@@ -72,6 +72,22 @@ export function removeKey(key) {
   }
 }
 
+/** Characters used by keys starting with `prefix` (keys and values). */
+export function usedChars(prefix) {
+  try {
+    const s = store();
+    if (!s) return 0;
+    let total = 0;
+    for (let i = 0; i < s.length; i++) {
+      const key = s.key(i);
+      if (key?.startsWith(prefix)) total += key.length + (s.getItem(key)?.length ?? 0);
+    }
+    return total;
+  } catch {
+    return 0;
+  }
+}
+
 export function isStorageAvailable() {
   return store() !== null;
 }

@@ -26,6 +26,7 @@ export const LABELS = {
     learning: "Putaran belajar",
     production: "Produksi",
     consolidation: "Putaran pemantapan",
+    review: "Ulangan",
   },
 };
 

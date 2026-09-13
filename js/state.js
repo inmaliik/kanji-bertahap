@@ -5,7 +5,8 @@
 // submitted). Whether a level is locked is always derived from level order,
 // so inserting a level during a content revision never corrupts progress.
 
-import { readJson, writeJson, writeRaw } from "./storage.js";
+import { readJson, usedChars, writeJson, writeRaw } from "./storage.js";
+import { shuffle } from "./random.js";
 
 // ---------------------------------------------------------------------------
 // Game rules. Change them here only.
@@ -25,6 +26,16 @@ export const REVIEW_ITEM_COUNT = 10;
 
 /** Choices shown in the reading and sentence stages (answer + distractors). */
 export const OPTION_COUNT = 4;
+
+/**
+ * Estimated localStorage budget in characters. Browsers allow roughly 5 MB per
+ * site, but count it differently; 2.5 million characters is a deliberately low
+ * estimate so the warning comes early on every browser.
+ */
+export const STORAGE_BUDGET_CHARS = 2_500_000;
+
+/** Share of the storage budget from which Settings and the level list warn. */
+export const STORAGE_WARNING_RATIO = 0.8;
 
 // ---------------------------------------------------------------------------
 // Storage format
@@ -72,6 +83,7 @@ function createLevelEntry() {
     attempts: 0, // number of times the level was opened for play
     learningDone: false, // first pass through stages 1–4 finished
     productionSubmitted: false,
+    reviewItemIds: null, // review levels only: the sampled items, kept across visits
     startedAt: null,
     passedAt: null,
   };
@@ -217,4 +229,35 @@ export function computeStatuses(nodes, progress) {
     statuses.set(node.id, unlocked ? LEVEL_STATUS.AVAILABLE : LEVEL_STATUS.LOCKED);
   });
   return statuses;
+}
+
+// ---------------------------------------------------------------------------
+// Review levels
+
+/**
+ * Sample review items evenly across levels: each level's items are shuffled,
+ * then picked round-robin, so no passed level is left out of a review.
+ * @param {Array<object[]>} itemsPerLevel scored items of each passed level
+ * @returns {object[]} at most REVIEW_ITEM_COUNT items
+ */
+export function sampleReviewItems(itemsPerLevel, random = Math.random, count = REVIEW_ITEM_COUNT) {
+  const queues = shuffle(itemsPerLevel.filter((items) => items.length), random).map((items) => shuffle(items, random));
+  const picked = [];
+  while (picked.length < count && queues.some((q) => q.length)) {
+    for (const queue of queues) {
+      if (picked.length >= count) break;
+      if (queue.length) picked.push(queue.shift());
+    }
+  }
+  return picked;
+}
+
+// ---------------------------------------------------------------------------
+// Storage capacity
+
+/** Estimated share of the browser storage budget used by this app. */
+export function storageUsage() {
+  const used = usedChars("kanjiGame.");
+  const ratio = used / STORAGE_BUDGET_CHARS;
+  return { used, budget: STORAGE_BUDGET_CHARS, ratio, warning: ratio >= STORAGE_WARNING_RATIO };
 }

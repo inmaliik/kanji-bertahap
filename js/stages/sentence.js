@@ -19,6 +19,23 @@ export function renderSentence({ item, level, isRevealed, random, onAnswer, onCo
 
   // The translation is withheld until the player answers: showing it first
   // turns the question into meaning matching instead of reading in context.
+  // A player who is stuck may ask for it; that is logged as hintUsed.
+  let hintUsed = false;
+  const translationHint = h("p", { class: "hint__text", hidden: true, "aria-live": "polite" }, example.translation);
+  const hintButton = h(
+    "button",
+    {
+      type: "button",
+      class: "button hint__button",
+      onClick: () => {
+        hintUsed = true;
+        translationHint.hidden = false;
+        hintButton.remove();
+      },
+    },
+    "Tampilkan arti"
+  );
+
   const sentenceWithSlot = renderRuby(segments, {
     range: blankRange,
     wrap: () => h("span", { class: "blank-slot" }, h("span", { class: "sr-only", lang: "id" }, "(bagian kosong)")),
@@ -28,6 +45,7 @@ export function renderSentence({ item, level, isRevealed, random, onAnswer, onCo
     prompt: [
       h("h2", { class: "question__title", tabindex: "-1" }, "Pilih kotoba yang tepat untuk bagian kosong"),
       ja("p", { class: "sentence-main" }, sentenceWithSlot),
+      h("div", { class: "hint" }, hintButton, translationHint),
     ],
     options: options.map((o) => ({ ...o, content: o.value, lang: "ja" })),
     optionsClass: "options--grid options--words",
@@ -41,15 +59,19 @@ export function renderSentence({ item, level, isRevealed, random, onAnswer, onCo
       h("p", { class: "example__translation" }, example.translation),
       h("p", {}, ja("span", { class: "feedback__word" }, revealed ? wordWithRuby(kotoba) : kotoba.word), ` — ${kotoba.meaning}`),
     ],
-    onAnswer: ({ value, type, correct }) =>
-      onAnswer({
+    onAnswer: ({ value, type, correct }) => {
+      hintButton.remove();
+      translationHint.hidden = true; // the feedback shows the translation
+      return onAnswer({
         prompt: `${plain.slice(0, blankRange.start)}${BLANK_MARK}${plain.slice(blankRange.end)}`,
         options,
         correctAnswer: example.blank,
         answer: value,
         answerType: type,
+        hintUsed,
         correct,
-      }),
+      });
+    },
     onContinue,
   });
 }

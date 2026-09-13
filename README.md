@@ -7,9 +7,9 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Status:** langkah 3 dari 5. Kelima tahap bisa dimainkan dan level bisa lulus. Level ulangan,
-> ekspor CSV, kode peserta, dan pengiriman log dibangun di langkah 4. Bagian README yang ditandai
-> *(menyusul)* akan dilengkapi di langkah berikutnya.
+> **Status:** langkah 4 dari 5. Semua fitur inti sudah ada: lima tahap, level ulangan, Pengaturan
+> lengkap, pengiriman log ke Google Apps Script, dan pratinjau materi yang bisa dicetak. Langkah 5
+> adalah pemolesan dan pengujian dengan 30 level.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
@@ -54,6 +54,7 @@ js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
 js/state.js                 progres di localStorage + SEMUA aturan permainan (ambang, kunci, ulangan)
 js/session.js               antrean soal satu level: putaran belajar, produksi, pemantapan
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
+js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
 js/content.js               memuat content.json, mengelompokkan level, menurunkan item soal
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
@@ -73,13 +74,14 @@ js/stages/production.js     tahap 5 — Produksi
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
 js/screens/level-list.js    daftar level, status terkunci, kartu level ulangan
 js/screens/play.js          layar bermain: menjalankan sesi, mencatat log
-js/screens/preview.js       pratinjau materi dan pemeriksaan konten
-js/screens/settings.js      pengaturan (reset progres, jumlah log, tautan pratinjau)
+js/screens/preview.js       pratinjau materi (per level dan semua level, bisa dicetak), pemeriksaan konten
+js/screens/settings.js      pengaturan: reset, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 
 tools/csv-to-json.mjs       konversi CSV spreadsheet → data/content.json
 tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
 tools/content-template.csv  contoh CSV (level 食)
+tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 ```
 DECISIONS.md                catatan keputusan desain beserta alasannya
 
@@ -201,7 +203,7 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 
 | Field | Wajib | Keterangan |
 |---|---|---|
-| `id` | ya | Huruf latin/angka/`-`/`_`. Unik. Format `R` + angka dicadangkan untuk level ulangan. |
+| `id` | ya | Huruf latin/angka/`-`/`_`. Unik. Format `R` + angka dicadangkan untuk level ulangan, dan `all` untuk halaman pratinjau semua level. |
 | `kanji` | ya | Tepat satu kanji, unik di seluruh materi. |
 | `meaning` | ya | Arti kanji (bahasa Indonesia). |
 | `jlptLevel` | ya | `N5`, `N4` (juga `N3`–`N1` untuk masa depan). Menentukan kelompok di daftar level. |
@@ -377,8 +379,6 @@ itu disengaja, karena soalnya memang berbeda.
 
 Level ber-`jlptLevel: "N4"` otomatis muncul di kelompok N4 beserta tombol saringnya.
 
-## Mengaktifkan pengiriman log *(menyusul di langkah 4)*
-
 ## Aturan permainan
 
 Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
@@ -390,6 +390,8 @@ Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
 | `REVIEW_EVERY_N_LEVELS` | 3 | Level ulangan disisipkan setiap 3 level. |
 | `REVIEW_ITEM_COUNT` | 10 | Jumlah item dalam satu level ulangan. |
 | `OPTION_COUNT` | 4 | Jumlah pilihan di tahap 2–4 (jawaban + pengecoh). |
+| `STORAGE_BUDGET_CHARS` | 2.500.000 | Perkiraan batas penyimpanan browser, sengaja rendah. |
+| `STORAGE_WARNING_RATIO` | 0,8 | Peringatan kapasitas muncul sejak 80% dari perkiraan batas. |
 
 **Alur satu level**
 
@@ -407,8 +409,10 @@ Level lulus bila semua item tahap 1–4 dikuasai dan tahap 5 sudah dikirim.
 menampilkan kotoba kun'yomi dari tahap 2 beserta furigananya. Setelah menjawab soal cara baca apa pun,
 umpan balik menampilkan kotoba kun'yomi dan on'yomi berdampingan, ditambah tabel bacaan.
 
-**Tahap 4.** Terjemahan kalimat baru ditampilkan setelah menjawab. Jika ditampilkan lebih dulu, soal
-berubah menjadi mencocokkan arti, bukan membaca kalimat.
+**Tahap 4.** Terjemahan kalimat tidak ditampilkan sebelum menjawab; jika ditampilkan lebih dulu, soal
+berubah menjadi mencocokkan arti. Pemain yang benar-benar buntu boleh menekan **Tampilkan arti**.
+Jawaban benar setelah bantuan tetap dihitung benar untuk kelulusan, tetapi log mencatat `hintUsed` = 1
+sehingga bisa dipisahkan saat analisis.
 
 **Tahap 5.** Tidak ada penilaian benar-salah dan tidak ada skor. Setelah pemain mengirim kalimat,
 contoh dari materi ditampilkan sebagai pembanding, lalu pemain memilih "Sudah mirip" atau "Masih
@@ -420,6 +424,17 @@ ditampilkan jika soal cara bacanya tidak akan segera muncul: sudah dijawab benar
 belajar), atau sudah dikuasai (tahap Produksi dan putaran pemantapan). Tanpa aturan ini, umpan balik
 soal 食べます akan memperlihatkan しょくじ tepat sebelum soal cara baca 食事.
 
+**Level ulangan.** Setelah setiap 3 level, satu level ulangan (R01, R02, …) wajib diselesaikan
+sebelum level berikutnya terbuka.
+- Isinya 10 item tahap 1–4 yang diambil acak dari semua level yang sudah lulus, **berimbang per level**
+  (setiap level terwakili sebelum level yang sama diambil lagi).
+- Tanpa putaran belajar dan tanpa Produksi: semua item langsung diacak, dengan aturan penguasaan yang
+  sama (benar 2 kali berturut-turut, tidak berdampingan).
+- Sampel disimpan saat level ulangan pertama kali dibuka, sehingga keluar lalu masuk lagi
+  melanjutkan item yang sama.
+- Di log: `levelId` = `R01`, `isReview` = 1, `phase` = `review` (atau `spacer`), dan `itemId` tetap
+  menunjukkan level asal item.
+
 **Status terkunci tidak disimpan.** Yang disimpan hanya fakta: streak tiap item, level sudah
 dimulai, level sudah lulus. Sebuah level terbuka jika level tepat sebelumnya (termasuk level
 ulangan) sudah lulus. Level yang sudah pernah dimulai tidak pernah terkunci lagi, sehingga level
@@ -427,29 +442,305 @@ yang disisipkan saat revisi materi tidak menghalangi peserta yang sudah lebih ja
 
 ## Kemajuan pemain dan reset
 
-Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v1`. Tombol **Reset progres**
-ada di Pengaturan: semua progres level dihapus dan pemain berikutnya mendapat `playerId` baru.
-**Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
+Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v1`. **Reset progres** (Pengaturan)
+menghapus progres level, membuat `playerId` baru, dan mengosongkan kode peserta. **Riwayat jawaban
+tidak ikut terhapus**, karena itu data penelitian.
 
 Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v1.corrupt.<waktu>`
 dan memulai progres baru.
 
-## Log jawaban *(ekspor CSV dan pengiriman menyusul di langkah 4)*
+> Buka aplikasi di **satu tab saja** per perangkat. Dua tab yang terbuka bersamaan saling menimpa
+> progres; yang terakhir menyimpan yang berlaku.
+
+## Pengaturan
+
+Dibuka dari tombol **⚙ Pengaturan** di daftar level.
+
+| Bagian | Isi |
+|---|---|
+| Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). |
+| Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti, misalnya `P017`. Tercatat di setiap baris log. |
+| Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
+| Materi | Revisi materi, tanda DRAF, tautan pratinjau semua level dan per level, pemeriksaan konten. |
+
+Peringatan kapasitas juga muncul di daftar level, supaya penjaga stan melihatnya tanpa membuka
+Pengaturan. Persentasenya adalah **perkiraan**: browser tidak memberi tahu batas pastinya.
+
+## Log jawaban
 
 Setiap jawaban dicatat di `localStorage` (key `kanjiGame.log.v1` dan `kanjiGame.log.v1.chunk.N`).
 Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penting untuk analisis:
 
 | Kolom | Isi |
 |---|---|
+| `rowId` | ID unik tiap baris. Dipakai spreadsheet untuk membuang baris yang terkirim dua kali. |
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
-| `phase` | `learning`, `consolidation`, `spacer`, atau `production`. |
+| `participantCode` | Kode peserta anonim, jika diisi. |
+| `levelId`, `isReview` | Level tempat soal dijawab (`L01`, `R01`, …) dan 1 jika level ulangan. |
+| `phase` | `learning`, `consolidation`, `spacer`, `production`, atau `review`. |
 | `stage` | `shape`, `kunyomi`, `onyomi`, `sentence`, atau `production`. |
+| `itemId` | ID item; diawali ID level asal item. |
 | `options` | Pilihan sesuai urutan tampil, dipisah ` \| `. |
 | `optionTypes` | Jenis tiap pilihan dengan urutan yang sama: `answer`, `manual`, `manual-cross`, `auto`. |
 | `answer`, `answerType` | Pilihan pemain dan jenisnya. `answerType` = `manual-cross` berarti pemain membaca kanji dengan jenis bacaan yang salah. |
+| `hintUsed` | Tahap 4 saja: 1 jika **Tampilkan arti** ditekan sebelum menjawab. |
 | `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. |
 | `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. |
 | `selfAssessment`, `containsKanji` | Tahap 5 saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji level. |
 
 Jika daftar kolom berubah di versi berikutnya, log lama di perangkat otomatis disusun ulang ke urutan
-kolom baru saat aplikasi dibuka.
+kolom baru saat aplikasi dibuka. Skrip Apps Script juga menambahkan kolom baru ke spreadsheet secara
+otomatis.
+
+## Pengiriman log ke Google Apps Script
+
+**Ini jalur utama pengumpulan data**, termasuk saat pameran. Ekspor CSV hanya cadangan.
+
+Cara kerjanya: setiap jawaban disimpan di perangkat lebih dulu, lalu dikirim per kelompok (50 baris)
+ke Web App. Baris dianggap terkirim hanya jika server membalas `{"ok": true}`. Jika gagal (jaringan
+mati, server lambat), aplikasi tetap berjalan normal, baris tetap tersimpan, dan pengiriman dicoba lagi
+otomatis: 2 detik setelah jawaban berikutnya, saat jaringan kembali, dan setiap 60 detik. Status dan
+pesan galat terlihat di Pengaturan → Riwayat jawaban → Pengiriman ke server.
+
+> ⚠ **Siapkan dan uji endpoint jauh sebelum hari pameran, jangan di hari-H.** Skrip di bawah sudah
+> diuji dengan tiruan layanan Google, tetapi tim wajib mengujinya sendiri di akun Google yang akan
+> dipakai.
+
+### 1. Buat spreadsheet dan tempel skrip
+
+1. Buat Google Sheet baru, misalnya **Log Kanji Bertahap**.
+2. Buka **Ekstensi → Apps Script**.
+3. Hapus isi `Code.gs`, lalu tempel seluruh skrip di bawah (sama dengan `tools/apps-script-log.gs`).
+4. Klik **Simpan** (ikon disket).
+
+```javascript
+/**
+ * Google Apps Script endpoint for the Kanji Bertahap answer log.
+ *
+ * Paste this whole file into Extensions → Apps Script of the Google Sheet
+ * that will hold the data, then deploy it as a Web App (see README,
+ * "Pengiriman log ke Google Apps Script").
+ *
+ * - Rows are appended to the sheet named SHEET_NAME (created if missing).
+ * - Columns are matched by name; new columns sent by a newer app version are
+ *   added to the header automatically.
+ * - Rows whose rowId already exists are skipped, so a batch that is sent twice
+ *   after a network drop does not create duplicates.
+ * - Every cell is stored as plain text; values that start with = + - @ get a
+ *   leading apostrophe so Sheets never runs them as formulas.
+ */
+
+var SHEET_NAME = "log";
+var APP_ID = "kanji-bertahap";
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    if (payload.app !== APP_ID || !Array.isArray(payload.columns) || !Array.isArray(payload.rows)) {
+      return jsonResponse({ ok: false, error: "format data tidak dikenal" });
+    }
+
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
+
+    var header = sheet.getLastRow() === 0 ? [] : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var newColumns = payload.columns.concat(["receivedAt"]).filter(function (name) {
+      return header.indexOf(name) === -1;
+    });
+    if (newColumns.length) {
+      sheet.getRange(1, header.length + 1, 1, newColumns.length).setValues([newColumns]);
+      header = header.concat(newColumns);
+    }
+
+    var rowIdColumn = header.indexOf("rowId");
+    var existing = {};
+    if (sheet.getLastRow() > 1) {
+      sheet
+        .getRange(2, rowIdColumn + 1, sheet.getLastRow() - 1, 1)
+        .getValues()
+        .forEach(function (row) {
+          existing[String(row[0])] = true;
+        });
+    }
+
+    var receivedAt = new Date().toISOString();
+    var output = [];
+    payload.rows.forEach(function (values) {
+      var record = {};
+      payload.columns.forEach(function (name, i) {
+        record[name] = values[i];
+      });
+      var rowId = String(record.rowId || "");
+      if (rowId && existing[rowId]) return;
+      existing[rowId] = true;
+      record.receivedAt = receivedAt;
+      output.push(
+        header.map(function (name) {
+          return asText(record[name]);
+        })
+      );
+    });
+
+    if (output.length) {
+      var range = sheet.getRange(sheet.getLastRow() + 1, 1, output.length, header.length);
+      range.setNumberFormat("@");
+      range.setValues(output);
+    }
+    return jsonResponse({ ok: true, received: payload.rows.length, appended: output.length });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Opening the Web App URL in a browser shows whether the endpoint is alive. */
+function doGet() {
+  return jsonResponse({ ok: true, message: "Endpoint log Kanji Bertahap aktif." });
+}
+
+function asText(value) {
+  if (value === undefined || value === null) return "";
+  var text = String(value);
+  return /^[=+\-@]/.test(text) ? "'" + text : text;
+}
+
+function jsonResponse(object) {
+  return ContentService.createTextOutput(JSON.stringify(object)).setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+### 2. Deploy sebagai Web App
+
+Nama menu di bawah mengikuti tampilan Google berbahasa Indonesia; di akun berbahasa Inggris namanya
+*Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone*.
+
+1. Klik **Terapkan (Deploy) → Deployment baru**.
+2. Klik ikon roda gigi di samping "Pilih jenis", pilih **Aplikasi web**.
+3. Isi:
+   - **Jalankan sebagai:** *Saya* (akun pemilik spreadsheet)
+   - **Siapa yang memiliki akses:** *Siapa saja* (Anyone)
+4. Klik **Terapkan**, izinkan akses saat diminta, lalu salin **URL aplikasi web** (berakhiran `/exec`).
+5. Uji: buka URL itu di browser. Harus muncul `{"ok":true,"message":"Endpoint log Kanji Bertahap aktif."}`.
+
+Jika skrip diubah, jangan membuat deployment baru (URL-nya akan berubah). Pakai **Terapkan → Kelola
+deployment → ikon pensil → Versi: Versi baru → Terapkan**; URL tetap sama.
+
+### 3. Aktifkan di aplikasi
+
+Buka `js/config.js`, ubah dua baris ini, lalu deploy ulang ke Netlify:
+
+```javascript
+export const LOG_REMOTE_ENABLED = true;
+export const LOG_REMOTE_URL = "https://script.google.com/macros/s/XXXXXXXX/exec";
+```
+
+### 4. Uji dari perangkat
+
+1. Buka aplikasi dari Netlify, mainkan beberapa soal.
+2. Buka **Pengaturan**. Setelah beberapa detik harus tertulis **✓ Semua jawaban sudah terkirim.**
+3. Periksa sheet `log` di spreadsheet: baris baru muncul dengan kolom `receivedAt`.
+
+### Jika pengiriman gagal
+
+| Pesan di Pengaturan | Penyebab paling mungkin |
+|---|---|
+| Balasan server bukan JSON | Akses Web App bukan *Siapa saja*, atau URL bukan yang berakhiran `/exec`. |
+| Tidak bisa terhubung ke server | Jaringan mati, URL salah ketik, atau Web App belum di-deploy. |
+| Server tidak membalas dalam 15 detik | Apps Script sedang lambat; akan dicoba lagi otomatis. |
+| Server menolak data | Skrip di spreadsheet bukan versi terbaru, atau spreadsheet dikunci. |
+
+**Keterbatasan.** URL Web App tersimpan di kode aplikasi dan bisa dilihat siapa pun yang membuka
+aplikasi, sehingga orang lain secara teori bisa mengirim data sampah. Saring data dengan kolom
+`appVersion`, `contentRevision`, dan `participantCode` saat analisis.
+
+## Ekspor CSV (cadangan)
+
+Dipakai jika pengiriman ke server tidak bisa diandalkan, misalnya jaringan pameran mati.
+
+1. Pengaturan → Riwayat jawaban → **Ekspor CSV**.
+2. File `kanji-bertahap-log-TAHUNBULANTANGGAL-JAMMENIT.csv` masuk ke folder Unduhan perangkat.
+3. File bisa dibuka langsung di Excel atau Google Sheets; huruf Jepang tampil benar.
+4. Ekspor tidak menghapus apa pun. Pengaturan mencatat kapan terakhir diekspor dan berapa jawaban baru
+   sejak itu.
+
+Nilai yang diawali `=`, `+`, `-`, atau `@` diberi tanda `'` di depannya supaya spreadsheet tidak
+menjalankannya sebagai rumus.
+
+## Prosedur pameran (untuk penjaga stan)
+
+Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi.
+
+### Seminggu sebelum pameran (koordinator data)
+
+1. Pastikan pengiriman log sudah aktif dan sudah diuji dari ponsel yang akan dipakai
+   (bagian [Pengiriman log](#pengiriman-log-ke-google-apps-script), langkah 4).
+2. Di setiap perangkat pameran, buka aplikasi dari tautan Netlify di **satu tab saja**.
+3. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
+
+### Pagi hari sebelum stan dibuka
+
+1. Nyalakan perangkat dan pastikan terhubung ke internet.
+2. Buka aplikasi → **⚙ Pengaturan** → bagian **Riwayat jawaban**.
+3. Periksa tiga hal:
+   - **Pengiriman ke server** tidak menampilkan pesan merah.
+   - **Penyimpanan terpakai** di bawah 80%. Jika sudah 80% atau lebih, jalankan langkah
+     *Jika muncul peringatan kapasitas* di bawah sebelum mulai.
+   - Tidak ada tulisan "jawaban tidak bisa disimpan".
+4. Tekan **Reset progres** → **Ya, reset progres**.
+
+### Setiap kali pengunjung berganti
+
+1. Pengaturan → **Reset progres** → **Ya, reset progres**.
+2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**, lalu
+   **Simpan kode**. Jangan pernah mengisi nama atau NIM.
+3. Tekan **‹ Daftar level**, serahkan perangkat ke pengunjung.
+
+Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim.
+
+### Setiap satu jam atau saat istirahat
+
+1. Buka Pengaturan → Riwayat jawaban.
+2. Jika tertulis **✓ Semua jawaban sudah terkirim**: tidak perlu melakukan apa-apa.
+3. Jika tertulis **Belum terkirim: N jawaban** dan ada pesan merah:
+   - Periksa koneksi internet, lalu tekan **Kirim sekarang**.
+   - Jika masih gagal, tekan **Ekspor CSV** sebagai cadangan dan beri tahu koordinator data.
+     Permainan tetap bisa berjalan seperti biasa.
+
+### Jika muncul peringatan kapasitas
+
+Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di daftar level dan di Pengaturan.
+
+1. Buka Pengaturan → Riwayat jawaban.
+2. Pastikan tertulis **✓ Semua jawaban sudah terkirim**. Jika belum, tekan **Kirim sekarang** dan tunggu.
+3. Tekan **Ekspor CSV** dan simpan filenya (kirim ke koordinator data atau salin ke laptop).
+4. Periksa bahwa file CSV bisa dibuka.
+5. Baru setelah itu: **Hapus log…** → ketik `HAPUS` → **Hapus log permanen**.
+
+Jika muncul pesan **merah** "Penyimpanan penuh", lakukan langkah di atas **sekarang juga**, sebelum
+pengunjung berikutnya bermain.
+
+### Akhir hari
+
+1. Pengaturan → pastikan **✓ Semua jawaban sudah terkirim**.
+2. **Ekspor CSV** sebagai cadangan harian, beri nama file sesuai tanggal jika perlu, serahkan ke
+   koordinator data.
+3. Jangan menghapus log sebelum koordinator memastikan data di spreadsheet dan file CSV lengkap.
+
+## Pratinjau dan cetak untuk validator ahli
+
+Pengaturan → Materi → **Pratinjau semua materi (bisa dicetak)** membuka `#/preview/all`:
+
+- ringkasan seluruh level (nomor, ID, kanji, arti, JLPT, bab, jumlah kotoba dan kalimat);
+- setiap level lengkap: bushu dan pilihannya, tabel cara baca beserta notasi data mentah, kotoba,
+  pengecoh (sejenis, lintas jenis, dan kalimat), contoh kalimat dengan bagian kosong ditandai,
+  instruksi Produksi;
+- revisi materi dan tanggal dicetak di bagian atas.
+
+Tekan **Cetak / simpan PDF**. Pada hasil cetak, setiap level dimulai di halaman baru dan diakhiri
+**kotak catatan validator**. Jika revisi materi diawali `draft`, spanduk **DRAF — BELUM DIVERIFIKASI**
+tampil di atas dan tanda air **DRAF** tercetak di setiap halaman.
+
+Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeriksaan teknis.

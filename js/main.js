@@ -3,6 +3,8 @@
 import { CONTENT_URL } from "./config.js";
 import { loadContent } from "./content.js";
 import { loadProgress } from "./state.js";
+import { onLogAppended } from "./logger.js";
+import { scheduleFlush, startLogSender } from "./log-sender.js";
 import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
@@ -94,6 +96,10 @@ async function boot() {
   } else if (recovered) {
     app.notices.push({ kind: "warning", text: "Data progres sebelumnya rusak dan tidak bisa dibaca, jadi progres dimulai dari awal." });
   }
+
+  // Remote log sending never blocks the game; it does nothing unless enabled in config.js.
+  onLogAppended(scheduleFlush);
+  startLogSender();
 
   window.addEventListener("hashchange", navigate);
   navigate();

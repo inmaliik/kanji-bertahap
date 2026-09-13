@@ -4,7 +4,7 @@
 import { h, ja } from "../dom.js";
 import { APP_TITLE } from "../config.js";
 import { groupLevels, jlptLevelsPresent, buildLevelItems } from "../content.js";
-import { buildProgression, computeStatuses, evaluateEntry, LEVEL_STATUS } from "../state.js";
+import { buildProgression, computeStatuses, evaluateEntry, LEVEL_STATUS, storageUsage } from "../state.js";
 import { STAGE_ORDER } from "../session.js";
 import { chapterLabel } from "./common.js";
 
@@ -35,6 +35,18 @@ function card({ href, status, symbol, title, meta }) {
   return locked
     ? h("div", { class: "level-card level-card--locked", "aria-disabled": "true" }, children)
     : h("a", { class: "level-card", href }, children);
+}
+
+// Exhibition staff need to see this without opening Settings.
+function storageNotice() {
+  const usage = storageUsage();
+  if (!usage.warning) return null;
+  return h(
+    "a",
+    { class: "notice notice--warning", href: "#/settings" },
+    h("span", { "aria-hidden": "true" }, "⚠ "),
+    `Penyimpanan perangkat hampir penuh (sekitar ${Math.round(usage.ratio * 100)}%). Penjaga stan: buka Pengaturan.`
+  );
 }
 
 /**
@@ -87,6 +99,12 @@ export function levelListScreen(app) {
 
   const reviewCard = (node) => {
     const status = statuses.get(node.id);
+    const sampled = progress.levels[node.id]?.reviewItemIds;
+    let extra = null;
+    if (status === LEVEL_STATUS.IN_PROGRESS && sampled?.length) {
+      const { mastered, total } = evaluateEntry(sampled, progress.levels[node.id], { requiresProduction: false });
+      extra = `${mastered}/${total} item`;
+    }
     const first = node.coveredLevelIds[0];
     const last = node.coveredLevelIds[node.coveredLevelIds.length - 1];
     return card({
@@ -94,7 +112,7 @@ export function levelListScreen(app) {
       status,
       symbol: h("span", { class: "level-card__symbol", "aria-hidden": "true" }, "↻"),
       title: `Level ulangan ${node.id}`,
-      meta: h("span", { class: "level-card__meta" }, `Campuran ${first}–${last} · `, statusBadge(status)),
+      meta: h("span", { class: "level-card__meta" }, `Campuran ${first}–${last} · `, statusBadge(status, extra)),
     });
   };
 
@@ -110,6 +128,7 @@ export function levelListScreen(app) {
       h("a", { class: "topbar__action", href: "#/settings" }, h("span", { "aria-hidden": "true" }, "⚙ "), "Pengaturan")
     ),
     notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, h("span", { "aria-hidden": "true" }, "⚠ "), n.text)),
+    storageNotice(),
     app.warnings.length
       ? h(
           "a",

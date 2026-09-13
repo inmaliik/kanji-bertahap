@@ -6,31 +6,35 @@
 // fails, rows are kept in memory for the current page and the failure is
 // reported through getLogStatus().
 //
-// Remote sending (Google Apps Script) is added in step 4.
+// Rows are append-only. `sentCount` marks how many leading stored rows were
+// delivered to the remote endpoint (see log-sender.js).
 
 import { readJson, writeJson, removeKey } from "./storage.js";
+import { createId } from "./state.js";
 
 export const LOG_KEY = "kanjiGame.log.v1";
 const LOG_CHUNK_SIZE = 200;
 
 export const LOG_COLUMNS = [
+  "rowId", // unique per row; lets the spreadsheet drop rows sent twice after a network drop
   "timestamp", // ISO-8601, device clock
   "appVersion",
   "contentRevision", // content.json revision the answer was given against
   "playerId", // random per device/player; new after progress reset
   "participantCode", // optional anonymous code entered in Settings
   "sessionId", // one per opening of a level
-  "levelId",
+  "levelId", // level or review level (R01…) where the answer was given
   "isReview", // 1 for review levels
   "phase", // learning | consolidation | spacer (mastered item shown between repeats) | production | review
   "stage", // shape | kunyomi | onyomi | sentence | production
-  "itemId",
+  "itemId", // starts with the level the item comes from
   "prompt", // what was shown (kanji, word, or sentence)
   "options", // choices in the order shown, separated by " | "
   "optionTypes", // per option, same order: answer | manual | manual-cross | auto
   "correctAnswer",
   "answer",
   "answerType", // type of the chosen option (see optionTypes)
+  "hintUsed", // sentence stage only: 1 if "Tampilkan arti" was pressed before answering
   "isCorrect", // 1 / 0; empty for production
   "streakAfter",
   "responseMs", // from question shown to answer
@@ -41,19 +45,31 @@ export const LOG_COLUMNS = [
 
 const chunkKey = (index) => `${LOG_KEY}.chunk.${index}`;
 
-let meta = null; // { version, columns, chunkCount, rowCount, sentCount }
+// { version, columns, chunkCount, rowCount, sentCount, lastExportAt, exportedRowCount }
+let meta = null;
 let lastChunk = null; // rows of the newest chunk
 const memoryRows = []; // rows that could not be written to storage
+let memorySentCount = 0;
 let storageFailed = false;
+let generation = 0; // bumped by clearLog so an in-flight send cannot mark new rows as sent
+const appendListeners = new Set();
 
 function emptyMeta() {
-  return { version: 1, columns: LOG_COLUMNS, chunkCount: 0, rowCount: 0, sentCount: 0 };
+  return {
+    version: 1,
+    columns: LOG_COLUMNS,
+    chunkCount: 0,
+    rowCount: 0,
+    sentCount: 0,
+    lastExportAt: null,
+    exportedRowCount: 0,
+  };
 }
 
 function loadMeta() {
   if (meta) return meta;
   const { ok, value } = readJson(LOG_KEY);
-  meta = ok && value && Array.isArray(value.columns) ? value : emptyMeta();
+  meta = ok && value && Array.isArray(value.columns) ? { ...emptyMeta(), ...value } : emptyMeta();
   if (meta.columns.join() !== LOG_COLUMNS.join()) migrateColumns();
   if (meta.chunkCount > 0) {
     const chunk = readJson(chunkKey(meta.chunkCount - 1));
@@ -64,42 +80,10 @@ function loadMeta() {
   return meta;
 }
 
-function toRow(record) {
-  return LOG_COLUMNS.map((col) => {
-    const v = record[col];
-    if (v === undefined || v === null) return "";
-    if (typeof v === "boolean") return v ? 1 : 0;
-    return v;
-  });
-}
-
-/**
- * Append one answer. Missing columns are written as empty.
- * @returns {boolean} true if persisted to storage
- */
-export function logAnswer(record) {
-  try {
-    const row = toRow({ timestamp: new Date().toISOString(), ...record });
-    const m = loadMeta();
-    // Build the new state first and commit it to memory only after both
-    // writes succeed, so a failed write can never overwrite a full chunk.
-    const startNew = m.chunkCount === 0 || lastChunk.length >= LOG_CHUNK_SIZE;
-    const chunkIndex = startNew ? m.chunkCount : m.chunkCount - 1;
-    const nextChunk = startNew ? [row] : [...lastChunk, row];
-    const nextMeta = { ...m, chunkCount: chunkIndex + 1, rowCount: m.rowCount + 1 };
-    if (writeJson(chunkKey(chunkIndex), nextChunk) && writeJson(LOG_KEY, nextMeta)) {
-      meta = nextMeta;
-      lastChunk = nextChunk;
-      return true;
-    }
-    memoryRows.push(row);
-    storageFailed = true;
-    return false;
-  } catch (err) {
-    storageFailed = true;
-    console.warn("Log gagal ditulis:", err);
-    return false;
-  }
+function saveMeta(next) {
+  if (!writeJson(LOG_KEY, next)) return false;
+  meta = next;
+  return true;
 }
 
 // Rewrite rows stored with an older column list into the current order, once,
@@ -117,12 +101,68 @@ function migrateColumns() {
   writeJson(LOG_KEY, meta);
 }
 
-function readStoredRows() {
+function toRow(record) {
+  return LOG_COLUMNS.map((col) => {
+    const v = record[col];
+    if (v === undefined || v === null) return "";
+    if (typeof v === "boolean") return v ? 1 : 0;
+    return v;
+  });
+}
+
+/** Called with no arguments after every appended row. */
+export function onLogAppended(listener) {
+  appendListeners.add(listener);
+  return () => appendListeners.delete(listener);
+}
+
+/**
+ * Append one answer. Missing columns are written as empty.
+ * @returns {boolean} true if persisted to storage
+ */
+export function logAnswer(record) {
+  let persisted = false;
+  try {
+    const row = toRow({ rowId: createId(), timestamp: new Date().toISOString(), ...record });
+    const m = loadMeta();
+    // Build the new state first and commit it to memory only after both
+    // writes succeed, so a failed write can never overwrite a full chunk.
+    const startNew = m.chunkCount === 0 || lastChunk.length >= LOG_CHUNK_SIZE;
+    const chunkIndex = startNew ? m.chunkCount : m.chunkCount - 1;
+    const nextChunk = startNew ? [row] : [...lastChunk, row];
+    const nextMeta = { ...m, chunkCount: chunkIndex + 1, rowCount: m.rowCount + 1 };
+    if (writeJson(chunkKey(chunkIndex), nextChunk) && saveMeta(nextMeta)) {
+      lastChunk = nextChunk;
+      persisted = true;
+    } else {
+      memoryRows.push(row);
+      storageFailed = true;
+    }
+  } catch (err) {
+    storageFailed = true;
+    console.warn("Log gagal ditulis:", err);
+  }
+  for (const listener of appendListeners) {
+    try {
+      listener();
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+  return persisted;
+}
+
+/** Stored rows in [start, start + limit), reading only the chunks involved. */
+function readStoredRows(start = 0, limit = Infinity) {
   const m = loadMeta();
+  const end = Math.min(m.rowCount, start + limit);
   const rows = [];
-  for (let i = 0; i < m.chunkCount; i++) {
-    const chunk = readJson(chunkKey(i)).value;
-    if (Array.isArray(chunk)) rows.push(...chunk);
+  for (let chunk = Math.floor(start / LOG_CHUNK_SIZE); chunk < m.chunkCount; chunk++) {
+    const chunkStart = chunk * LOG_CHUNK_SIZE;
+    if (chunkStart >= end) break;
+    const value = readJson(chunkKey(chunk)).value;
+    if (!Array.isArray(value)) continue;
+    rows.push(...value.slice(Math.max(0, start - chunkStart), end - chunkStart));
   }
   return rows;
 }
@@ -132,9 +172,49 @@ export function getLogRows() {
   return [...readStoredRows(), ...memoryRows];
 }
 
+/**
+ * Next rows the remote endpoint has not received: stored rows first, then
+ * rows that only exist in memory because storage was full.
+ * Pass the returned batch to markSent() once the endpoint confirms it.
+ * @returns {{rows: Array<Array>, source: "stored"|"memory"|null, generation: number}}
+ */
+export function getUnsentBatch(limit) {
+  const m = loadMeta();
+  if (m.sentCount < m.rowCount) return { rows: readStoredRows(m.sentCount, limit), source: "stored", generation };
+  if (memorySentCount < memoryRows.length) {
+    return { rows: memoryRows.slice(memorySentCount, memorySentCount + limit), source: "memory", generation };
+  }
+  return { rows: [], source: null, generation };
+}
+
+export function markSent({ rows, source, generation: batchGeneration }) {
+  if (batchGeneration !== generation) return; // the log was cleared meanwhile
+  const count = rows.length;
+  if (source === "memory") {
+    memorySentCount = Math.min(memoryRows.length, memorySentCount + count);
+    return;
+  }
+  const m = loadMeta();
+  saveMeta({ ...m, sentCount: Math.min(m.rowCount, m.sentCount + count) });
+}
+
+export function markExported() {
+  const m = loadMeta();
+  saveMeta({ ...m, lastExportAt: new Date().toISOString(), exportedRowCount: m.rowCount + memoryRows.length });
+}
+
 export function getLogStatus() {
   const m = loadMeta();
-  return { storedRows: m.rowCount, unsavedRows: memoryRows.length, storageFailed };
+  const totalRows = m.rowCount + memoryRows.length;
+  return {
+    storedRows: m.rowCount,
+    unsavedRows: memoryRows.length,
+    totalRows,
+    unsentRows: m.rowCount - m.sentCount + (memoryRows.length - memorySentCount),
+    lastExportAt: m.lastExportAt,
+    rowsSinceExport: Math.max(0, totalRows - m.exportedRowCount),
+    storageFailed,
+  };
 }
 
 // Values starting with these characters are run as formulas by spreadsheet
@@ -160,5 +240,7 @@ export function clearLog() {
   meta = emptyMeta();
   lastChunk = [];
   memoryRows.length = 0;
+  memorySentCount = 0;
   storageFailed = false;
+  generation += 1;
 }

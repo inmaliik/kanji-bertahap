@@ -1,10 +1,11 @@
-// Play screen: runs one level session, renders stages, logs every answer.
+// Play screen: runs one level or review level session, renders stages, and
+// logs every answer.
 
 import { h } from "../dom.js";
 import { APP_VERSION } from "../config.js";
 import { buildLevelItems } from "../content.js";
 import { itemId } from "../validate.js";
-import { createLevelSession } from "../session.js";
+import { createLevelSession, STAGE_ORDER } from "../session.js";
 import { logAnswer } from "../logger.js";
 import {
   STREAK_TO_MASTER,
@@ -13,6 +14,7 @@ import {
   computeStatuses,
   createId,
   LEVEL_STATUS,
+  sampleReviewItems,
   saveProgress,
   touch,
 } from "../state.js";
@@ -37,6 +39,28 @@ function messageScreen(title, ...body) {
   return h("div", { class: "screen" }, backLink("#/", "Daftar level"), h("h1", { tabindex: "-1" }, title), body);
 }
 
+const groupByStage = (items) => Object.fromEntries(STAGE_ORDER.map((stage) => [stage, items.filter((i) => i.stage === stage)]));
+
+/**
+ * Items of a review level. The sample is stored in the review entry on the
+ * first visit so that leaving and returning continues with the same items.
+ */
+function reviewItems(app, node, entry) {
+  const passed = node.coveredLevelIds
+    .filter((id) => app.progress.levels[id]?.status === LEVEL_STATUS.PASSED)
+    .map((id) => app.content.levels.find((l) => l.id === id))
+    .filter(Boolean);
+  const pool = passed.map((level) => STAGE_ORDER.flatMap((stage) => buildLevelItems(level)[stage]));
+  const byId = new Map(pool.flat().map((item) => [item.id, item]));
+
+  const stored = entry.reviewItemIds?.map((id) => byId.get(id));
+  // Resample only if the content changed so much that stored items vanished.
+  if (stored?.length && stored.every(Boolean)) return stored;
+  const sample = sampleReviewItems(pool);
+  entry.reviewItemIds = sample.map((item) => item.id);
+  return sample;
+}
+
 /**
  * @param {object} app shared app context from main.js
  * @param {string} nodeId
@@ -47,6 +71,7 @@ export function playScreen(app, nodeId) {
   if (index === -1) return messageScreen("Level tidak ditemukan", h("p", {}, "Level ini tidak ada di materi saat ini."));
 
   const node = nodes[index];
+  const isReview = node.type === "review";
   const status = computeStatuses(nodes, app.progress).get(node.id);
 
   if (status === LEVEL_STATUS.LOCKED) {
@@ -55,23 +80,20 @@ export function playScreen(app, nodeId) {
       h("p", {}, h("span", { "aria-hidden": "true" }, "🔒 "), `Selesaikan ${nodeLabel(nodes[index - 1])} lebih dulu untuk membuka level ini.`)
     );
   }
-  if (node.type === "review") {
-    return messageScreen(
-      nodeLabel(node),
-      h("p", {}, `Berisi campuran soal dari ${node.coveredLevelIds.join(", ")}.`),
-      h("p", { class: "dev-note" }, "Level ulangan dibangun di langkah 4.")
-    );
-  }
 
-  const { level } = node;
-  const items = buildLevelItems(level);
-  const entry = status === LEVEL_STATUS.PASSED ? app.progress.levels[level.id] : beginAttempt(app.progress, level.id);
+  const entry = status === LEVEL_STATUS.PASSED ? app.progress.levels[node.id] : beginAttempt(app.progress, node.id);
+  const items = isReview ? groupByStage(reviewItems(app, node, entry)) : buildLevelItems(node.level);
   saveProgress(app.progress);
+
+  const levelsById = new Map(app.content.levels.map((l) => [l.id, l]));
+  const scoredIds = new Set(STAGE_ORDER.flatMap((stage) => items[stage]).map((i) => i.id));
 
   const sessionId = createId();
   const session = createLevelSession({
     items,
     entry,
+    hasProduction: !isReview,
+    skipLearning: isReview,
     onChange: () => {
       touch(app.progress);
       saveProgress(app.progress);
@@ -98,9 +120,11 @@ export function playScreen(app, nodeId) {
     playerId: app.progress.playerId,
     participantCode: app.progress.participantCode,
     sessionId,
-    levelId: level.id,
-    isReview: false,
+    levelId: node.id,
+    isReview,
   });
+
+  const phaseLabel = (phase) => (isReview ? LABELS.phase.review : LABELS.phase[phase]);
 
   function header(step) {
     const stage = step.kind === "item" ? step.item.stage : step.kind === "production" ? "production" : null;
@@ -120,7 +144,7 @@ export function playScreen(app, nodeId) {
             "p",
             { class: "play-header__stage" },
             h("span", {}, `Tahap ${LABELS.stageNumber[stage]} · ${LABELS.stage[stage]}`),
-            h("span", { class: "badge" }, LABELS.phase[step.phase])
+            h("span", { class: "badge" }, phaseLabel(step.phase))
           )
         : null,
       h(
@@ -133,12 +157,13 @@ export function playScreen(app, nodeId) {
   }
 
   // A kotoba's reading may be shown only when its reading question is not
-  // coming up soon: answered once during the learning pass, mastered after it.
-  // Kotoba without a reading question (readingType special) are always shown.
-  function revealRule(phase) {
+  // coming up soon (D-29): answered once during the learning pass, mastered
+  // after it. Kotoba whose reading is not asked in this session are shown.
+  function revealRule(phase, level) {
     return (kotoba) => {
-      if (kotoba.readingType !== "kunyomi" && kotoba.readingType !== "onyomi") return true;
-      const streak = entry.itemStreaks[itemId.reading(level.id, kotoba.word)] ?? 0;
+      const id = itemId.reading(level.id, kotoba.word);
+      if (!scoredIds.has(id)) return true;
+      const streak = entry.itemStreaks[id] ?? 0;
       return streak >= (phase === "learning" ? 1 : STREAK_TO_MASTER);
     };
   }
@@ -148,21 +173,27 @@ export function playScreen(app, nodeId) {
     hiddenDuringItem = document.hidden;
   }
 
+  function logPhase(step) {
+    if (step.spacer) return "spacer";
+    return isReview ? "review" : step.phase;
+  }
+
   function itemView(step) {
     startTiming();
+    const level = levelsById.get(step.item.levelId);
     return STAGE_RENDERERS[step.item.stage]({
       item: step.item,
       level,
       levels: app.content.levels,
       phase: step.phase,
-      isRevealed: revealRule(step.phase),
+      isRevealed: revealRule(step.phase, level),
       random: Math.random,
-      onAnswer: ({ prompt, options, correctAnswer, answer, answerType, correct }) => {
+      onAnswer: ({ prompt, options, correctAnswer, answer, answerType, hintUsed, correct }) => {
         const responseMs = Math.round(performance.now() - shownAt);
         const result = session.answer(correct);
         logAnswer({
           ...baseRecord(),
-          phase: step.spacer ? "spacer" : step.phase,
+          phase: logPhase(step),
           stage: step.item.stage,
           itemId: step.item.id,
           prompt,
@@ -171,6 +202,7 @@ export function playScreen(app, nodeId) {
           correctAnswer,
           answer,
           answerType,
+          hintUsed,
           isCorrect: correct,
           streakAfter: result.streak,
           responseMs,
@@ -184,9 +216,10 @@ export function playScreen(app, nodeId) {
 
   function productionView(step) {
     startTiming();
+    const { level } = node;
     return renderProduction({
       level,
-      isRevealed: revealRule(step.phase),
+      isRevealed: revealRule(step.phase, level),
       onSubmit: ({ sentence, selfAssessment, writingMs }) => {
         session.submitProduction();
         logAnswer({
@@ -223,8 +256,14 @@ export function playScreen(app, nodeId) {
     return h(
       "section",
       { class: "result result--passed" },
-      h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Level lulus"),
-      h("p", {}, `Semua ${step.total} item sudah dikuasai dan tahap Produksi sudah dikirim.`),
+      h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), isReview ? "Level ulangan lulus" : "Level lulus"),
+      h(
+        "p",
+        {},
+        isReview
+          ? `Semua ${step.total} item ulangan sudah dikuasai.`
+          : `Semua ${step.total} item sudah dikuasai dan tahap Produksi sudah dikirim.`
+      ),
       nextOpen
         ? h("a", { class: "button button--primary button--block", href: `#/play/${encodeURIComponent(next.id)}` }, `Lanjut ke ${nodeLabel(next)}`)
         : null,

@@ -1,119 +1,400 @@
-// Settings. Step 2 version: progress reset, log count, and content preview
-// links. Participant code, CSV export, and remote logging follow in step 4.
+// Settings: next-visitor actions, answer log management, and content preview
+// links for the content team and expert validators.
 
 import { h } from "../dom.js";
-import { getLogStatus } from "../logger.js";
-import { resetProgress } from "../state.js";
+import { clearLog, getLogStatus, logToCsv, markExported } from "../logger.js";
+import { flushLog, getSenderStatus, subscribeSenderStatus } from "../log-sender.js";
+import { resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
 import { isStorageAvailable } from "../storage.js";
 import { backLink } from "./common.js";
 
-export function settingsScreen(app) {
-  const root = h("div", { class: "screen" });
+const DELETE_CONFIRM_WORD = "HAPUS";
+const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
+const LOOKS_LIKE_NIM = /^\d{8,}$/;
+const STORAGE_CRITICAL_RATIO = 0.95;
 
-  function render(message = null) {
-    const log = getLogStatus();
+const formatTime = (iso) =>
+  iso ? new Date(iso).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : null;
 
-    const confirmBox = h(
-      "div",
-      { class: "confirm", hidden: true, role: "group", "aria-labelledby": "reset-confirm-title" },
-      h("p", { id: "reset-confirm-title", class: "confirm__title" }, "Reset progres di perangkat ini?"),
-      h(
-        "ul",
-        {},
-        h("li", {}, "Semua progres level dihapus, termasuk level yang sudah lulus."),
-        h("li", {}, "Pemain berikutnya mendapat ID pemain baru."),
-        h("li", {}, "Riwayat jawaban (log) tidak dihapus.")
-      ),
+function csvFilename(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  return `kanji-bertahap-log-${stamp}.csv`;
+}
+
+function downloadText(text, filename, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const link = h("a", { href: url, download: filename, hidden: true });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/** Two-step confirmation: a button that opens a box with the real action. */
+function confirmFlow({ openLabel, title, details, confirmLabel, requireWord = null, onConfirm }) {
+  const wrapper = h("div", {});
+  const openButton = h("button", { type: "button", class: "button button--danger button--block" }, openLabel);
+
+  function showClosed() {
+    wrapper.replaceChildren(openButton);
+  }
+
+  function showOpen() {
+    const input = requireWord
+      ? h("input", {
+          type: "text",
+          class: "text-input",
+          id: "confirm-word",
+          autocomplete: "off",
+          autocapitalize: "characters",
+          spellcheck: "false",
+        })
+      : null;
+    const confirmButton = h(
+      "button",
+      { type: "button", class: "button button--danger", disabled: Boolean(requireWord), onClick: onConfirm },
+      confirmLabel
+    );
+    input?.addEventListener("input", () => {
+      confirmButton.disabled = input.value.trim().toUpperCase() !== requireWord;
+    });
+    wrapper.replaceChildren(
       h(
         "div",
-        { class: "button-row" },
+        { class: "confirm", role: "group", "aria-label": title },
+        h("p", { class: "confirm__title" }, title),
+        h("ul", {}, details.map((d) => h("li", {}, d))),
+        input
+          ? [h("label", { for: "confirm-word", class: "confirm__label" }, `Ketik ${requireWord} untuk melanjutkan:`), input]
+          : null,
         h(
-          "button",
-          {
-            type: "button",
-            class: "button button--danger",
-            onClick: () => {
-              app.progress = resetProgress();
-              render("✓ Progres direset. Perangkat siap untuk pemain berikutnya.");
-            },
-          },
-          "Ya, reset progres"
-        ),
-        h(
-          "button",
-          {
-            type: "button",
-            class: "button",
-            onClick: () => {
-              confirmBox.hidden = true;
-              resetButton.hidden = false;
-              resetButton.focus();
-            },
-          },
-          "Batal"
+          "div",
+          { class: "button-row" },
+          confirmButton,
+          h("button", { type: "button", class: "button", onClick: () => (showClosed(), openButton.focus()) }, "Batal")
         )
       )
     );
+    (input ?? confirmButton).focus();
+  }
 
-    const resetButton = h(
-      "button",
-      {
-        type: "button",
-        class: "button button--danger button--block",
-        onClick: () => {
-          resetButton.hidden = true;
-          confirmBox.hidden = false;
-          confirmBox.querySelector("button").focus();
+  openButton.addEventListener("click", showOpen);
+  showClosed();
+  return wrapper;
+}
+
+export function settingsScreen(app) {
+  const root = h("div", { class: "screen settings" });
+  const messages = {}; // card key → { kind, text }
+
+  const messageFor = (key) => {
+    const m = messages[key];
+    return m ? h("p", { class: `notice notice--${m.kind}`, role: "status" }, m.text) : null;
+  };
+
+  function setMessage(key, kind, text) {
+    Object.keys(messages).forEach((k) => delete messages[k]);
+    messages[key] = { kind, text };
+    render();
+  }
+
+  // --- Next visitor -------------------------------------------------------------
+
+  function resetCard() {
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "reset-title" },
+      h("h2", { id: "reset-title" }, "Pemain berikutnya"),
+      h("p", { class: "muted" }, "Lakukan reset setiap kali perangkat berpindah ke pemain lain, misalnya di pameran."),
+      messageFor("reset"),
+      h("p", {}, "ID pemain saat ini: ", h("code", {}, app.progress.playerId)),
+      confirmFlow({
+        openLabel: "Reset progres",
+        title: "Reset progres di perangkat ini?",
+        details: [
+          "Semua progres level dihapus, termasuk level yang sudah lulus.",
+          "Pemain berikutnya mendapat ID pemain baru dan kode peserta dikosongkan.",
+          "Riwayat jawaban (log) tidak dihapus.",
+        ],
+        confirmLabel: "Ya, reset progres",
+        onConfirm: () => {
+          app.progress = resetProgress();
+          setMessage("reset", "success", "✓ Progres direset. Perangkat siap untuk pemain berikutnya.");
         },
-      },
-      "Reset progres"
+      })
     );
+  }
 
-    root.replaceChildren(
+  function participantCard() {
+    const current = app.progress.participantCode;
+    const input = h("input", {
+      type: "text",
+      id: "participant-code",
+      class: "text-input",
+      value: current ?? "",
+      maxlength: "32",
+      autocomplete: "off",
+      autocapitalize: "characters",
+      spellcheck: "false",
+      "aria-describedby": "participant-help",
+    });
+
+    const save = () => {
+      const code = input.value.trim();
+      if (!code) {
+        setMessage("participant", "error", "✗ Kode peserta masih kosong.");
+        return;
+      }
+      if (!PARTICIPANT_CODE_PATTERN.test(code)) {
+        setMessage("participant", "error", "✗ Kode hanya boleh berisi huruf, angka, tanda - dan _, tanpa spasi (maksimal 32 karakter).");
+        return;
+      }
+      if (LOOKS_LIKE_NIM.test(code)) {
+        setMessage(
+          "participant",
+          "error",
+          "✗ Kode berupa 8 angka atau lebih terlihat seperti NIM. Gunakan kode anonim dari peneliti, misalnya P017."
+        );
+        return;
+      }
+      app.progress.participantCode = code;
+      saveProgress(app.progress);
+      setMessage("participant", "success", `✓ Kode peserta ${code} disimpan. Jawaban berikutnya dicatat dengan kode ini.`);
+    };
+
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "participant-title" },
+      h("h2", { id: "participant-title" }, "Kode peserta"),
+      messageFor("participant"),
+      h(
+        "p",
+        { id: "participant-help" },
+        "Opsional. Isi hanya jika peneliti memberimu kode. Gunakan ",
+        h("strong", {}, "kode anonim"),
+        " (misalnya P017), ",
+        h("strong", {}, "bukan nama atau NIM"),
+        "."
+      ),
+      h("label", { for: "participant-code", class: "field-label" }, current ? `Kode saat ini: ${current}` : "Belum ada kode"),
+      input,
+      h(
+        "div",
+        { class: "button-row" },
+        h("button", { type: "button", class: "button button--primary", onClick: save }, "Simpan kode"),
+        current
+          ? h(
+              "button",
+              {
+                type: "button",
+                class: "button",
+                onClick: () => {
+                  app.progress.participantCode = null;
+                  saveProgress(app.progress);
+                  setMessage("participant", "success", "✓ Kode peserta dikosongkan.");
+                },
+              },
+              "Kosongkan kode"
+            )
+          : null
+      )
+    );
+  }
+
+  // --- Answer log ------------------------------------------------------------------
+
+  function capacityBlock(log) {
+    const usage = storageUsage();
+    const percent = Math.min(100, Math.round(usage.ratio * 100));
+    const avgRowChars = log.storedRows ? usage.used / log.storedRows : null;
+    const rowsLeft = avgRowChars ? Math.max(0, Math.floor((usage.budget - usage.used) / avgRowChars)) : null;
+
+    let notice = null;
+    if (usage.ratio >= STORAGE_CRITICAL_RATIO || log.unsavedRows) {
+      notice = h(
+        "p",
+        { class: "notice notice--error" },
+        "✗ Penyimpanan penuh atau hampir penuh. Jawaban baru bisa hilang saat halaman ditutup. Pastikan semua log terkirim atau ekspor CSV sekarang, lalu hapus log."
+      );
+    } else if (usage.ratio >= STORAGE_WARNING_RATIO) {
+      notice = h(
+        "p",
+        { class: "notice notice--warning" },
+        "⚠ Penyimpanan hampir penuh. Pastikan semua log terkirim atau ekspor CSV, lalu hapus log (lihat prosedur pameran di README)."
+      );
+    }
+
+    return h(
+      "div",
+      { class: "capacity" },
+      h("label", { for: "capacity-bar", class: "field-label" }, `Penyimpanan terpakai: sekitar ${percent}%`),
+      h("progress", { id: "capacity-bar", max: 100, value: percent, class: percent >= STORAGE_WARNING_RATIO * 100 ? "is-warning" : "" }),
+      rowsLeft !== null ? h("p", { class: "muted" }, `Perkiraan: masih cukup untuk sekitar ${rowsLeft.toLocaleString("id-ID")} jawaban lagi.`) : null,
+      notice
+    );
+  }
+
+  function senderBlock() {
+    const s = getSenderStatus();
+    if (!s.configured) {
+      return h(
+        "div",
+        { class: "sender", id: "sender-status" },
+        h("h3", {}, "Pengiriman ke server"),
+        h(
+          "p",
+          {},
+          s.enabled
+            ? "⚠ Pengiriman diaktifkan tetapi URL server masih kosong. Log hanya tersimpan di perangkat ini."
+            : "Nonaktif. Log hanya tersimpan di perangkat ini. Cara mengaktifkan ada di README bagian Pengiriman log."
+        )
+      );
+    }
+    return h(
+      "div",
+      { class: "sender", id: "sender-status" },
+      h("h3", {}, "Pengiriman ke server"),
+      h(
+        "p",
+        {},
+        h("strong", {}, s.unsentRows === 0 ? "✓ Semua jawaban sudah terkirim." : `Belum terkirim: ${s.unsentRows} jawaban.`)
+      ),
+      s.lastSuccessAt ? h("p", { class: "muted" }, `Terakhir berhasil: ${formatTime(s.lastSuccessAt)}`) : null,
+      s.lastError ? h("p", { class: "notice notice--error", role: "status" }, `✗ ${s.lastError}`) : null,
+      h(
+        "button",
+        { type: "button", class: "button", disabled: s.sending || s.unsentRows === 0, onClick: () => flushLog() },
+        s.sending ? "Mengirim…" : "Kirim sekarang"
+      )
+    );
+  }
+
+  function logCard() {
+    const log = getLogStatus();
+    const sender = getSenderStatus();
+
+    const exportInfo = log.lastExportAt
+      ? `Terakhir diekspor: ${formatTime(log.lastExportAt)} · ${log.rowsSinceExport} jawaban baru sejak itu.`
+      : "Belum pernah diekspor dari perangkat ini.";
+
+    const deleteDetails = [`${log.totalRows} jawaban di perangkat ini akan dihapus permanen.`];
+    if (sender.configured && sender.unsentRows) deleteDetails.push(`⚠ ${sender.unsentRows} jawaban BELUM terkirim ke server.`);
+    if (log.rowsSinceExport) deleteDetails.push(`⚠ ${log.rowsSinceExport} jawaban belum pernah diekspor ke CSV.`);
+    if ((!sender.configured || !sender.unsentRows) && !log.rowsSinceExport) {
+      deleteDetails.push("Semua jawaban sudah terkirim atau sudah diekspor.");
+    }
+    deleteDetails.push("Progres pemain tidak ikut terhapus.");
+
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "log-title" },
+      h("h2", { id: "log-title" }, "Riwayat jawaban"),
+      messageFor("log"),
+      h("p", {}, `${log.totalRows} jawaban tercatat di perangkat ini.`),
+      log.unsavedRows
+        ? h("p", { class: "notice notice--error" }, `✗ ${log.unsavedRows} jawaban tidak bisa disimpan karena penyimpanan penuh dan akan hilang saat halaman ditutup.`)
+        : null,
+      capacityBlock(log),
+      senderBlock(),
+      h(
+        "div",
+        { class: "export" },
+        h("h3", {}, "Ekspor CSV"),
+        h("p", { class: "muted" }, "Cadangan jika pengiriman ke server tidak bisa dipakai, misalnya saat jaringan mati."),
+        h("p", {}, exportInfo),
+        h(
+          "button",
+          {
+            type: "button",
+            class: "button button--primary button--block",
+            disabled: log.totalRows === 0,
+            onClick: () => {
+              downloadText(logToCsv(), csvFilename(), "text/csv;charset=utf-8");
+              markExported();
+              setMessage("log", "success", `✓ File CSV berisi ${log.totalRows} jawaban sudah diunduh. Periksa folder Unduhan.`);
+            },
+          },
+          "Ekspor CSV"
+        )
+      ),
+      h(
+        "div",
+        { class: "delete-log" },
+        h("h3", {}, "Hapus log"),
+        log.totalRows === 0
+          ? h("p", { class: "muted" }, "Tidak ada log untuk dihapus.")
+          : confirmFlow({
+              openLabel: "Hapus log…",
+              title: "Hapus seluruh riwayat jawaban?",
+              details: deleteDetails,
+              confirmLabel: "Hapus log permanen",
+              requireWord: DELETE_CONFIRM_WORD,
+              onConfirm: () => {
+                clearLog();
+                setMessage("log", "success", "✓ Riwayat jawaban di perangkat ini sudah dihapus.");
+              },
+            })
+      )
+    );
+  }
+
+  // --- Content -------------------------------------------------------------------------
+
+  function contentCard() {
+    const { contentRevision, levels } = app.content;
+    const isDraft = /^draft/i.test(contentRevision);
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "content-title" },
+      h("h2", { id: "content-title" }, "Materi"),
+      h("p", {}, "Revisi materi: ", h("strong", {}, contentRevision)),
+      isDraft
+        ? h("p", { class: "notice notice--error" }, "✗ DRAF — nomor bab belum diverifikasi terhadap buku. Jangan kirim ke validator ahli.")
+        : null,
+      h(
+        "p",
+        {},
+        h("a", { class: "button button--block", href: "#/preview/all" }, "Pratinjau semua materi (bisa dicetak)")
+      ),
+      h("p", {}, "Pratinjau per level:"),
+      h(
+        "ul",
+        { class: "link-list" },
+        levels.map((l) => h("li", {}, h("a", { href: `#/preview/${encodeURIComponent(l.id)}` }, `${l.id} · ${l.meaning}`)))
+      ),
+      h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten"))
+    );
+  }
+
+  function render() {
+    const scrollY = window.scrollY;
+    // Built through h() so that a null child is skipped instead of becoming the text "null".
+    const screen = h(
+      "div",
+      {},
       backLink("#/", "Daftar level"),
       h("h1", { tabindex: "-1" }, "Pengaturan"),
-      message ? h("p", { class: "notice notice--success", role: "status" }, message) : null,
       isStorageAvailable()
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),
-
-      h(
-        "section",
-        { class: "card" },
-        h("h2", {}, "Progres pemain"),
-        h("p", {}, "ID pemain: ", h("code", {}, app.progress.playerId)),
-        h("p", { class: "muted" }, "Gunakan reset saat perangkat dipakai bergantian, misalnya di pameran."),
-        resetButton,
-        confirmBox
-      ),
-
-      h(
-        "section",
-        { class: "card" },
-        h("h2", {}, "Riwayat jawaban"),
-        h("p", {}, `${log.storedRows} jawaban tersimpan di perangkat ini.`),
-        log.unsavedRows
-          ? h("p", { class: "notice notice--warning" }, `⚠ ${log.unsavedRows} jawaban tidak bisa disimpan karena penyimpanan penuh.`)
-          : null,
-        h("p", { class: "dev-note" }, "Ekspor CSV, kode peserta, dan pengiriman log dibangun di langkah 4.")
-      ),
-
-      h(
-        "section",
-        { class: "card" },
-        h("h2", {}, "Materi"),
-        h("p", {}, `Revisi materi: ${app.content.contentRevision}`),
-        h("p", {}, "Pratinjau materi per level:"),
-        h(
-          "ul",
-          { class: "link-list" },
-          app.content.levels.map((l) => h("li", {}, h("a", { href: `#/preview/${encodeURIComponent(l.id)}` }, `${l.id} · ${l.meaning}`)))
-        ),
-        h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten"))
-      )
+      resetCard(),
+      participantCard(),
+      logCard(),
+      contentCard()
     );
-    root.querySelector("h1").focus({ preventScroll: true });
+    root.replaceChildren(...screen.childNodes);
+    window.scrollTo(0, scrollY);
   }
+
+  // Live sender status while this screen is open.
+  const unsubscribe = subscribeSenderStatus(() => {
+    if (!root.isConnected) {
+      unsubscribe();
+      return;
+    }
+    root.querySelector("#sender-status")?.replaceWith(senderBlock());
+  });
 
   render();
   return root;

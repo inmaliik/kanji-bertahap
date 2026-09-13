@@ -26,6 +26,7 @@ export const PHASE = Object.freeze({
  * @param {{shape: object[], kunyomi: object[], onyomi: object[], sentence: object[]}} opts.items
  * @param {object} opts.entry level progress entry from state.js (mutated)
  * @param {boolean} [opts.hasProduction] false for levels without stage 5 (review levels)
+ * @param {boolean} [opts.skipLearning] start directly with the shuffled consolidation queue (review levels)
  * @param {() => number} [opts.random]
  * @param {() => void} [opts.onChange] called after every change to `entry`
  */
@@ -33,6 +34,7 @@ export function createLevelSession({
   items,
   entry,
   hasProduction = true,
+  skipLearning = false,
   random = Math.random,
   onChange = () => {},
 }) {
@@ -61,7 +63,7 @@ export function createLevelSession({
     else enterConsolidation();
   }
 
-  if (!entry.learningDone) enterLearning();
+  if (!skipLearning && !entry.learningDone) enterLearning();
   else afterLearning();
 
   function progress() {

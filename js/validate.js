@@ -20,8 +20,9 @@ export const PARTS_OF_SPEECH = ["verb", "noun", "i-adj", "na-adj", "adverb", "ot
 export const CHAPTER_MIN = 1;
 export const CHAPTER_MAX = 50;
 
-// Review levels are generated at runtime with ids like "R01".
-const RESERVED_LEVEL_ID = /^R\d+$/i;
+// Review levels are generated at runtime with ids like "R01"; "all" is the
+// preview route that shows every level.
+const RESERVED_LEVEL_ID = /^(R\d+|all)$/i;
 const LEVEL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 const ROOT_KEYS = ["schemaVersion", "contentRevision", "levels"];
@@ -221,7 +222,7 @@ function validateLevel(level, index, root, report, seen) {
     if (!LEVEL_ID_PATTERN.test(id)) {
       report.error(ctx.field("id"), "INVALID_LEVEL_ID", `"${id}" hanya boleh berisi huruf latin, angka, "-" dan "_".`);
     } else if (RESERVED_LEVEL_ID.test(id)) {
-      report.error(ctx.field("id"), "RESERVED_LEVEL_ID", `"${id}" tidak boleh dipakai: format R + angka dicadangkan untuk level ulangan.`);
+      report.error(ctx.field("id"), "RESERVED_LEVEL_ID", `"${id}" tidak boleh dipakai: format R + angka dicadangkan untuk level ulangan, dan "all" untuk halaman pratinjau semua level.`);
     }
     if (seen.ids.has(id)) {
       report.error(ctx.field("id"), "DUPLICATE_LEVEL_ID", `id "${id}" sudah dipakai oleh level urutan #${seen.ids.get(id) + 1}.`);

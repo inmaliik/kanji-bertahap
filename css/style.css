@@ -1234,3 +1234,333 @@ rt {
 .self-assessment legend + * {
   clear: both;
 }
+
+/* Settings -------------------------------------------------------------------------- */
+
+.field-label {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 600;
+}
+
+.text-input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.125rem;
+}
+
+.text-input:focus {
+  border-color: var(--primary);
+  outline: 3px solid var(--primary-soft);
+}
+
+.settings .card .button-row,
+.settings .card .button--block {
+  margin-top: 0.5rem;
+}
+
+.settings .card h3 {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.notice--error {
+  background: var(--error-soft);
+  color: var(--error);
+  border: 1px solid currentColor;
+}
+
+.confirm__label {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 600;
+}
+
+.confirm .text-input {
+  margin-bottom: 0.5rem;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.capacity progress {
+  appearance: none;
+  width: 100%;
+  height: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.capacity progress::-webkit-progress-bar {
+  background: var(--surface);
+}
+
+.capacity progress::-webkit-progress-value {
+  background: var(--primary);
+}
+
+.capacity progress::-moz-progress-bar {
+  background: var(--primary);
+}
+
+.capacity progress.is-warning::-webkit-progress-value {
+  background: var(--error);
+}
+
+.capacity progress.is-warning::-moz-progress-bar {
+  background: var(--error);
+}
+
+/* Stage 4 hint ---------------------------------------------------------------------- */
+
+.hint {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.hint__button {
+  min-height: 40px;
+  font-weight: 600;
+}
+
+.hint__text {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--primary);
+  background: var(--surface);
+  justify-self: stretch;
+}
+
+/* Preview for validators ------------------------------------------------------------- */
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.preview-header h1 {
+  margin: 0;
+}
+
+.preview-header__revision {
+  margin: 0.25rem 0 0;
+}
+
+.draft-banner {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 4px solid var(--error);
+  border-radius: var(--radius);
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.draft-banner__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.draft-banner p:last-child {
+  margin: 0;
+  color: var(--text);
+}
+
+.draft-watermark {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: min(40vw, 16rem);
+  font-weight: 900;
+  color: rgba(180, 35, 24, 0.08);
+  transform: rotate(-30deg);
+  user-select: none;
+}
+
+.preview-level {
+  margin-top: 2rem;
+}
+
+.preview-level > * + * {
+  margin-top: 1rem;
+}
+
+.preview-level__number {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.preview-list {
+  margin: 0.25rem 0;
+}
+
+.raw-notation {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.summary-table__kanji {
+  font-size: 1.5rem;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 10.5pt;
+  }
+
+  #app {
+    max-width: none;
+    padding: 0;
+  }
+
+  .no-print,
+  .back-link,
+  .button,
+  .topbar__action {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .card {
+    border: 1px solid #888;
+    break-inside: auto;
+  }
+
+  .preview-level {
+    break-before: page;
+    margin-top: 0;
+  }
+
+  /* Kotoba may continue on the next page; only small units stay whole, so no
+     heading is left alone above a large blank area. */
+  .example,
+  .kotoba__head,
+  .readings-block,
+  .bushu,
+  .option-previews,
+  .preview-level > .hero {
+    break-inside: avoid;
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  /* Transparent surfaces so the DRAF watermark shows on every printed page. */
+  body,
+  .card,
+  .option-preview,
+  .reading-legend__item,
+  .kotoba__note {
+    background: none !important;
+  }
+
+  .hero__kanji {
+    font-size: 54pt;
+  }
+
+  .draft-banner {
+    border: 3px solid #000;
+    background: none;
+    color: #000;
+  }
+
+  .draft-watermark {
+    color: rgba(0, 0, 0, 0.07);
+    font-size: 150pt;
+  }
+
+  .blank {
+    background: none;
+    border-bottom: 2px solid #000;
+    font-weight: 700;
+  }
+
+  .badge,
+  .option-preview--correct {
+    border: 1px solid #000;
+    background: none;
+    color: #000;
+  }
+
+  .muted,
+  rt,
+  .raw-notation,
+  .example__translation {
+    color: #333;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+
+  .validator-notes {
+    min-height: 45mm;
+    margin-top: 6mm;
+    padding: 3mm;
+    border: 1px solid #000;
+    break-inside: avoid;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
+}
