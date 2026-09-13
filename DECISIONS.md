@@ -13,6 +13,18 @@ Kode A1–A11 merujuk pada daftar masalah spesifikasi yang dibahas pada putaran 
 
 ---
 
+## Menunggu keputusan dosen
+
+Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan ada di entri masing-masing.
+
+- **D-15** — Varian soal tahap Bentuk untuk kanji yang sekaligus bushu (misalnya 食 → 食): soal apa yang dipakai sebagai pengganti?
+- **D-18** — Tabel cara baca menampilkan okurigana redup (た + べる kecil) alih-alih notasi bentuk kamus た(べる): apakah tampilan ini diterima?
+- **D-20** — Pengecoh lintas jenis bacaan (misalnya しょくべます untuk 食べます): bolehkah bentuk yang salah ditampilkan kepada pemula?
+
+*Terakhir diperbarui: 2026-09-13.*
+
+---
+
 ## Bagian 1 — Keputusan desain
 
 ### D-01 · Aplikasi dijalankan lewat server lokal, materi tetap JSON murni
@@ -156,7 +168,7 @@ dan saat dicetak jika `contentRevision` diawali `draft` (dibangun di langkah 4).
 sementara berasal dari ingatan, bukan dari pemeriksaan buku. Aturan yang dijaga aplikasi lebih andal
 daripada aturan yang dijaga ingatan anggota tim. **Alternatif ditolak:** Mengandalkan disiplin tim saja.
 
-### D-18 · Tabel cara baca tidak menampilkan notasi bentuk kamus secara mentah
+### D-18 · Tabel cara baca tidak menampilkan notasi bentuk kamus secara mentah *(Menunggu dosen)*
 **Tanggal:** 2026-09-13. **Keputusan:** Data tetap memakai notasi `た(べる)`. Tampilan memisahkan bacaan
 kanji (`た`, besar dan tebal) dari okurigana (`べる`, kecil dan bergaris putus-putus), dengan legenda
 yang contohnya diambil dari data. **Alasan:** Mahasiswa semester 1 belum diajarkan bentuk kamus;
@@ -236,13 +248,17 @@ sedangkan batas `localStorage` sekitar 5 MB; satu perangkat yang dipakai ratusan
 mencapai batas tersebut, dan ekspor manual berkala mudah terlupa. **Alternatif ditolak:** Ekspor manual
 sebagai jalur utama, dan peringatan hanya ketika penyimpanan sudah penuh.
 
-### D-27 · Terjemahan kalimat tahap 4 ditampilkan setelah menjawab *(Menunggu dosen)*
-**Tanggal:** 2026-09-13. **Keputusan:** Terjemahan bahasa Indonesia baru muncul di umpan balik.
-**Alasan:** Jika terjemahan ditampilkan lebih dulu, arti kotoba sasaran langsung terbaca dari
-terjemahan, sehingga soal berubah menjadi mencocokkan arti, bukan memahami kotoba dalam konteks
-kalimat Jepang. Keputusan ini mungkin terlalu berat bagi mahasiswa semester 1 dan perlu ditinjau
-setelah uji coba. **Alternatif ditolak:** Terjemahan selalu tampil; tombol "tampilkan terjemahan"
-(ditunda karena pemakaiannya perlu dicatat sebagai variabel tersendiri).
+### D-27 · Terjemahan tahap 4 disembunyikan, dengan bantuan opsional "Tampilkan arti"
+**Tanggal:** 2026-09-13 (direvisi 2026-09-13). **Keputusan:** Terjemahan kalimat tidak ditampilkan
+sebelum menjawab. Pemain dapat menekan tombol opsional **Tampilkan arti** jika buntu; penekanan tombol
+dicatat di kolom log `hintUsed`. Jawaban benar setelah bantuan tetap dihitung benar untuk kelulusan
+level, tetapi dapat dipisahkan saat analisis. Setelah menjawab, terjemahan selalu tampil di umpan balik.
+**Alasan:** Terjemahan yang tampil lebih dulu mengubah soal menjadi pencocokan arti, tetapi menyembunyikannya
+tanpa jalan keluar berisiko menahan mahasiswa semester 1. Bantuan opsional yang tercatat memenuhi kedua
+kebutuhan dan menghasilkan data tambahan tentang item yang paling sering membutuhkan bantuan. *Versi awal
+keputusan ini (terjemahan disembunyikan tanpa bantuan, berstatus menunggu dosen) digantikan oleh versi ini
+atas keputusan kelompok.* **Alternatif ditolak:** Terjemahan selalu tampil; terjemahan disembunyikan tanpa
+bantuan; jawaban benar setelah bantuan tidak dihitung benar (menghukum pemain yang jujur meminta bantuan).
 
 ### D-28 · Tahap Produksi tanpa skor, satu baris log per kalimat
 **Tanggal:** 2026-09-13. **Keputusan:** Tahap 5 tidak memberi penilaian benar-salah maupun skor.
@@ -278,6 +294,79 @@ dicetak atau disimpan sebagai PDF, dengan `contentRevision` di bagian atas. Taut
 Pengaturan. (Perluasan dibangun di langkah 4.) **Alasan:** Validator ahli perlu menilai seluruh materi
 tanpa memainkan level satu per satu, sering ingin mencoret di kertas, dan catatannya harus dapat
 dipastikan mengacu ke revisi tertentu. **Alternatif ditolak:** Menghapus pratinjau setelah langkah 1.
+
+---
+
+### D-32 · Level ulangan: sampel berimbang, disimpan, tanpa putaran belajar dan Produksi
+**Tanggal:** 2026-09-13. **Keputusan:** Level ulangan berisi `REVIEW_ITEM_COUNT` (10) item tahap 1–4 dari
+level-level sebelumnya yang sudah lulus. Item diambil acak secara bergiliran per level, sehingga setiap
+level terwakili sebelum level yang sama diambil lagi. Sampel disimpan pada kunjungan pertama. Sesi
+ulangan langsung mengacak semua item tanpa putaran belajar dan tanpa Produksi, dengan aturan penguasaan
+yang sama (D-06, D-21). Di log tercatat `levelId` = ID ulangan, `isReview` = 1, dan `phase` = `review`.
+**Alasan:** Pengambilan acak murni dapat melewatkan satu level sepenuhnya, padahal tujuan level ulangan
+adalah mencegah lupa pada semua materi lama. Sampel yang disimpan membuat streak tetap bermakna ketika
+pemain keluar dan kembali. Ulangan adalah uji retensi, bukan pembelajaran baru, sehingga putaran belajar
+dan Produksi tidak diperlukan. **Alternatif ditolak:** Acak murni dari seluruh item; sampel baru setiap
+kali dibuka; memakai alur lengkap level biasa.
+
+### D-33 · Pengiriman log: kelompok baris, `rowId` untuk menyaring duplikat, coba ulang otomatis
+**Tanggal:** 2026-09-13. **Keputusan:** Log dikirim per 50 baris sebagai POST `text/plain` ke Web App
+Google Apps Script. Baris dianggap terkirim hanya jika server membalas `{"ok": true}`. Setiap baris
+memiliki `rowId` unik, dan skrip Apps Script melewati baris yang `rowId`-nya sudah ada. Pengiriman dicoba
+lagi otomatis setelah jawaban berikutnya, saat jaringan kembali, dan setiap 60 detik; status serta pesan
+galat berbahasa Indonesia tampil di Pengaturan. Fitur ini dinonaktifkan lewat `LOG_REMOTE_ENABLED`
+sampai endpoint siap. **Alasan:** Apps Script tidak dapat menjawab permintaan preflight CORS, sehingga
+hanya permintaan sederhana `text/plain` yang dapat membaca balasannya. Jaringan pameran yang putus di
+tengah pengiriman dapat membuat satu kelompok terkirim dua kali; `rowId` mencegah data ganda tanpa
+membutuhkan koordinasi rumit. Logging tidak boleh memblokir permainan. **Alternatif ditolak:** Mode
+`no-cors` (keberhasilan tidak dapat dipastikan); `navigator.sendBeacon` (tanpa balasan); kirim satu baris
+per jawaban (terlalu banyak permintaan ke Apps Script).
+
+### D-34 · Kapasitas penyimpanan diperkirakan konservatif dan diperingatkan sejak 80%
+**Tanggal:** 2026-09-13. **Keputusan:** Pemakaian penyimpanan dihitung dari total karakter key aplikasi
+dibandingkan `STORAGE_BUDGET_CHARS` = 2.500.000. Peringatan kuning muncul sejak 80% di Pengaturan dan di
+daftar level; peringatan merah muncul sejak 95% atau ketika ada jawaban yang gagal disimpan.
+**Alasan:** Browser tidak menyediakan cara membaca batas `localStorage` yang pasti, dan setiap browser
+menghitungnya berbeda. Perkiraan yang sengaja rendah membuat peringatan datang lebih awal di semua
+browser. Peringatan di daftar level diperlukan karena penjaga stan jarang membuka Pengaturan.
+**Alternatif ditolak:** Peringatan hanya saat penyimpanan sudah penuh; menghapus log terkirim secara
+otomatis (risiko kehilangan data jika status pengiriman keliru).
+
+### D-35 · Kode peserta divalidasi formatnya dan ikut dikosongkan saat reset
+**Tanggal:** 2026-09-13. **Keputusan:** Kode peserta hanya menerima huruf, angka, `-`, dan `_` tanpa spasi
+(maksimal 32 karakter); deretan 8 angka atau lebih ditolak dengan pesan bahwa kode tersebut menyerupai
+NIM. Kode disimpan bersama progres, sehingga reset progres ikut mengosongkannya. **Alasan:** Larangan
+spasi mencegah nama lengkap diketik sebagai kode, dan penolakan pola NIM mencegah data identitas masuk
+ke log penelitian. Mengosongkan kode saat reset mencegah jawaban pengunjung berikutnya tercatat dengan
+kode peserta sebelumnya. **Alternatif ditolak:** Isian bebas dengan keterangan saja; kode yang bertahan
+setelah reset.
+
+### D-36 · Hapus log memakai konfirmasi ganda dan menampilkan data yang belum aman
+**Tanggal:** 2026-09-13. **Keputusan:** Menghapus log membutuhkan dua langkah: membuka kotak konfirmasi,
+lalu mengetik `HAPUS` sebelum tombol penghapusan aktif. Kotak konfirmasi menyebut jumlah jawaban yang
+akan dihapus, yang belum terkirim ke server, dan yang belum pernah diekspor. Reset progres cukup dengan
+satu konfirmasi. **Alasan:** Log adalah data penelitian yang tidak dapat dipulihkan, sedangkan reset
+progres sering dipakai dan tidak menghapus data. Menampilkan jumlah jawaban yang belum aman membuat
+penjaga stan menyadari risiko sebelum menghapus. **Alternatif ditolak:** Dialog `confirm()` bawaan
+browser; satu konfirmasi yang sama untuk reset dan hapus log.
+
+### D-37 · Pratinjau cetak untuk validator ahli
+**Tanggal:** 2026-09-13. **Keputusan:** Halaman `#/preview/all` menampilkan ringkasan seluruh level lalu
+setiap level secara lengkap, termasuk semua jenis pengecoh dan notasi data mentah `た(べる)` di samping
+tampilan untuk mahasiswa. Revisi materi dan tanggal tampil di atas. Saat dicetak, setiap level dimulai di
+halaman baru dan diakhiri kotak catatan validator. Jika revisi diawali `draft`, spanduk DRAF tampil di atas
+dan tanda air DRAF tercetak di setiap halaman. ID level `all` dicadangkan. **Alasan:** Validator menilai
+materi di kertas dan sering memasangkannya dengan lembar validasi, sehingga satu level per halaman dan
+ruang catatan memudahkan. Validator perlu memeriksa data sebenarnya, bukan hanya tampilannya. Tanda air
+di setiap halaman mencegah halaman lepas dari dokumen draf disalahartikan sebagai versi final.
+**Alternatif ditolak:** Spanduk DRAF hanya di halaman pertama; pratinjau tanpa tata letak cetak.
+
+### D-38 · Satu tab aplikasi per perangkat
+**Tanggal:** 2026-09-13. **Keputusan:** Prosedur pameran dan README menetapkan bahwa aplikasi dibuka di
+satu tab saja per perangkat; aplikasi tidak menyinkronkan progres antartab. **Alasan:** Temuan T-07
+menunjukkan bahwa dua tab yang terbuka bersamaan saling menimpa progres. Log jawaban tidak terdampak.
+Sinkronisasi antartab menambah kerumitan yang tidak sebanding untuk pemakaian satu pengunjung per
+perangkat. **Alternatif ditolak:** Sinkronisasi progres lewat event `storage` antartab.
 
 ---
 
@@ -320,3 +409,31 @@ sebagai 飠, bab 13 untuk 食 (bab kemunculan 食事, bukan 食べます), dan k
 yang belum diajarkan pada semester 1. **Tindakan:** D-09, D-11, dan D-12. Seluruh nomor bab dimasukkan
 ke daftar periksa verifikasi terhadap buku (D-17). **Dampak:** Kesalahan isi terdeteksi sebelum data
 sampai ke validator ahli.
+
+### T-06 · Tulisan "null" muncul di layar Pengaturan
+**Tanggal:** 2026-09-13. **Temuan:** Pemeriksaan tangkapan layar menunjukkan kata "null" di bawah judul
+Pengaturan. Penyebabnya, bagian yang sengaja dikosongkan diserahkan langsung ke fungsi DOM yang mengubah
+nilai kosong menjadi teks. Uji otomatis tidak menangkapnya karena semua tombol tetap berfungsi.
+**Tindakan:** Layar disusun lewat pembangun elemen yang menyaring nilai kosong; pemanggilan serupa lain
+diperiksa. **Dampak:** Menegaskan kebiasaan memeriksa tangkapan layar di setiap langkah.
+
+### T-07 · Dua tab aplikasi saling menimpa progres
+**Tanggal:** 2026-09-13. **Temuan:** Saat pengujian, progres yang ditulis ke penyimpanan tertimpa oleh
+aplikasi yang masih terbuka di halaman yang sama, karena aplikasi menyimpan progres dari memorinya
+sendiri. Situasi yang sama terjadi jika aplikasi dibuka di dua tab. **Tindakan:** D-38. **Dampak:**
+Risiko dikendalikan lewat prosedur pameran; log jawaban tidak terdampak.
+
+### T-08 · Pengiriman yang sedang berjalan dapat menandai baris baru sebagai terkirim
+**Tanggal:** 2026-09-13. **Temuan:** Pada tinjauan kode, ditemukan bahwa jika log dihapus ketika sebuah
+kelompok baris sedang dikirim, konfirmasi pengiriman itu akan menandai baris baru (yang belum terkirim)
+sebagai terkirim. **Tindakan:** Log diberi penanda generasi yang berubah setiap kali dihapus; konfirmasi
+dari generasi lama diabaikan. Uji otomatis ditambahkan. **Dampak:** Tidak ada baris yang dapat hilang dari
+pengiriman karena penghapusan log.
+
+### T-09 · Hasil cetak pratinjau: ruang kosong besar dan tanda air tertutup
+**Tanggal:** 2026-09-13. **Temuan:** Pemeriksaan PDF hasil cetak menunjukkan dua cacat: judul "Kotoba"
+tertinggal sendirian di bawah halaman dengan ruang kosong besar karena isinya dilarang terpotong
+antarhalaman, dan tanda air DRAF hanya terlihat penuh di halaman pertama karena tertutup latar kartu.
+**Tindakan:** Kotoba boleh berlanjut ke halaman berikutnya (unit kecil seperti contoh kalimat tetap utuh),
+judul dijaga agar tidak terpisah dari isinya, dan latar kartu dibuat transparan saat dicetak.
+**Dampak:** Tanda air DRAF tercetak di setiap halaman dan tata letak cetak tidak membuang kertas.
