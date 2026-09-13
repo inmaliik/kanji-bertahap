@@ -52,6 +52,17 @@ export function containsKanji(str) {
   return Array.from(str).some(isKanji);
 }
 
+/**
+ * Split dictionary reading notation into the part read by the kanji and the
+ * okurigana: "た(べる)" and "た.べる" → { kanjiPart: "た", okurigana: "べる" };
+ * "ショク" → { kanjiPart: "ショク", okurigana: "" }.
+ */
+export function splitReadingNotation(notation) {
+  const match = /^([^().]*)(?:\((.*)\)|\.(.*))$/.exec(notation);
+  if (!match) return { kanjiPart: notation, okurigana: "" };
+  return { kanjiPart: match[1], okurigana: match[2] ?? match[3] ?? "" };
+}
+
 export function toHiragana(str) {
   return Array.from(str)
     .map((ch) => {
