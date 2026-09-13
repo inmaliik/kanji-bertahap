@@ -7,9 +7,11 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Status:** langkah 2 dari 5. Tahap 1 (Bentuk) bisa dimainkan lengkap dengan progres dan log;
-> tahap 2–5 dibangun di langkah 3, sehingga belum ada level yang bisa lulus. Bagian README yang
-> ditandai *(menyusul)* akan dilengkapi di langkah berikutnya.
+> **Status:** langkah 3 dari 5. Kelima tahap bisa dimainkan dan level bisa lulus. Level ulangan,
+> ekspor CSV, kode peserta, dan pengiriman log dibangun di langkah 4. Bagian README yang ditandai
+> *(menyusul)* akan dilengkapi di langkah berikutnya.
+>
+> Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
 > ⚠ **Materi masih `draft-0`.** Nomor bab belum diperiksa terhadap buku. Jangan kirim data
 > ber-`draft-0` ke validator ahli; lihat [Yang harus diverifikasi terhadap buku](#yang-harus-diverifikasi-terhadap-buku).
@@ -59,8 +61,14 @@ js/ruby.js                  parser sintaks furigana [漢字|かんじ] dan rende
 js/jp-text.js               pengenalan hiragana/katakana/kanji, pemisah notasi た(べる)
 js/dom.js                   pembuat elemen HTML
 
+js/distractors.js           penyusunan pilihan jawaban dan pengecoh
+js/random.js                pengacak
+
 js/stages/choice.js         komponen soal pilihan ganda (dipakai tahap 1–4)
 js/stages/shape.js          tahap 1 — Bentuk
+js/stages/reading.js        tahap 2 dan 3 — Kun'yomi / On'yomi
+js/stages/sentence.js       tahap 4 — Kotoba dalam kalimat
+js/stages/production.js     tahap 5 — Produksi
 
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
 js/screens/level-list.js    daftar level, status terkunci, kartu level ulangan
@@ -73,7 +81,7 @@ tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
 tools/content-template.csv  contoh CSV (level 食)
 ```
-Menyusul: `js/distractors.js` dan `js/stages/` untuk tahap 2–5.
+DECISIONS.md                catatan keputusan desain beserta alasannya
 
 ---
 
@@ -135,11 +143,12 @@ Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`.
 | `word_meaning` | Arti kotoba | `makan` |
 | `word_chapter` | Bab kotoba muncul di buku. `-` jika di luar buku | `6` |
 | `word_note` | *Boleh kosong.* Catatan, misalnya perubahan bunyi | |
-| `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca buatan tim | |
+| `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca **sejenis** buatan tim | `くべます;のべます;しらべます` |
+| `reading_distractors_cross` | *Daftar, boleh kosong.* Pengecoh cara baca **lintas jenis** (lihat [Menulis pengecoh](#menulis-pengecoh)) | `しょくべます` |
 | `example_ja` | Kalimat dengan sintaks furigana | `[毎朝\|まいあさ]パンを[食\|た]べます。` |
 | `example_blank` | Bagian kalimat yang dikosongkan di tahap 4 | `食べます` |
 | `example_translation` | Terjemahan | `Setiap pagi saya makan roti.` |
-| `example_distractors` | *Daftar, boleh kosong.* Pengecoh buatan tim untuk tahap 4 | |
+| `example_distractors` | ***Wajib, minimal 3.*** Pengecoh buatan tim untuk tahap 4 | `飲みます;読みます;聞きます` |
 
 Kotoba tanpa contoh kalimat: tulis satu baris dengan keempat kolom `example_*` kosong.
 
@@ -212,11 +221,12 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 | `word` | ya | Harus mengandung kanji level. Kata kerja ditulis dalam bentuk ます. |
 | `reading` | ya | Hiragana/katakana. Harus cocok dengan okurigana di `word` (dicek otomatis). |
 | `readingType` | ya | `kunyomi` → tahap 2, `onyomi` → tahap 3, `special` (jukujikun, bacaan campuran seperti 今日) → hanya tahap 4. Tahap tanpa item dilewati. |
-| `pos` | ya | Kelas kata; dipakai memilih pengecoh yang sejenis di tahap 4. |
+| `pos` | ya | Kelas kata. Pengecoh tahap 4 harus sekelas kata dengan kotoba ini. |
 | `meaning` | ya | Arti kotoba. |
 | `chapter` | ya | Bab kotoba muncul di みんなの日本語初級I, atau `null`. |
 | `note` | tidak | Catatan untuk umpan balik, misalnya perubahan bunyi. |
-| `readingDistractors` | tidak | Pengecoh cara baca buatan tim; dipakai lebih dulu sebelum pengecoh otomatis. |
+| `readingDistractors` | tidak | Pengecoh cara baca **sejenis** buatan tim; dipakai sebelum pengecoh otomatis. |
+| `readingDistractorsCross` | tidak | Pengecoh cara baca **lintas jenis** buatan tim, misalnya bacaan on'yomi untuk kotoba kun'yomi. Selalu ditampilkan dan ditandai `manual-cross` di log. |
 | `examples` | ya | Daftar contoh kalimat (boleh `[]`). |
 
 **Contoh kalimat**
@@ -226,15 +236,23 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 | `ja` | ya | Kalimat dengan sintaks furigana. |
 | `blank` | ya | Lihat [Aturan `blank`](#aturan-blank). |
 | `translation` | ya | Terjemahan bahasa Indonesia. |
-| `distractors` | tidak | Pengecoh buatan tim untuk tahap 4. |
+| `distractors` | **ya** | Minimal 3 pengecoh buatan tim untuk tahap 4. Kurang dari itu adalah error. |
 
 ## Menulis pengecoh
 
-Pengecoh yang tidak masuk akal membuat soal bisa dijawab tanpa menguasai materi. Aturan berikut
-berlaku untuk pengecoh otomatis **dan** isian manual.
+Pengecoh yang tidak masuk akal membuat soal bisa dijawab tanpa menguasai materi.
 
-**Tahap 2–3 (`readingDistractors`)**: ganti bagian yang dibaca oleh kanji level dengan bacaan
-**sejenis** (kun'yomi untuk soal kun'yomi, on'yomi untuk soal on'yomi), dari kanji ini atau kanji
+### Tahap 2–3: cara baca
+
+Pilihan jawaban disusun dengan urutan prioritas berikut sampai berjumlah 4 (jawaban + 3 pengecoh):
+
+1. `readingDistractorsCross` — manual, lintas jenis bacaan. **Selalu ditampilkan.**
+2. `readingDistractors` — manual, sejenis.
+3. Otomatis — cara baca kotoba di **level lain** dengan **jenis bacaan yang sama**, diutamakan yang
+   panjangnya mirip.
+
+**Pengecoh sejenis** (`reading_distractors`): ganti bagian yang dibaca oleh kanji level dengan
+bacaan sejenis (kun'yomi untuk soal kun'yomi, on'yomi untuk soal on'yomi), dari kanji ini atau kanji
 lain. Okurigana dan bagian kata yang lain tetap.
 
 | Kotoba | Jawaban | Pengecoh | Asal |
@@ -242,11 +260,60 @@ lain. Okurigana dan bagian kata yang lain tetap.
 | 食べます | たべます | くべます · のべます · しらべます | く(う) dari 食 · の(む) dari 飲 · 調べます |
 | 食事 | しょくじ | じきじ · いんじ · きじ | ジキ dari 食 · イン dari 飲 · キ dari 気 |
 
-**Tahap 4 (`distractors`)**: kotoba dengan **kelas kata dan bentuk yang sama** seperti `blank`
-(kata kerja bentuk ます dengan kata kerja bentuk ます), dan **salah dalam konteks kalimat**.
-Periksa setiap pengecoh dengan membaca kalimatnya utuh: jika kalimat itu tetap benar, pengecoh
-tersebut adalah jawaban benar kedua dan harus diganti. Kalimat yang konteksnya bisa menerima
-banyak jawaban (misalnya `何を＿か`) sebaiknya diganti dengan kalimat yang lebih spesifik.
+**Pengecoh lintas jenis** (`reading_distractors_cross`): meniru kesalahan nyata mahasiswa, yaitu
+membaca kanji dengan jenis bacaan yang salah. Contoh: しょくべます untuk 食べます (食 dibaca dengan
+on'yomi ショク). Pengecoh ini **hanya boleh diisi manual**; aplikasi tidak pernah membuatnya sendiri,
+karena bentuk seperti ini gampang menjadi ngawur jika disusun otomatis. Jika pemain memilihnya,
+umpan balik menjelaskan bahwa kanji itu dibaca dengan jenis bacaan yang salah, dan log mencatat
+`answerType` = `manual-cross`.
+
+> Status: masih dibahas dengan dosen, karena sebagian pengajar keberatan menampilkan bentuk salah
+> kepada pemula. Jika ditolak, cukup kosongkan kolom ini; kode tidak perlu diubah.
+
+Jika jumlah pengecoh (manual + otomatis) kurang dari 3, pemeriksa konten memberi **peringatan** dan
+soal ditampilkan dengan pilihan lebih sedikit.
+
+### Tahap 4: kotoba dalam kalimat
+
+`example_distractors` **wajib diisi manual, minimal 3**. Kurang dari itu adalah **error**, dan
+materi tidak bisa dimuat. Tidak ada pengecoh otomatis di tahap ini: kode tidak bisa memastikan
+sebuah pengecoh benar-benar salah di dalam kalimat.
+
+Setiap pengecoh harus:
+- sekelas kata dan sebentuk dengan `blank` (kata kerja bentuk ます dengan kata kerja bentuk ます);
+- **salah dalam konteks kalimat**. Baca kalimatnya utuh dengan pengecoh terpasang: jika kalimat itu
+  tetap benar, pengecoh tersebut adalah jawaban benar kedua dan harus diganti.
+
+## Menulis kalimat contoh yang tidak ambigu
+
+Kalimat contoh dipakai sebagai soal di tahap 4, jadi konteksnya harus cukup untuk menentukan **satu**
+jawaban. Dua kalimat berikut pernah ada di materi contoh dan dibuang karena cacat ini.
+
+**Kasus 1 — konteks terlalu terbuka**
+
+| | Kalimat | Masalah |
+|---|---|---|
+| ✗ | 今晩何を＿＿か。 (*Malam ini [Anda] ＿ apa?*) | 飲みます, 読みます, 書きます juga benar: siapa pun bisa "minum apa", "membaca apa", "menulis apa" malam ini. Semua pengecoh kata kerja menjadi jawaban benar. |
+| ✓ | レストランで晩ごはんを＿＿。 (*Saya ＿ makan malam di restoran.*) | 晩ごはん (makan malam) hanya bisa "dimakan". 飲みます, 読みます, 書きます jelas salah. |
+
+Pelajarannya: kata tanya seperti 何 membuka terlalu banyak kemungkinan. Ganti dengan **objek yang
+konkret** yang hanya cocok dengan satu kata kerja.
+
+**Kasus 2 — pengecoh ternyata juga benar**
+
+| | Kalimat | Masalah |
+|---|---|---|
+| ✗ | きょうはいい＿＿ですね。 (*Hari ini ＿ bagus, ya.*) | いい食事ですね ("makanannya enak, ya") juga kalimat yang wajar. Pengecoh 食事 menjadi jawaban benar kedua. |
+| ✓ | あしたの＿＿は雨です。 (*＿ besok hujan.*) | Hanya 天気 (cuaca) yang bisa "hujan". 食事, 手紙, 新聞 jelas salah. |
+
+Pelajarannya: pola seperti いい＿ですね bisa diisi hampir semua kata benda. Tambahkan **keterangan
+yang hanya cocok dengan kotoba sasaran** (雨 hanya cocok dengan 天気).
+
+**Daftar periksa sebelum menulis satu kalimat**
+1. Tutup bagian `blank`, lalu pasang setiap pengecoh satu per satu. Apakah ada yang tetap
+   menghasilkan kalimat wajar? Jika ya, ganti pengecohnya atau ganti kalimatnya.
+2. Apakah konteks kalimat memuat kata yang **hanya** cocok dengan kotoba sasaran?
+3. Minta anggota tim lain mengerjakan soalnya tanpa melihat jawaban.
 
 ## Tampilan cara baca
 
@@ -336,6 +403,23 @@ Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
 
 Level lulus bila semua item tahap 1–4 dikuasai dan tahap 5 sudah dikirim.
 
+**Tahap 3 dan kontras dengan tahap 2.** Di putaran belajar, soal on'yomi didahului kartu yang
+menampilkan kotoba kun'yomi dari tahap 2 beserta furigananya. Setelah menjawab soal cara baca apa pun,
+umpan balik menampilkan kotoba kun'yomi dan on'yomi berdampingan, ditambah tabel bacaan.
+
+**Tahap 4.** Terjemahan kalimat baru ditampilkan setelah menjawab. Jika ditampilkan lebih dulu, soal
+berubah menjadi mencocokkan arti, bukan membaca kalimat.
+
+**Tahap 5.** Tidak ada penilaian benar-salah dan tidak ada skor. Setelah pemain mengirim kalimat,
+contoh dari materi ditampilkan sebagai pembanding, lalu pemain memilih "Sudah mirip" atau "Masih
+ragu". Kalimat dan penilaian diri disimpan bersama sebagai satu baris log saat penilaian dipilih.
+Ada petunjuk bahwa pemain boleh menulis dengan hiragana, beserta cara menambah papan ketik Jepang.
+
+**Cara baca yang belum boleh terlihat.** Cara baca sebuah kotoba (furigana, baris tabel bacaan) hanya
+ditampilkan jika soal cara bacanya tidak akan segera muncul: sudah dijawab benar sekali (putaran
+belajar), atau sudah dikuasai (tahap Produksi dan putaran pemantapan). Tanpa aturan ini, umpan balik
+soal 食べます akan memperlihatkan しょくじ tepat sebelum soal cara baca 食事.
+
 **Status terkunci tidak disimpan.** Yang disimpan hanya fakta: streak tiap item, level sudah
 dimulai, level sudah lulus. Sebuah level terbuka jika level tepat sebelumnya (termasuk level
 ulangan) sudah lulus. Level yang sudah pernah dimulai tidak pernah terkunci lagi, sehingga level
@@ -353,4 +437,19 @@ dan memulai progres baru.
 ## Log jawaban *(ekspor CSV dan pengiriman menyusul di langkah 4)*
 
 Setiap jawaban dicatat di `localStorage` (key `kanjiGame.log.v1` dan `kanjiGame.log.v1.chunk.N`).
-Daftar kolom beserta artinya ada di `LOG_COLUMNS` dalam `js/logger.js`.
+Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penting untuk analisis:
+
+| Kolom | Isi |
+|---|---|
+| `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
+| `phase` | `learning`, `consolidation`, `spacer`, atau `production`. |
+| `stage` | `shape`, `kunyomi`, `onyomi`, `sentence`, atau `production`. |
+| `options` | Pilihan sesuai urutan tampil, dipisah ` \| `. |
+| `optionTypes` | Jenis tiap pilihan dengan urutan yang sama: `answer`, `manual`, `manual-cross`, `auto`. |
+| `answer`, `answerType` | Pilihan pemain dan jenisnya. `answerType` = `manual-cross` berarti pemain membaca kanji dengan jenis bacaan yang salah. |
+| `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. |
+| `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. |
+| `selfAssessment`, `containsKanji` | Tahap 5 saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji level. |
+
+Jika daftar kolom berubah di versi berikutnya, log lama di perangkat otomatis disusun ulang ke urutan
+kolom baru saat aplikasi dibuka.

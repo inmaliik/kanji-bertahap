@@ -82,27 +82,28 @@ export function readingNotation(notation) {
   );
 }
 
-/** Table of kun'yomi and on'yomi with a legend taken from the data itself. */
-export function readingsTable(readings) {
-  const row = (label, list) =>
-    h(
-      "tr",
-      {},
-      h("th", { scope: "row" }, label),
-      h(
-        "td",
-        {},
-        list.length
-          ? h("ul", { class: "reading-list" }, list.map((r) => h("li", {}, readingNotation(r))))
-          : h("span", { class: "muted" }, "tidak ada")
-      )
-    );
+/**
+ * Table of kun'yomi and on'yomi with a legend taken from the data itself.
+ * @param {string[]} [hiddenTypes] reading types whose row must not be revealed yet
+ */
+export function readingsTable(readings, hiddenTypes = []) {
+  const row = (label, list, type) => {
+    let cell;
+    if (hiddenTypes.includes(type)) {
+      cell = h("span", { class: "muted" }, `Ditampilkan setelah soal ${label} dijawab.`);
+    } else if (list.length) {
+      cell = h("ul", { class: "reading-list" }, list.map((r) => h("li", {}, readingNotation(r))));
+    } else {
+      cell = h("span", { class: "muted" }, "tidak ada");
+    }
+    return h("tr", {}, h("th", { scope: "row" }, label), h("td", {}, cell));
+  };
 
   const sample = [...readings.kunyomi, ...readings.onyomi].find((r) => splitReadingNotation(r).okurigana);
   return h(
     "div",
     { class: "readings-block" },
-    h("table", { class: "readings" }, h("tbody", {}, row("Kun'yomi", readings.kunyomi), row("On'yomi", readings.onyomi))),
+    h("table", { class: "readings" }, h("tbody", {}, row("Kun'yomi", readings.kunyomi, "kunyomi"), row("On'yomi", readings.onyomi, "onyomi"))),
     sample
       ? h(
           "p",
@@ -118,5 +119,58 @@ export function readingsTable(readings) {
           )
         )
       : null
+  );
+}
+
+/** Text with every occurrence of `kanji` wrapped in a focus highlight. */
+export function highlightKanji(text, kanji) {
+  return text.split(kanji).flatMap((part, i) => (i === 0 ? [part] : [h("mark", { class: "kanji-focus" }, kanji), part]));
+}
+
+/** Word with furigana, highlighting the ruby segment that contains `kanji`. */
+export function wordWithRubyFocus(kotoba, kanji) {
+  const segments = alignReading(kotoba.word, kotoba.reading) ?? [{ text: kotoba.word, ruby: kotoba.reading }];
+  let start = 0;
+  for (const seg of segments) {
+    if (seg.ruby !== null && seg.text.includes(kanji)) {
+      return renderRuby(segments, {
+        range: { start, end: start + seg.text.length },
+        wrap: (inner) => h("mark", { class: "kanji-focus" }, inner),
+      });
+    }
+    start += seg.text.length;
+  }
+  return renderRuby(segments);
+}
+
+/**
+ * Reading-stage kotoba of a level side by side, plus the readings table.
+ * Only kotoba accepted by `isRevealed` are shown, so feedback never gives away
+ * the answer of a question that is still ahead.
+ */
+export function readingContrast(level, isRevealed) {
+  const readingKotoba = level.kotoba.filter((k) => k.readingType === "kunyomi" || k.readingType === "onyomi");
+  const rows = readingKotoba.filter(isRevealed);
+  const hiddenTypes = ["kunyomi", "onyomi"].filter((type) =>
+    readingKotoba.some((k) => k.readingType === type && !isRevealed(k))
+  );
+  return h(
+    "div",
+    { class: "contrast" },
+    h("p", { class: "contrast__title" }, "Kanji yang sama, cara baca berbeda"),
+    h(
+      "ul",
+      { class: "contrast__list" },
+      rows.map((k) =>
+        h(
+          "li",
+          { class: "contrast__row" },
+          h("span", { class: `badge badge--${k.readingType}` }, LABELS.readingType[k.readingType]),
+          ja("span", { class: "contrast__word" }, wordWithRubyFocus(k, level.kanji)),
+          h("span", { class: "contrast__meaning" }, k.meaning)
+        )
+      )
+    ),
+    readingsTable(level.readings, hiddenTypes)
   );
 }

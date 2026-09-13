@@ -850,6 +850,245 @@ rt {
   color: var(--success);
 }
 
+/* Stages 2–5 --------------------------------------------------------------------- */
+
+.word-main {
+  /* Kotoba in the reading stages: never below 64px. */
+  font-size: clamp(4rem, 18vw, 5.5rem);
+  line-height: 1.15;
+  text-align: center;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.question__hint {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.kanji-focus {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+.contrast {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.contrast--before {
+  border-left: 6px solid var(--success);
+}
+
+.feedback .contrast {
+  margin-top: 0.75rem;
+}
+
+.contrast__title {
+  font-weight: 700;
+}
+
+.contrast__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.contrast__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.contrast__word {
+  font-size: 1.75rem;
+  line-height: 2;
+}
+
+.contrast__meaning {
+  color: var(--muted);
+}
+
+.contrast__now {
+  margin: 0.5rem 0 0;
+}
+
+.options--words .option__content {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.options--words .option {
+  min-height: 4rem;
+}
+
+.sentence-main {
+  font-size: 1.5rem;
+  line-height: 2.3; /* room for furigana */
+  margin: 0;
+}
+
+.sentence-main--answer {
+  font-size: 1.25rem;
+}
+
+.blank-slot {
+  display: inline-block;
+  min-width: 4em;
+  height: 1.1em;
+  margin-inline: 0.15em;
+  vertical-align: -0.15em;
+  border-bottom: 3px solid var(--text);
+  background: var(--primary-soft);
+}
+
+.feedback__answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.feedback__word {
+  font-size: 1.5rem;
+  line-height: 2;
+}
+
+.feedback__cross {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--error);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.production__prompt {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.production__label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.production__kotoba {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+.production__input {
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.production__input:focus {
+  border-color: var(--primary);
+  outline: 3px solid var(--primary-soft);
+}
+
+.production__error {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--error);
+  font-weight: 600;
+}
+
+.production__hint {
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+}
+
+.production__hint details {
+  margin-top: 0.25rem;
+}
+
+.production__hint summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.production__hint ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.production__sample {
+  font-size: 1.125rem;
+}
+
+.production__sentence {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--primary);
+  background: var(--surface);
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.self-assessment {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.self-assessment legend {
+  padding-inline: 0.25rem;
+  font-weight: 700;
+}
+
+.self-assessment__option {
+  flex: 1 1 8rem;
+}
+
+.self-assessment__option[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.self-assessment__option:disabled {
+  cursor: default;
+}
+
+.production__recorded {
+  margin: 0;
+  font-weight: 600;
+}
+
 /* Reading notation: kanji reading prominent, okurigana subordinate ------------------ */
 
 .reading-list {
@@ -978,4 +1217,20 @@ rt {
   .level-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.readings td .muted {
+  font-size: 0.875rem;
+}
+
+/* A wrapped <legend> would collide with the fieldset border. */
+.self-assessment legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.self-assessment legend + * {
+  clear: both;
 }

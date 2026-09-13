@@ -11,6 +11,7 @@
 // second correct answer always comes from a later, non-adjacent exposure.
 
 import { STREAK_TO_MASTER, REQUEUE_GAP_MIN, REQUEUE_GAP_MAX, isMastered, evaluateEntry, markPassed } from "./state.js";
+import { shuffle } from "./random.js";
 
 export const STAGE_ORDER = ["shape", "kunyomi", "onyomi", "sentence"];
 
@@ -20,35 +21,22 @@ export const PHASE = Object.freeze({
   CONSOLIDATION: "consolidation",
 });
 
-export function shuffle(list, random = Math.random) {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
-
 /**
  * @param {object} opts
  * @param {{shape: object[], kunyomi: object[], onyomi: object[], sentence: object[]}} opts.items
  * @param {object} opts.entry level progress entry from state.js (mutated)
- * @param {(stage: string) => boolean} [opts.hasStage] stages that can be played
- * @param {boolean} [opts.hasProduction] whether stage 5 can be played
+ * @param {boolean} [opts.hasProduction] false for levels without stage 5 (review levels)
  * @param {() => number} [opts.random]
  * @param {() => void} [opts.onChange] called after every change to `entry`
  */
 export function createLevelSession({
   items,
   entry,
-  hasStage = () => true,
   hasProduction = true,
   random = Math.random,
   onChange = () => {},
 }) {
   const scored = STAGE_ORDER.flatMap((stage) => items[stage]);
-  const playable = STAGE_ORDER.filter(hasStage).flatMap((stage) => items[stage]);
-  const missingStages = STAGE_ORDER.filter((stage) => items[stage].length && !hasStage(stage));
 
   const streakOf = (item) => entry.itemStreaks[item.id] ?? 0;
   const randomGap = () => REQUEUE_GAP_MIN + Math.floor(random() * (REQUEUE_GAP_MAX - REQUEUE_GAP_MIN + 1));
@@ -60,12 +48,12 @@ export function createLevelSession({
 
   function enterLearning() {
     phase = PHASE.LEARNING;
-    queue = playable.filter((item) => streakOf(item) < 1); // keeps stage order
+    queue = scored.filter((item) => streakOf(item) < 1); // keeps stage order
   }
 
   function enterConsolidation() {
     phase = PHASE.CONSOLIDATION;
-    queue = shuffle(playable.filter((item) => !isMastered(streakOf(item))), random);
+    queue = shuffle(scored.filter((item) => !isMastered(streakOf(item))), random);
   }
 
   function afterLearning() {
@@ -77,7 +65,7 @@ export function createLevelSession({
   else afterLearning();
 
   function progress() {
-    const { mastered, total } = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: true });
+    const { mastered, total } = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: hasProduction });
     return { mastered, total };
   }
 
@@ -89,17 +77,17 @@ export function createLevelSession({
   // An already mastered item shown between two exposures of the same item,
   // so the second exposure is never back to back.
   function pickSpacer() {
-    const candidates = playable.filter((item) => item.id !== lastShownId && isMastered(streakOf(item)));
+    const candidates = scored.filter((item) => item.id !== lastShownId && isMastered(streakOf(item)));
     return candidates.length ? candidates[Math.floor(random() * candidates.length)] : null;
   }
 
   function finish() {
-    const result = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: true });
+    const result = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: hasProduction });
     if (result.passed) {
       markPassed(entry);
       onChange();
     }
-    return { kind: "done", ...result, missingStages, productionMissing: !hasProduction };
+    return { kind: "done", ...result };
   }
 
   /** @returns {{kind: "item"|"production"|"done", ...}} */

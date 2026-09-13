@@ -45,6 +45,9 @@
             "のべます",
             "しらべます"
           ],
+          "readingDistractorsCross": [
+            "しょくべます"
+          ],
           "examples": [
             {
               "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
@@ -81,6 +84,7 @@
             "いんじ",
             "きじ"
           ],
+          "readingDistractorsCross": [],
           "examples": [
             {
               "ja": "[家族|かぞく]と[食事|しょくじ]をします。",
@@ -138,6 +142,9 @@
             "たみます",
             "くみます",
             "よみます"
+          ],
+          "readingDistractorsCross": [
+            "いんみます"
           ],
           "examples": [
             {
@@ -204,6 +211,7 @@
             "げんしょく",
             "げんいん"
           ],
+          "readingDistractorsCross": [],
           "examples": [
             {
               "ja": "お[元気|げんき]ですか。",
@@ -230,6 +238,7 @@
             "てんしょく",
             "てんいん"
           ],
+          "readingDistractorsCross": [],
           "examples": [
             {
               "ja": "あしたの[天気|てんき]は[雨|あめ]です。",

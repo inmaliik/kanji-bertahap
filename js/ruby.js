@@ -212,3 +212,8 @@ export function renderRuby(segments, { range = null, wrap = (fragment) => fragme
   target(Infinity);
   return out;
 }
+
+/** Copy of `segments` with the furigana removed wherever `hide(segment)` is true. */
+export function hideRuby(segments, hide) {
+  return segments.map((seg) => (seg.ruby !== null && hide(seg) ? { text: seg.text, ruby: null } : seg));
+}

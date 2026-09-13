@@ -11,6 +11,7 @@ import {
   isRadicalBlock,
   isSingleChar,
 } from "./jp-text.js";
+import { DISTRACTORS_NEEDED, readingDistractorPool, sentenceDistractorPool } from "./distractors.js";
 
 export const SCHEMA_VERSION = 1;
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"]; // display and unlock order
@@ -32,7 +33,7 @@ const BUSHU_KEYS = ["char", "name", "meaning", "variants"];
 const READINGS_KEYS = ["kunyomi", "onyomi"];
 const KOTOBA_KEYS = [
   "word", "reading", "readingType", "pos", "meaning", "chapter", "note",
-  "readingDistractors", "examples",
+  "readingDistractors", "readingDistractorsCross", "examples",
 ];
 const EXAMPLE_KEYS = ["ja", "blank", "translation", "distractors"];
 
@@ -42,6 +43,7 @@ export const itemId = {
   shape: (levelId) => `${levelId}:shape`,
   reading: (levelId, word) => `${levelId}:reading:${word}`,
   sentence: (levelId, plainSentence) => `${levelId}:sentence:${plainSentence}`,
+  production: (levelId) => `${levelId}:production`,
 };
 
 // ---------------------------------------------------------------------------
@@ -195,6 +197,7 @@ export function validateContent(data) {
   const seen = { ids: new Map(), kanji: new Map() };
   data.levels.forEach((level, i) => validateLevel(level, i, root, report, seen));
   checkLevelOrder(data.levels, root, report);
+  checkReadingPools(data.levels, root, report);
 
   return report.result();
 }
@@ -448,15 +451,35 @@ function validateKotoba(kotoba, index, level, parentCtx, report, sentenceIds) {
 
   optionalString(kotoba, "note", ctx, report);
 
-  const distractors = stringArray(kotoba, "readingDistractors", ctx, report, { required: false });
-  (distractors ?? []).forEach((d, i) => {
-    const dctx = ctx.child(`readingDistractors[${i}]`, `readingDistractors #${i + 1}`);
-    if (!isAllKana(d)) {
-      report.error(dctx, "DISTRACTOR_NOT_KANA", `Pengecoh cara baca harus hiragana/katakana, ditemukan "${d}".`);
-    } else if (d === reading) {
-      report.error(dctx, "DISTRACTOR_IS_ANSWER", `Pengecoh "${d}" sama dengan jawaban benar.`);
-    }
-  });
+  const readingLists = {};
+  for (const key of ["readingDistractors", "readingDistractorsCross"]) {
+    const list = stringArray(kotoba, key, ctx, report, { required: false }) ?? [];
+    readingLists[key] = list;
+    list.forEach((d, i) => {
+      const dctx = ctx.child(`${key}[${i}]`, `${key} #${i + 1}`);
+      if (!isAllKana(d)) {
+        report.error(dctx, "DISTRACTOR_NOT_KANA", `Pengecoh cara baca harus hiragana/katakana, ditemukan "${d}".`);
+      } else if (d === reading) {
+        report.error(dctx, "DISTRACTOR_IS_ANSWER", `Pengecoh "${d}" sama dengan jawaban benar.`);
+      }
+    });
+  }
+  const inBoth = readingLists.readingDistractors.filter((d) => readingLists.readingDistractorsCross.includes(d));
+  if (inBoth.length) {
+    report.error(
+      ctx.field("readingDistractorsCross"),
+      "DISTRACTOR_IN_BOTH_LISTS",
+      `"${inBoth.join(", ")}" ada di readingDistractors dan readingDistractorsCross sekaligus. ` +
+        "Pilih salah satu: lintas jenis bacaan atau sejenis."
+    );
+  }
+  if (kotoba.readingType === "special" && (readingLists.readingDistractors.length || readingLists.readingDistractorsCross.length)) {
+    report.warn(
+      ctx.field("readingDistractors"),
+      "DISTRACTORS_UNUSED",
+      "Kotoba ber-readingType special tidak muncul di tahap Kun'yomi/On'yomi, jadi pengecoh cara bacanya tidak dipakai."
+    );
+  }
 
   let exampleCount = 0;
   if (!Array.isArray(kotoba.examples)) {
@@ -499,12 +522,25 @@ function validateExample(example, index, level, parentCtx, report, sentenceIds) 
 
   requireString(example, "translation", ctx, report);
 
-  const distractors = stringArray(example, "distractors", ctx, report, { required: false });
+  const distractors = stringArray(example, "distractors", ctx, report, { required: true });
   (distractors ?? []).forEach((d, i) => {
     if (d === blank) {
       report.error(ctx.child(`distractors[${i}]`, `distractors #${i + 1}`), "DISTRACTOR_IS_ANSWER", `Pengecoh "${d}" sama dengan jawaban benar (blank).`);
     }
   });
+  if (distractors) {
+    const usable = sentenceDistractorPool({ distractors, blank }).length;
+    if (usable < DISTRACTORS_NEEDED) {
+      const sentenceText = parsed ? `"${parsed.plain}"` : "ini";
+      report.error(
+        ctx.field("distractors"),
+        "SENTENCE_DISTRACTORS_TOO_FEW",
+        `Kalimat ${sentenceText} butuh minimal ${DISTRACTORS_NEEDED} pengecoh manual yang berbeda ` +
+          `(kolom example_distractors), baru ada ${usable}. Tahap Kotoba dalam Kalimat tidak memakai ` +
+          "pengecoh otomatis, karena kode tidak bisa memastikan pengecoh itu salah dalam konteks kalimat."
+      );
+    }
+  }
 
   if (parsed && level.id !== undefined) {
     const id = itemId.sentence(level.id, parsed.plain);
@@ -606,5 +642,28 @@ function checkLevelOrder(levels, root, report) {
     } else {
       furthest = current;
     }
+  });
+}
+
+// Stages 2–3 combine manual and automatic distractors; warn when a question
+// would show fewer than OPTION_COUNT choices.
+function checkReadingPools(levels, root, report) {
+  levels.forEach((level, i) => {
+    if (!isPlainObject(level) || !Array.isArray(level.kotoba)) return;
+    level.kotoba.forEach((kotoba, j) => {
+      if (!isPlainObject(kotoba) || !["kunyomi", "onyomi"].includes(kotoba.readingType)) return;
+      if (typeof kotoba.reading !== "string") return;
+      const { cross, manual, auto } = readingDistractorPool(levels, level.id, kotoba);
+      const total = cross.length + manual.length + auto.length;
+      if (total < DISTRACTORS_NEEDED) {
+        report.warn(
+          root.child(`levels[${i}].kotoba[${j}]`, `${levelLabel(level, i)} › kotoba "${kotoba.word}"`),
+          "READING_DISTRACTORS_TOO_FEW",
+          `Soal cara baca "${kotoba.word}" hanya punya ${total} pengecoh (manual ${cross.length + manual.length}, ` +
+            `otomatis ${auto.length}); seharusnya ${DISTRACTORS_NEEDED}. Soal tetap bisa dimainkan dengan pilihan ` +
+            "lebih sedikit. Tambahkan pengecoh di kolom reading_distractors."
+        );
+      }
+    });
   });
 }

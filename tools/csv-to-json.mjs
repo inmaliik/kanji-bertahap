@@ -22,7 +22,7 @@ const LEVEL_COLUMNS = [
 ];
 const KOTOBA_COLUMNS = [
   "word", "word_reading", "reading_type", "pos", "word_meaning", "word_chapter",
-  "word_note", "reading_distractors",
+  "word_note", "reading_distractors", "reading_distractors_cross",
 ];
 const EXAMPLE_COLUMNS = ["example_ja", "example_blank", "example_translation", "example_distractors"];
 const ALL_COLUMNS = [...LEVEL_COLUMNS, ...KOTOBA_COLUMNS, ...EXAMPLE_COLUMNS];
@@ -244,6 +244,7 @@ function buildContent(records, revision, problems) {
         chapter: parseChapter(kv.word_chapter, "word_chapter", kRows, problems),
         note: kv.word_note,
         readingDistractors: splitList(kv.reading_distractors),
+        readingDistractorsCross: splitList(kv.reading_distractors_cross),
         examples: [],
       };
 

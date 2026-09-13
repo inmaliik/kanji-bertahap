@@ -3,9 +3,11 @@
 import { h } from "../dom.js";
 import { APP_VERSION } from "../config.js";
 import { buildLevelItems } from "../content.js";
+import { itemId } from "../validate.js";
 import { createLevelSession } from "../session.js";
 import { logAnswer } from "../logger.js";
 import {
+  STREAK_TO_MASTER,
   beginAttempt,
   buildProgression,
   computeStatuses,
@@ -15,14 +17,17 @@ import {
   touch,
 } from "../state.js";
 import { renderShape } from "../stages/shape.js";
+import { renderReading } from "../stages/reading.js";
+import { renderSentence } from "../stages/sentence.js";
+import { renderProduction } from "../stages/production.js";
 import { backLink, LABELS } from "./common.js";
 
-// Stages that exist in this build. Stages missing here are skipped by the
-// session, and a level cannot pass until all of them exist.
 const STAGE_RENDERERS = {
   shape: renderShape,
+  kunyomi: renderReading,
+  onyomi: renderReading,
+  sentence: renderSentence,
 };
-const HAS_PRODUCTION = false;
 
 function nodeLabel(node) {
   return node.type === "review" ? `Level ulangan ${node.id}` : `Level ${node.id}`;
@@ -67,8 +72,6 @@ export function playScreen(app, nodeId) {
   const session = createLevelSession({
     items,
     entry,
-    hasStage: (stage) => stage in STAGE_RENDERERS,
-    hasProduction: HAS_PRODUCTION,
     onChange: () => {
       touch(app.progress);
       saveProgress(app.progress);
@@ -88,6 +91,16 @@ export function playScreen(app, nodeId) {
     if (document.hidden) hiddenDuringItem = true;
   };
   document.addEventListener("visibilitychange", onVisibility);
+
+  const baseRecord = () => ({
+    appVersion: APP_VERSION,
+    contentRevision: app.content.contentRevision,
+    playerId: app.progress.playerId,
+    participantCode: app.progress.participantCode,
+    sessionId,
+    levelId: level.id,
+    isReview: false,
+  });
 
   function header(step) {
     const stage = step.kind === "item" ? step.item.stage : step.kind === "production" ? "production" : null;
@@ -119,33 +132,45 @@ export function playScreen(app, nodeId) {
     );
   }
 
-  function itemView(step) {
-    const render = STAGE_RENDERERS[step.item.stage];
+  // A kotoba's reading may be shown only when its reading question is not
+  // coming up soon: answered once during the learning pass, mastered after it.
+  // Kotoba without a reading question (readingType special) are always shown.
+  function revealRule(phase) {
+    return (kotoba) => {
+      if (kotoba.readingType !== "kunyomi" && kotoba.readingType !== "onyomi") return true;
+      const streak = entry.itemStreaks[itemId.reading(level.id, kotoba.word)] ?? 0;
+      return streak >= (phase === "learning" ? 1 : STREAK_TO_MASTER);
+    };
+  }
+
+  function startTiming() {
     shownAt = performance.now();
     hiddenDuringItem = document.hidden;
+  }
 
-    return render({
+  function itemView(step) {
+    startTiming();
+    return STAGE_RENDERERS[step.item.stage]({
       item: step.item,
       level,
+      levels: app.content.levels,
+      phase: step.phase,
+      isRevealed: revealRule(step.phase),
       random: Math.random,
-      onAnswer: ({ prompt, options, correctAnswer, answer, correct }) => {
+      onAnswer: ({ prompt, options, correctAnswer, answer, answerType, correct }) => {
         const responseMs = Math.round(performance.now() - shownAt);
         const result = session.answer(correct);
         logAnswer({
-          appVersion: APP_VERSION,
-          contentRevision: app.content.contentRevision,
-          playerId: app.progress.playerId,
-          participantCode: app.progress.participantCode,
-          sessionId,
-          levelId: level.id,
-          isReview: false,
+          ...baseRecord(),
           phase: step.spacer ? "spacer" : step.phase,
           stage: step.item.stage,
           itemId: step.item.id,
           prompt,
-          options: options.join(" | "),
+          options: options.map((o) => o.value).join(" | "),
+          optionTypes: options.map((o) => o.type).join(" | "),
           correctAnswer,
           answer,
+          answerType,
           isCorrect: correct,
           streakAfter: result.streak,
           responseMs,
@@ -157,38 +182,67 @@ export function playScreen(app, nodeId) {
     });
   }
 
+  function productionView(step) {
+    startTiming();
+    return renderProduction({
+      level,
+      isRevealed: revealRule(step.phase),
+      onSubmit: ({ sentence, selfAssessment, writingMs }) => {
+        session.submitProduction();
+        logAnswer({
+          ...baseRecord(),
+          phase: step.phase,
+          stage: "production",
+          itemId: itemId.production(level.id),
+          prompt: level.productionPrompt,
+          answer: sentence,
+          responseMs: writingMs,
+          wasHidden: hiddenDuringItem,
+          selfAssessment,
+          containsKanji: sentence.includes(level.kanji),
+        });
+      },
+      onContinue: show,
+    });
+  }
+
   function doneView(step) {
-    if (step.passed) {
+    const back = h("a", { class: "button button--block", href: "#/" }, "Kembali ke daftar level");
+    if (!step.passed) {
+      // Only reachable if content changed while the level was open.
       return h(
         "section",
-        { class: "result result--passed" },
-        h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Level lulus"),
-        h("p", {}, `Semua ${step.total} item sudah dikuasai dan tahap Produksi sudah dikirim.`),
-        h("a", { class: "button button--primary button--block", href: "#/" }, "Kembali ke daftar level")
+        { class: "result" },
+        h("h2", { tabindex: "-1" }, "Sesi selesai"),
+        h("p", {}, `Item dikuasai: ${step.mastered} dari ${step.total}.`),
+        back
       );
     }
-    const missing = [...step.missingStages, ...(step.productionMissing ? ["production"] : [])].map((s) => LABELS.stage[s]);
+    const next = nodes[index + 1];
+    const nextOpen = next && computeStatuses(nodes, app.progress).get(next.id) !== LEVEL_STATUS.LOCKED;
     return h(
       "section",
-      { class: "result" },
-      h("h2", { tabindex: "-1" }, "Sesi selesai"),
-      h("p", {}, `Item dikuasai: ${step.mastered} dari ${step.total}.`),
-      missing.length
-        ? h("p", { class: "dev-note" }, `Level ini belum bisa lulus karena tahap berikut belum dibangun (langkah 3): ${missing.join(", ")}.`)
+      { class: "result result--passed" },
+      h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Level lulus"),
+      h("p", {}, `Semua ${step.total} item sudah dikuasai dan tahap Produksi sudah dikirim.`),
+      nextOpen
+        ? h("a", { class: "button button--primary button--block", href: `#/play/${encodeURIComponent(next.id)}` }, `Lanjut ke ${nodeLabel(next)}`)
         : null,
-      h("a", { class: "button button--primary button--block", href: "#/" }, "Kembali ke daftar level")
+      back
     );
   }
 
   function show() {
     const step = session.next();
-    const body = step.kind === "item" ? itemView(step) : doneView(step);
+    let body;
+    if (step.kind === "item") body = itemView(step);
+    else if (step.kind === "production") body = productionView(step);
+    else body = doneView(step);
     root.replaceChildren(header(step), body);
     window.scrollTo(0, 0);
-    root.querySelector(".question__title, .result h2")?.focus?.({ preventScroll: true });
+    root.querySelector(".question__title, .result h2")?.focus({ preventScroll: true });
   }
 
   show();
   return root;
 }
-

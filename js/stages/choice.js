@@ -6,11 +6,11 @@ import { h } from "../dom.js";
 /**
  * @param {object} opts
  * @param {Node[]} opts.prompt question content
- * @param {Array<{value: string, content: Node|string, lang?: string}>} opts.options in display order
+ * @param {Array<{value: string, type: string, content: Node|string, lang?: string}>} opts.options in display order
  * @param {string} opts.correctValue
  * @param {string} [opts.optionsClass] extra class for the options grid
- * @param {(correct: boolean) => Node|Node[]} opts.explanation shown after answering
- * @param {(answer: {value: string, correct: boolean}) => {mastered: boolean, willReturn: boolean}} opts.onAnswer
+ * @param {(correct: boolean, chosen: object) => Node|Node[]} opts.explanation shown after answering
+ * @param {(answer: {value: string, type: string, correct: boolean}) => {mastered: boolean, willReturn: boolean}} opts.onAnswer
  * @param {() => void} opts.onContinue
  */
 export function choiceQuestion({ prompt, options, correctValue, optionsClass = "", explanation, onAnswer, onContinue }) {
@@ -54,7 +54,7 @@ export function choiceQuestion({ prompt, options, correctValue, optionsClass = "
       }
     }
 
-    const result = onAnswer({ value: chosen.value, correct });
+    const result = onAnswer({ value: chosen.value, type: chosen.type, correct });
     let progressNote;
     if (result.mastered) progressNote = "Item ini sudah dikuasai.";
     else if (result.willReturn) progressNote = "Soal ini akan muncul lagi nanti.";
@@ -68,7 +68,7 @@ export function choiceQuestion({ prompt, options, correctValue, optionsClass = "
         h("span", { "aria-hidden": "true" }, correct ? "✓ " : "✗ "),
         correct ? "Benar" : "Belum tepat"
       ),
-      h("div", { class: "feedback__explanation" }, explanation(correct)),
+      h("div", { class: "feedback__explanation" }, explanation(correct, chosen)),
       h("p", { class: "feedback__progress" }, progressNote)
     );
     continueButton.hidden = false;

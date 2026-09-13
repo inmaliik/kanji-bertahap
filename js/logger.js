@@ -27,8 +27,10 @@ export const LOG_COLUMNS = [
   "itemId",
   "prompt", // what was shown (kanji, word, or sentence)
   "options", // choices in the order shown, separated by " | "
+  "optionTypes", // per option, same order: answer | manual | manual-cross | auto
   "correctAnswer",
   "answer",
+  "answerType", // type of the chosen option (see optionTypes)
   "isCorrect", // 1 / 0; empty for production
   "streakAfter",
   "responseMs", // from question shown to answer
@@ -52,6 +54,7 @@ function loadMeta() {
   if (meta) return meta;
   const { ok, value } = readJson(LOG_KEY);
   meta = ok && value && Array.isArray(value.columns) ? value : emptyMeta();
+  if (meta.columns.join() !== LOG_COLUMNS.join()) migrateColumns();
   if (meta.chunkCount > 0) {
     const chunk = readJson(chunkKey(meta.chunkCount - 1));
     lastChunk = Array.isArray(chunk.value) ? chunk.value : [];
@@ -99,19 +102,34 @@ export function logAnswer(record) {
   }
 }
 
-/** @returns {Array<Array>} stored rows followed by unsaved in-memory rows */
-export function getLogRows() {
+// Rewrite rows stored with an older column list into the current order, once,
+// so old and new rows never mix column orders. Unknown old columns are dropped;
+// new columns are empty for old rows.
+function migrateColumns() {
+  const oldColumns = meta.columns;
+  for (let i = 0; i < meta.chunkCount; i++) {
+    const chunk = readJson(chunkKey(i)).value;
+    if (!Array.isArray(chunk)) continue;
+    const mapped = chunk.map((row) => LOG_COLUMNS.map((col) => row[oldColumns.indexOf(col)] ?? ""));
+    writeJson(chunkKey(i), mapped);
+  }
+  meta = { ...meta, columns: LOG_COLUMNS };
+  writeJson(LOG_KEY, meta);
+}
+
+function readStoredRows() {
   const m = loadMeta();
   const rows = [];
   for (let i = 0; i < m.chunkCount; i++) {
     const chunk = readJson(chunkKey(i)).value;
     if (Array.isArray(chunk)) rows.push(...chunk);
   }
-  // Rows written with an older column list are mapped by column name.
-  const mapped = m.columns.join() === LOG_COLUMNS.join()
-    ? rows
-    : rows.map((r) => LOG_COLUMNS.map((col) => r[m.columns.indexOf(col)] ?? ""));
-  return [...mapped, ...memoryRows];
+  return rows;
+}
+
+/** @returns {Array<Array>} stored rows followed by unsaved in-memory rows */
+export function getLogRows() {
+  return [...readStoredRows(), ...memoryRows];
 }
 
 export function getLogStatus() {
