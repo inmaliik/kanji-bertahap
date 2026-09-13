@@ -8,11 +8,28 @@
       "meaning": "makan",
       "jlptLevel": "N5",
       "chapter": 6,
-      "bushu": { "char": "食", "name": "shoku", "meaning": "makan / makanan", "variants": ["飠"] },
-      "bushuOptions": ["食", "人", "米", "皿"],
+      "bushu": {
+        "char": "食",
+        "name": "shoku",
+        "meaning": "makan / makanan",
+        "variants": [
+          "飠"
+        ]
+      },
+      "bushuOptions": [
+        "食",
+        "人",
+        "米",
+        "皿"
+      ],
       "readings": {
-        "kunyomi": ["た(べる)", "く(う)"],
-        "onyomi": ["ショク"]
+        "kunyomi": [
+          "た(べる)",
+          "く(う)"
+        ],
+        "onyomi": [
+          "ショク"
+        ]
       },
       "kotoba": [
         {
@@ -23,19 +40,31 @@
           "meaning": "makan",
           "chapter": 6,
           "note": "",
-          "readingDistractors": [],
+          "readingDistractors": [
+            "くべます",
+            "のべます",
+            "しらべます"
+          ],
           "examples": [
             {
               "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
               "blank": "食べます",
               "translation": "Setiap pagi saya makan roti.",
-              "distractors": []
+              "distractors": [
+                "飲みます",
+                "読みます",
+                "聞きます"
+              ]
             },
             {
-              "ja": "[今晩|こんばん][何|なに]を[食|た]べますか。",
+              "ja": "レストランで[晩|ばん]ごはんを[食|た]べます。",
               "blank": "食べます",
-              "translation": "Malam ini (Anda) makan apa?",
-              "distractors": []
+              "translation": "Saya makan malam di restoran.",
+              "distractors": [
+                "飲みます",
+                "読みます",
+                "書きます"
+              ]
             }
           ]
         },
@@ -47,13 +76,21 @@
           "meaning": "makan / bersantap",
           "chapter": 13,
           "note": "",
-          "readingDistractors": [],
+          "readingDistractors": [
+            "じきじ",
+            "いんじ",
+            "きじ"
+          ],
           "examples": [
             {
               "ja": "[家族|かぞく]と[食事|しょくじ]をします。",
               "blank": "食事",
               "translation": "Saya bersantap bersama keluarga.",
-              "distractors": []
+              "distractors": [
+                "天気",
+                "手紙",
+                "新聞"
+              ]
             }
           ]
         }
@@ -66,11 +103,27 @@
       "meaning": "minum",
       "jlptLevel": "N5",
       "chapter": 6,
-      "bushu": { "char": "飠", "name": "shokuhen", "meaning": "makan / makanan", "variants": ["食"] },
-      "bushuOptions": ["飠", "欠", "氵", "口"],
+      "bushu": {
+        "char": "飠",
+        "name": "shokuhen",
+        "meaning": "makan / makanan",
+        "variants": [
+          "食"
+        ]
+      },
+      "bushuOptions": [
+        "飠",
+        "欠",
+        "氵",
+        "口"
+      ],
       "readings": {
-        "kunyomi": ["の(む)"],
-        "onyomi": ["イン"]
+        "kunyomi": [
+          "の(む)"
+        ],
+        "onyomi": [
+          "イン"
+        ]
       },
       "kotoba": [
         {
@@ -81,19 +134,31 @@
           "meaning": "minum",
           "chapter": 6,
           "note": "",
-          "readingDistractors": [],
+          "readingDistractors": [
+            "たみます",
+            "くみます",
+            "よみます"
+          ],
           "examples": [
             {
               "ja": "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。",
               "blank": "飲みます",
               "translation": "Setiap malam saya minum teh.",
-              "distractors": []
+              "distractors": [
+                "食べます",
+                "読みます",
+                "書きます"
+              ]
             },
             {
               "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
               "blank": "飲みます",
               "translation": "Pagi hari saya minum susu.",
-              "distractors": []
+              "distractors": [
+                "食べます",
+                "読みます",
+                "聞きます"
+              ]
             }
           ]
         }
@@ -106,11 +171,24 @@
       "meaning": "semangat / udara / perasaan",
       "jlptLevel": "N5",
       "chapter": 8,
-      "bushu": { "char": "气", "name": "kigamae", "meaning": "uap / udara", "variants": [] },
-      "bushuOptions": ["气", "厂", "乙", "人"],
+      "bushu": {
+        "char": "气",
+        "name": "kigamae",
+        "meaning": "uap / udara",
+        "variants": []
+      },
+      "bushuOptions": [
+        "气",
+        "厂",
+        "乙",
+        "人"
+      ],
       "readings": {
         "kunyomi": [],
-        "onyomi": ["キ", "ケ"]
+        "onyomi": [
+          "キ",
+          "ケ"
+        ]
       },
       "kotoba": [
         {
@@ -121,13 +199,21 @@
           "meaning": "sehat / bersemangat",
           "chapter": 8,
           "note": "",
-          "readingDistractors": [],
+          "readingDistractors": [
+            "げんけ",
+            "げんしょく",
+            "げんいん"
+          ],
           "examples": [
             {
               "ja": "お[元気|げんき]ですか。",
               "blank": "元気",
               "translation": "Apa kabar? (Apakah Anda sehat?)",
-              "distractors": []
+              "distractors": [
+                "有名",
+                "便利",
+                "大切"
+              ]
             }
           ]
         },
@@ -139,13 +225,21 @@
           "meaning": "cuaca",
           "chapter": 12,
           "note": "",
-          "readingDistractors": [],
+          "readingDistractors": [
+            "てんけ",
+            "てんしょく",
+            "てんいん"
+          ],
           "examples": [
             {
-              "ja": "きょうはいい[天気|てんき]ですね。",
+              "ja": "あしたの[天気|てんき]は[雨|あめ]です。",
               "blank": "天気",
-              "translation": "Hari ini cuacanya bagus, ya.",
-              "distractors": []
+              "translation": "Cuaca besok hujan.",
+              "distractors": [
+                "食事",
+                "手紙",
+                "新聞"
+              ]
             }
           ]
         }
