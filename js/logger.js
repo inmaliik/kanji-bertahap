@@ -22,6 +22,9 @@ export const LOG_COLUMNS = [
   "contentRevision", // content.json revision the answer was given against
   "playerId", // random per device/player; new after progress reset
   "participantCode", // optional anonymous code entered in Settings
+  "consentStatus", // always "agreed": rows are written only after consent
+  "consentVersion", // version of data/consent.json the player agreed to
+  "consentAt", // when the player agreed
   "sessionId", // one per opening of a level
   "levelId", // level or review level (R01…) where the answer was given
   "isReview", // 1 for review levels

@@ -1,0 +1,31 @@
+{
+  "version": "placeholder-0",
+  "isPlaceholder": true,
+  "title": "[PLACEHOLDER] Persetujuan perekaman jawaban",
+  "sections": [
+    {
+      "heading": "[PLACEHOLDER] Apa yang direkam",
+      "paragraphs": [
+        "[PLACEHOLDER — Tulis di sini data apa saja yang direkam aplikasi. Redaksi harus disetujui dosen pembimbing. Daftar data yang secara teknis direkam ada di README bagian \"Layar persetujuan peserta\".]"
+      ]
+    },
+    {
+      "heading": "[PLACEHOLDER] Untuk apa data dipakai",
+      "paragraphs": [
+        "[PLACEHOLDER — Tulis di sini tujuan penggunaan data. Redaksi harus disetujui dosen pembimbing.]"
+      ]
+    },
+    {
+      "heading": "[PLACEHOLDER] Kode peserta bersifat anonim",
+      "paragraphs": [
+        "[PLACEHOLDER — Tulis di sini penjelasan kode peserta anonim. Redaksi harus disetujui dosen pembimbing.]"
+      ]
+    },
+    {
+      "heading": "[PLACEHOLDER] Boleh berhenti kapan saja",
+      "paragraphs": [
+        "[PLACEHOLDER — Tulis di sini hak peserta untuk berhenti kapan saja. Redaksi harus disetujui dosen pembimbing.]"
+      ]
+    }
+  ]
+}

@@ -20,8 +20,10 @@ Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan a
 - **D-15** — Varian soal tahap Bentuk untuk kanji yang sekaligus bushu (misalnya 食 → 食): soal apa yang dipakai sebagai pengganti?
 - **D-18** — Tabel cara baca menampilkan okurigana redup (た + べる kecil) alih-alih notasi bentuk kamus た(べる): apakah tampilan ini diterima?
 - **D-20** — Pengecoh lintas jenis bacaan (misalnya しょくべます untuk 食べます): bolehkah bentuk yang salah ditampilkan kepada pemula?
+- **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
+- **D-50** — Jika peserta berhenti atau menarik persetujuan, apakah jawaban yang sudah terekam dihapus, dan bagaimana caranya?
 
-*Terakhir diperbarui: 2026-09-13.*
+*Terakhir diperbarui: 2026-09-15.*
 
 ---
 
@@ -488,6 +490,24 @@ berbeda. Pembukaan dengan klik ganda tidak dimungkinkan karena browser memblokir
 tanpa pemasangan. **Alternatif ditolak:** Menyalin logika ke dalam satu berkas HTML (dua salinan yang bisa
 berbeda); membangun berkas gabungan otomatis (membutuhkan build step); aplikasi desktop atau makro
 spreadsheet.
+
+### D-50 · Layar persetujuan peserta, dengan pilihan bermain tanpa merekam
+**Tanggal:** 2026-09-15. **Keputusan:** Sebelum permainan pertama setiap pemain, aplikasi menampilkan layar
+persetujuan dengan dua tombol: **Saya setuju** dan **Main tanpa merekam**. Jika pemain memilih yang kedua,
+permainan berjalan normal tetapi tidak ada baris log yang ditulis maupun dikirim; semua pencatatan melewati satu
+fungsi yang memeriksa persetujuan. Pilihan, waktu, dan versi teks disimpan di progres pemain, sehingga reset
+progres mengosongkannya, dan layar muncul lagi jika versi teks berubah. Setiap baris log mencatat
+`consentStatus`, `consentVersion`, dan `consentAt`. Teks disimpan di `data/consent.json` sebagai placeholder
+yang ditandai jelas (`isPlaceholder`, spanduk "TEKS SEMENTARA") sampai redaksinya disetujui dosen pembimbing.
+Jika teks gagal dimuat, hanya pilihan tanpa merekam yang tersedia. Layar dapat dibuka lagi dari Pengaturan.
+**Alasan:** Aplikasi merekam kalimat yang diketik peserta, sehingga persetujuan diperlukan untuk penelitian.
+Pengunjung umum di pameran bukan peserta penelitian dan harus dapat bermain tanpa direkam. Menyimpan pilihan per
+pemain sesuai dengan pemakaian perangkat bergantian. Mencatat versi teks memungkinkan data yang direkam dengan
+teks placeholder atau versi lama dipisahkan saat analisis. Redaksi persetujuan adalah dokumen etika penelitian
+yang harus disetujui pembimbing, sehingga tidak dikarang pengembang dan tidak disimpan di kode. **Alternatif
+ditolak:** Persetujuan per perangkat (terbawa ke pengunjung berikutnya); teks di dalam kode; memblokir tombol
+setuju selama teks masih placeholder (menghalangi uji coba internal pencatatan). **Belum diputuskan:** penanganan
+jawaban yang sudah terekam jika peserta menarik persetujuan (saat ini tidak dihapus otomatis).
 
 ---
 

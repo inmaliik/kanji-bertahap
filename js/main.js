@@ -1,6 +1,7 @@
 // App bootstrap and hash routing.
 
-import { CONTENT_URL } from "./config.js";
+import { CONSENT_URL, CONTENT_URL } from "./config.js";
+import { loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { loadPrefs, loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
@@ -13,6 +14,7 @@ import { levelListScreen } from "./screens/level-list.js";
 import { playScreen } from "./screens/play.js";
 import { previewScreen, contentCheckScreen } from "./screens/preview.js";
 import { settingsScreen } from "./screens/settings.js";
+import { consentScreen } from "./screens/consent.js";
 
 window.__kanjiAppBooted = true;
 
@@ -25,6 +27,8 @@ const app = {
   notes: [], // content notes (information only)
   progress: null,
   prefs: null,
+  consentText: null, // data/consent.json, or null if it could not be loaded
+  consentError: null,
   notices: [], // { kind, text } shown on the level list
   jlptFilter: "all",
   render,
@@ -36,6 +40,10 @@ const ROUTES = [
   { pattern: /^#\/preview\/([^/]+)$/, screen: (id) => previewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
+  {
+    pattern: /^#\/consent$/,
+    screen: () => consentScreen(app, { afterChoice: () => (location.hash = "#/settings"), backHref: "#/settings" }),
+  },
 ];
 
 function notFoundScreen() {
@@ -84,7 +92,9 @@ function navigate() {
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const result = await loadContent(CONTENT_URL);
+  const [result, consent] = await Promise.all([loadContent(CONTENT_URL), loadConsentText(CONSENT_URL)]);
+  app.consentText = consent.text;
+  app.consentError = consent.error;
   if (!result.content) {
     root.replaceChildren(contentErrorScreen(result));
     return;

@@ -7,6 +7,7 @@ import { flushLog, getSenderStatus, subscribeSenderStatus } from "../log-sender.
 import { resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
 import { isStorageAvailable } from "../storage.js";
 import { backLink } from "./common.js";
+import { consentStatusText } from "./consent.js";
 
 const DELETE_CONFIRM_WORD = "HAPUS";
 const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
@@ -115,7 +116,7 @@ export function settingsScreen(app) {
         title: "Reset progres di perangkat ini?",
         details: [
           "Semua progres level dihapus, termasuk level yang sudah lulus.",
-          "Pemain berikutnya mendapat ID pemain baru dan kode peserta dikosongkan.",
+          "Pemain berikutnya mendapat ID pemain baru; kode peserta dan pilihan persetujuan dikosongkan.",
           "Riwayat jawaban (log) tidak dihapus.",
         ],
         confirmLabel: "Ya, reset progres",
@@ -124,6 +125,20 @@ export function settingsScreen(app) {
           setMessage("reset", "success", "✓ Progres direset. Perangkat siap untuk pemain berikutnya.");
         },
       })
+    );
+  }
+
+  function consentCard() {
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "consent-title" },
+      h("h2", { id: "consent-title" }, "Persetujuan perekaman"),
+      h("p", {}, "Pemain saat ini: ", h("strong", {}, consentStatusText(app))),
+      app.consentText
+        ? h("p", { class: "muted" }, `Versi teks: ${app.consentText.version}${app.consentText.isPlaceholder ? " (TEKS SEMENTARA)" : ""}`)
+        : h("p", { class: "notice notice--error" }, `✗ Teks persetujuan tidak bisa dimuat: ${app.consentError}`),
+      h("p", { class: "muted" }, "Layar persetujuan muncul otomatis sebelum permainan pertama setiap pemain, termasuk setelah reset."),
+      h("a", { class: "button button--block", href: "#/consent" }, "Buka layar persetujuan")
     );
   }
 
@@ -392,6 +407,7 @@ export function settingsScreen(app) {
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),
       resetCard(),
+      consentCard(),
       participantCard(),
       logCard(),
       contentCard()

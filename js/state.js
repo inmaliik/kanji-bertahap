@@ -69,10 +69,13 @@ export function createId() {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+export const CONSENT_CHOICE = Object.freeze({ AGREED: "agreed", DECLINED: "declined" });
+
 export function createProgress(now = new Date()) {
   return {
     playerId: createId(),
     participantCode: null,
+    consent: null, // { choice, version, at } — asked again when the consent text version changes
     createdAt: now.toISOString(),
     lastPlayed: null,
     levels: {},
@@ -101,6 +104,7 @@ function isValidProgress(value) {
 // Fill fields added after a progress object was first written.
 function normalizeProgress(progress) {
   progress.participantCode ??= null;
+  progress.consent ??= null;
   progress.createdAt ??= null;
   progress.lastPlayed ??= null;
   for (const [id, entry] of Object.entries(progress.levels)) {
@@ -277,3 +281,29 @@ export function loadPrefs() {
 export function savePrefs(prefs) {
   return writeJson(PREFS_KEY, prefs);
 }
+
+// ---------------------------------------------------------------------------
+// Consent to record answers (D-50)
+
+/**
+ * "agreed" or "declined" for the current consent text version, otherwise
+ * "undecided" (never asked, or asked with an older version of the text).
+ * @param {string|null} currentVersion null when the consent text could not be loaded
+ */
+export function consentStatus(progress, currentVersion) {
+  const consent = progress.consent;
+  if (!consent) return "undecided";
+  if (consent.choice === CONSENT_CHOICE.DECLINED) return CONSENT_CHOICE.DECLINED;
+  if (consent.choice === CONSENT_CHOICE.AGREED && currentVersion && consent.version === currentVersion) {
+    return CONSENT_CHOICE.AGREED;
+  }
+  return "undecided";
+}
+
+export function setConsent(progress, choice, version, now = new Date()) {
+  progress.consent = { choice, version, at: now.toISOString() };
+}
+
+/** Answers are written to the log only after agreeing to the current consent text. */
+export const isRecordingAllowed = (progress, currentVersion) =>
+  consentStatus(progress, currentVersion) === CONSENT_CHOICE.AGREED;

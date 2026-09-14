@@ -49,6 +49,7 @@ karena aplikasi tidak memakainya.
 index.html                  halaman utama + pesan untuk file://
 css/style.css               tampilan (mobile-first)
 data/content.json           SELURUH materi pembelajaran
+data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
@@ -58,6 +59,7 @@ js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
 js/tab-guard.js             peringatan jika aplikasi terbuka di tab lain
+js/consent.js               memuat dan memeriksa teks persetujuan (data/consent.json)
 js/content.js               memuat content.json, mengelompokkan level, menurunkan item soal
 js/chapters.js              bab Minna sebuah level, dihitung dari kotobanya
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
@@ -79,7 +81,8 @@ js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
 js/screens/level-list.js    daftar level, status terkunci, kartu level ulangan
 js/screens/play.js          layar bermain: menjalankan sesi, mencatat log
 js/screens/preview.js       pratinjau materi (per level dan semua level, bisa dicetak), pemeriksaan konten
-js/screens/settings.js      pengaturan: reset, kode peserta, kapasitas, pengiriman, ekspor, hapus log
+js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
+js/screens/consent.js       layar persetujuan perekaman
 
 tools/convert.html          pemeriksa dan konverter CSV → content.json di browser (untuk tim konten)
 tools/csv-to-json.mjs       konversi CSV → data/content.json dari terminal
@@ -537,6 +540,62 @@ dan memulai progres baru.
 > Buka aplikasi di **satu tab saja** per perangkat. Dua tab yang terbuka bersamaan saling menimpa
 > progres; yang terakhir menyimpan yang berlaku.
 
+## Layar persetujuan peserta
+
+Aplikasi merekam jawaban peserta, termasuk kalimat yang mereka ketik sendiri di tahap 5. Karena itu setiap
+pemain memilih lebih dulu, **sebelum permainan pertama**:
+
+- **Saya setuju** — jawaban direkam dan dikirim seperti biasa.
+- **Main tanpa merekam** — permainan berjalan normal, tetapi **tidak ada satu baris log pun yang ditulis maupun
+  dikirim**. Pilihan untuk pengunjung umum di pameran yang bukan peserta penelitian.
+
+Layar ini muncul lagi setelah **Reset progres** (pemain berikutnya), dan ketika **versi teks persetujuan
+berubah**. Pilihan beserta waktunya disimpan, dan setiap baris log mencatat `consentStatus`, `consentVersion`,
+dan `consentAt`. Pemain dapat membuka layar ini lagi dari ⚙ Pengaturan → Persetujuan perekaman dan mengubah
+pilihannya; perubahan berlaku untuk jawaban berikutnya.
+
+> ⚠ **Teks persetujuan saat ini adalah PLACEHOLDER** dan belum boleh dipakai untuk peserta penelitian.
+> Redaksinya harus disetujui dosen pembimbing.
+
+### Mengganti teks persetujuan
+
+Teksnya ada di `data/consent.json`, bukan di kode:
+
+```json
+{
+  "version": "v1-2026-10",
+  "isPlaceholder": false,
+  "title": "Judul layar",
+  "sections": [
+    { "heading": "Judul bagian", "paragraphs": ["Paragraf 1", "Paragraf 2"] }
+  ]
+}
+```
+
+1. Tulis redaksi yang sudah disetujui dosen pembimbing di `title` dan `sections`. Jumlah bagian bebas.
+2. Ubah `isPlaceholder` menjadi `false` (spanduk "TEKS SEMENTARA" hilang).
+3. **Ganti `version`** setiap kali redaksi berubah. Semua pemain akan diminta memilih ulang, dan log mencatat
+   versi yang disetujui. Data yang direkam dengan versi `placeholder-0` dapat disaring dari analisis.
+4. Unggah ulang aplikasi ke Netlify.
+
+### Data yang secara teknis direkam (bahan penyusunan teks)
+
+Daftar ini fakta teknis untuk membantu penyusun teks, **bukan** redaksi persetujuan. Untuk setiap jawaban:
+
+- waktu menjawab dan lama berpikir (milidetik), serta apakah tab sempat ditinggalkan;
+- ID pemain acak (dibuat di perangkat, bukan identitas), kode peserta jika diisi, dan ID sesi;
+- level, tahap, soal yang ditampilkan, pilihan jawaban beserta urutannya, jawaban yang dipilih, benar atau
+  salah, dan apakah bantuan "Tampilkan arti" dipakai;
+- di tahap 5: **kalimat yang diketik peserta apa adanya** dan penilaian dirinya ("sudah mirip"/"masih ragu");
+- versi aplikasi, revisi materi, dan status serta versi persetujuan.
+
+Aplikasi tidak merekam nama, NIM, alamat email, lokasi, atau informasi perangkat. Data disimpan di perangkat
+dan, jika pengiriman diaktifkan, dikirim ke Google Sheet milik tim.
+
+**Belum diputuskan:** jika peserta berhenti atau mengubah pilihan menjadi "Main tanpa merekam", jawaban yang
+**sudah** terekam sebelumnya tidak dihapus otomatis. Kebijakan penanganannya perlu diputuskan bersama dosen
+pembimbing (lihat daftar di awal `DECISIONS.md`).
+
 ## Pengaturan
 
 Dibuka dari tombol **⚙ Pengaturan** di daftar level.
@@ -544,6 +603,7 @@ Dibuka dari tombol **⚙ Pengaturan** di daftar level.
 | Bagian | Isi |
 |---|---|
 | Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). |
+| Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. |
 | Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
 | Materi | Revisi materi, tanda DRAF, tautan pratinjau semua level dan per level, pemeriksaan konten. |
@@ -561,6 +621,7 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | `rowId` | ID unik tiap baris. Dipakai spreadsheet untuk membuang baris yang terkirim dua kali. |
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
 | `participantCode` | Kode peserta anonim, jika diisi. |
+| `consentStatus`, `consentVersion`, `consentAt` | Selalu `agreed` (baris hanya ditulis setelah persetujuan), versi teks persetujuan yang disetujui, dan waktunya. |
 | `levelId`, `isReview` | Level tempat soal dijawab (`L01`, `R01`, …) dan 1 jika level ulangan. |
 | `phase` | `learning`, `consolidation`, `spacer`, `production`, atau `review`. |
 | `stage` | `shape`, `kunyomi`, `onyomi`, `sentence`, atau `production`. |
@@ -782,6 +843,9 @@ Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi.
 2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**
    (bentuknya huruf lalu angka, misalnya `K4-01`), lalu **Simpan kode**. Jangan pernah mengisi nama atau NIM.
 3. Tekan **‹ Daftar level**, serahkan perangkat ke pengunjung.
+4. Saat pengunjung membuka level pertama, **layar persetujuan** muncul:
+   - **Pengunjung umum** (bukan peserta penelitian): minta mereka memilih **Main tanpa merekam**.
+   - **Peserta penelitian**: minta mereka membaca teksnya sampai selesai, lalu memilih sendiri. Jangan memilihkan.
 
 Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim.
 
@@ -955,6 +1019,10 @@ Dijalankan oleh koordinator data dan penjaga stan.
 - [ ] Bagian [Prosedur pameran](#prosedur-pameran-untuk-penjaga-stan) sudah **dicetak** dan ada di meja stan.
 - [ ] Penjaga stan sudah berlatih: reset, mengisi kode peserta, membaca status pengiriman, ekspor CSV, dan
       menangani spanduk tab ganda.
+- [ ] Teks persetujuan di `data/consent.json` sudah diganti dengan redaksi yang disetujui dosen pembimbing,
+      `isPlaceholder` bernilai `false`, dan `version` sudah diganti. Layar persetujuan dibuka ulang dan spanduk
+      **TEKS SEMENTARA** sudah tidak muncul.
+- [ ] Kebijakan untuk jawaban peserta yang berhenti di tengah jalan sudah diputuskan dan dijelaskan di teks persetujuan.
 - [ ] Jika ada peserta penelitian: daftar kode peserta anonim (misalnya `K4-01`, `K4-02`, …) sudah disiapkan
       peneliti, terpisah dari daftar nama.
 - [ ] Nomor telepon koordinator data tertulis di lembar prosedur.

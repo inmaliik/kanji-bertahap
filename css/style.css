@@ -1752,3 +1752,22 @@ rt {
 .converter__fatal {
   white-space: pre-line;
 }
+
+/* Consent screen ------------------------------------------------------------------ */
+
+.consent__placeholder {
+  font-weight: 800;
+}
+
+.consent__section h2 {
+  font-size: 1.05rem;
+}
+
+.consent__actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.consent__version {
+  font-size: 0.8125rem;
+}

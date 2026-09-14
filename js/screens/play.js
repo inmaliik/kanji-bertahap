@@ -12,7 +12,9 @@ import {
   beginAttempt,
   buildProgression,
   computeStatuses,
+  consentStatus,
   createId,
+  isRecordingAllowed,
   LEVEL_STATUS,
   sampleReviewItems,
   saveProgress,
@@ -23,6 +25,7 @@ import { renderReading } from "../stages/reading.js";
 import { renderSentence } from "../stages/sentence.js";
 import { renderProduction } from "../stages/production.js";
 import { backLink, LABELS } from "./common.js";
+import { consentScreen } from "./consent.js";
 
 const STAGE_RENDERERS = {
   shape: renderShape,
@@ -81,6 +84,12 @@ export function playScreen(app, nodeId) {
     );
   }
 
+  // Each player decides about recording before their first game (D-50).
+  const consentVersion = app.consentText?.version ?? null;
+  if (consentStatus(app.progress, consentVersion) === "undecided") {
+    return consentScreen(app, { afterChoice: () => app.render(), backHref: "#/" });
+  }
+
   const entry = status === LEVEL_STATUS.PASSED ? app.progress.levels[node.id] : beginAttempt(app.progress, node.id);
   const items = isReview ? groupByStage(reviewItems(app, node, entry)) : buildLevelItems(node.level);
   saveProgress(app.progress);
@@ -113,6 +122,19 @@ export function playScreen(app, nodeId) {
     if (document.hidden) hiddenDuringItem = true;
   };
   document.addEventListener("visibilitychange", onVisibility);
+
+  // The only path to the log. Nothing is written (and so nothing is sent)
+  // unless the player agreed to the current consent text.
+  function record(fields) {
+    if (!isRecordingAllowed(app.progress, consentVersion)) return;
+    logAnswer({
+      ...baseRecord(),
+      consentStatus: app.progress.consent.choice,
+      consentVersion: app.progress.consent.version,
+      consentAt: app.progress.consent.at,
+      ...fields,
+    });
+  }
 
   const baseRecord = () => ({
     appVersion: APP_VERSION,
@@ -191,8 +213,7 @@ export function playScreen(app, nodeId) {
       onAnswer: ({ prompt, options, correctAnswer, answer, answerType, hintUsed, correct }) => {
         const responseMs = Math.round(performance.now() - shownAt);
         const result = session.answer(correct);
-        logAnswer({
-          ...baseRecord(),
+        record({
           phase: logPhase(step),
           stage: step.item.stage,
           itemId: step.item.id,
@@ -222,8 +243,7 @@ export function playScreen(app, nodeId) {
       isRevealed: revealRule(step.phase, level),
       onSubmit: ({ sentence, selfAssessment, writingMs }) => {
         session.submitProduction();
-        logAnswer({
-          ...baseRecord(),
+        record({
           phase: step.phase,
           stage: "production",
           itemId: itemId.production(level.id),

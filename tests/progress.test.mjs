@@ -122,3 +122,22 @@ test("createId works without crypto.randomUUID", () => {
     globalThis.crypto.randomUUID = original;
   }
 });
+
+test("recording requires agreeing to the current consent text version", async () => {
+  const { validateConsentText } = await import(jsModule("consent.js"));
+  const { readFileSync } = await import("node:fs");
+  const repoText = JSON.parse(readFileSync(new URL("../data/consent.json", import.meta.url), "utf8"));
+  assert.deepEqual(validateConsentText(repoText), [], "data/consent.json is valid");
+  assert.ok(validateConsentText({ version: "", title: "x", sections: [] }).length >= 2);
+
+  const progress = S.createProgress();
+  assert.equal(S.consentStatus(progress, "v1"), "undecided");
+  assert.equal(S.isRecordingAllowed(progress, "v1"), false);
+  S.setConsent(progress, S.CONSENT_CHOICE.DECLINED, "v1");
+  assert.equal(S.isRecordingAllowed(progress, "v1"), false);
+  S.setConsent(progress, S.CONSENT_CHOICE.AGREED, "v1");
+  assert.equal(S.isRecordingAllowed(progress, "v1"), true);
+  assert.equal(S.consentStatus(progress, "v2"), "undecided", "a new text version asks again");
+  assert.equal(S.isRecordingAllowed(progress, null), false, "no recording when the text failed to load");
+  assert.equal(S.createProgress().consent, null, "a reset clears consent");
+});
