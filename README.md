@@ -10,7 +10,8 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 > **Status:** scaffold selesai (langkah 5 dari 5). Semua fitur ada dan teruji dengan data uji 33 level.
 > `data/content.json` masih berisi **tiga level contoh** dengan urutan sementara; materi sungguhan
 > menunggu urutan kanji dari mata kuliah Hyouki. Lihat [Sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)
-> dan [Sebelum pameran](#daftar-periksa-sebelum-pameran) di akhir dokumen ini.
+> dan [Sebelum pameran](#daftar-periksa-sebelum-pameran) di akhir dokumen ini. Hal yang masih menghalangi uji
+> coba sungguhan dicatat di [`BLOCKERS.md`](BLOCKERS.md).
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
@@ -37,9 +38,75 @@ python3 -m http.server 8000     # Windows: python -m http.server 8000
 ```
 Lalu buka <http://localhost:8000>. Tekan Ctrl+C untuk berhenti.
 
-**Netlify**
-Seret folder proyek ke <https://app.netlify.com/drop>. Folder `tools/` ikut terunggah; tidak masalah,
-karena aplikasi tidak memakainya.
+**Netlify** — untuk tautan yang bisa dibuka siapa pun, termasuk validator ahli. Lihat
+[Menaruh aplikasi di Netlify](#menaruh-aplikasi-di-netlify).
+
+---
+
+## Menaruh aplikasi di Netlify
+
+Tanpa perintah baris perintah. Hasilnya tautan seperti `https://kanji-bertahap.netlify.app` yang bisa
+dibuka dari ponsel atau komputer mana pun. Nama menu di bawah mengikuti tampilan Netlify berbahasa Inggris
+dan bisa sedikit berbeda.
+
+### 1. Siapkan folder unggahan
+
+Buat folder baru, misalnya `kanji-bertahap-situs`, lalu **salin** isi berikut dari folder proyek ke dalamnya:
+
+| Salin | Jangan salin |
+|---|---|
+| `index.html` | `.git` (folder tersembunyi) |
+| `css/` | `tests/` |
+| `js/` | `README.md`, `DECISIONS.md`, `BLOCKERS.md` |
+| `data/` | file CSV ekspor log jawaban |
+| `tools/` (berisi pemeriksa materi untuk tim konten) | |
+
+Dokumen internal tidak disalin karena semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya.
+
+Sebelum menyalin, pastikan:
+- `data/content.json` adalah versi materi yang ingin ditampilkan (periksa revisinya);
+- jika pengiriman log sudah siap, `js/config.js` sudah berisi `LOG_REMOTE_ENABLED = true` dan URL Apps Script
+  (lihat [Pengiriman log](#pengiriman-log-ke-google-apps-script)).
+
+### 2. Unggah pertama kali
+
+1. Buka <https://app.netlify.com> dan buat akun gratis (bisa dengan akun Google). Akun diperlukan supaya situs
+   tidak terhapus dan bisa diperbarui.
+2. Di halaman **Sites**, pilih **Add new site → Deploy manually**.
+3. **Seret folder `kanji-bertahap-situs`** (foldernya, bukan isinya satu per satu) ke kotak unggah.
+4. Tunggu sampai status **Published**. Netlify memberi nama acak, misalnya `https://acak-12345.netlify.app`.
+
+### 3. Beri nama yang mudah
+
+1. Buka situsnya → **Site configuration** → **General** → **Site details** → **Change site name**.
+2. Isi nama, misalnya `kanji-bertahap`. Tautannya menjadi `https://kanji-bertahap.netlify.app`.
+
+### 4. Periksa hasilnya
+
+- [ ] Tautan utama membuka daftar level di ponsel.
+- [ ] `https://nama-situs.netlify.app/tools/convert.html` membuka pemeriksa materi.
+- [ ] ⚙ Pengaturan → **Pratinjau semua materi** menampilkan materi dengan revisi yang benar.
+- [ ] Satu level bisa dimainkan sampai layar persetujuan dan soal pertama.
+
+### 5. Memperbarui situs
+
+Setiap kali materi atau aplikasi berubah:
+
+1. Siapkan ulang folder unggahan (langkah 1) dengan file terbaru.
+2. Buka situs di Netlify → tab **Deploys**.
+3. Seret folder ke kotak **"Need to update your site? Drag and drop your site output folder here"**.
+4. Tautan tetap sama. Di ponsel, muat ulang halaman untuk melihat versi baru.
+
+Jika pembaruan ternyata salah: tab **Deploys** → pilih unggahan sebelumnya → **Publish deploy**.
+
+### Tautan untuk validator ahli
+
+Berikan tautan langsung ke pratinjau: `https://nama-situs.netlify.app/#/preview/all`. Sebelum mengirimnya,
+jalankan [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli). Selama revisi
+materi masih `draft-…`, halaman itu bertanda DRAF dan **tidak boleh** dikirim ke validator.
+
+Situs dapat dibuka siapa pun yang mengetahui tautannya. Jangan menaruh data jawaban peserta di folder
+unggahan.
 
 ---
 
@@ -93,6 +160,7 @@ tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
 tests/                      uji otomatis logika inti (lihat "Uji otomatis")
 DECISIONS.md                catatan keputusan desain beserta alasannya
+BLOCKERS.md                 hal yang masih menghalangi uji coba sungguhan
 ```
 
 ---
@@ -1009,7 +1077,7 @@ Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dik
 
 Dijalankan oleh koordinator data dan penjaga stan.
 
-- [ ] Aplikasi dengan materi final sudah di-deploy ke Netlify, dan tautannya sudah dicoba.
+- [ ] Aplikasi dengan materi final sudah di-deploy ke Netlify (lihat [Menaruh aplikasi di Netlify](#menaruh-aplikasi-di-netlify)), dan tautannya sudah dicoba.
 - [ ] Pengujian tim nomor 2 (endpoint Apps Script) sudah lolos, dan `LOG_REMOTE_ENABLED` aktif di versi
       yang di-deploy.
 - [ ] Pengujian tim nomor 3 (CSV di iPhone) sudah lolos.

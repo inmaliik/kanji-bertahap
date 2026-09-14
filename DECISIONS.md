@@ -509,6 +509,17 @@ ditolak:** Persetujuan per perangkat (terbawa ke pengunjung berikutnya); teks di
 setuju selama teks masih placeholder (menghalangi uji coba internal pencatatan). **Belum diputuskan:** penanganan
 jawaban yang sudah terekam jika peserta menarik persetujuan (saat ini tidak dihapus otomatis).
 
+### D-51 · Deploy lewat unggah folder Netlify, tanpa dokumen internal
+**Tanggal:** 2026-09-15. **Keputusan:** Aplikasi ditaruh di Netlify dengan menyeret folder unggahan berisi
+`index.html`, `css/`, `js/`, `data/`, dan `tools/`. Folder `.git`, `tests/`, `README.md`, `DECISIONS.md`,
+`BLOCKERS.md`, dan file ekspor log tidak ikut diunggah. Langkahnya ditulis di README untuk orang yang tidak
+memakai baris perintah, termasuk cara memperbarui dan mengembalikan versi sebelumnya. **Alasan:** Tim membutuhkan
+tautan untuk validator lebih cepat dari rencana, dan tidak ada anggota tim yang diharapkan memakai baris
+perintah. Semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya, sehingga dokumen internal dan
+data peserta tidak boleh ikut. `tools/` tetap diunggah karena memuat pemeriksa materi untuk tim konten (D-49).
+**Alternatif ditolak:** Menghubungkan repositori Git ke Netlify (membutuhkan repositori daring dan akses Git);
+mengunggah seluruh folder proyek.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
