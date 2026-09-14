@@ -52,6 +52,7 @@
               "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
               "blank": "食べます",
               "translation": "Setiap pagi saya makan roti.",
+              "sentenceChapter": 6,
               "distractors": [
                 "飲みます",
                 "読みます",
@@ -62,6 +63,7 @@
               "ja": "レストランで[晩|ばん]ごはんを[食|た]べます。",
               "blank": "食べます",
               "translation": "Saya makan malam di restoran.",
+              "sentenceChapter": 8,
               "distractors": [
                 "飲みます",
                 "読みます",
@@ -89,6 +91,7 @@
               "ja": "[食堂|しょくどう]で[昼|ひる]ごはんを[食|た]べます。",
               "blank": "食堂",
               "translation": "Saya makan siang di kantin.",
+              "sentenceChapter": 6,
               "distractors": [
                 "天気",
                 "新聞",
@@ -116,6 +119,7 @@
               "ja": "[家族|かぞく]と[食事|しょくじ]をします。",
               "blank": "食事",
               "translation": "Saya bersantap bersama keluarga.",
+              "sentenceChapter": 13,
               "distractors": [
                 "天気",
                 "手紙",
@@ -176,6 +180,7 @@
               "ja": "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。",
               "blank": "飲みます",
               "translation": "Setiap malam saya minum teh.",
+              "sentenceChapter": 6,
               "distractors": [
                 "食べます",
                 "読みます",
@@ -186,6 +191,7 @@
               "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
               "blank": "飲みます",
               "translation": "Pagi hari saya minum susu.",
+              "sentenceChapter": 6,
               "distractors": [
                 "食べます",
                 "読みます",
@@ -241,6 +247,7 @@
               "ja": "[電気|でんき]をつけます。",
               "blank": "電気",
               "translation": "Saya menyalakan lampu.",
+              "sentenceChapter": 14,
               "distractors": [
                 "天気",
                 "雨",
@@ -268,6 +275,7 @@
               "ja": "お[元気|げんき]ですか。",
               "blank": "元気",
               "translation": "Apa kabar? (Apakah Anda sehat?)",
+              "sentenceChapter": 8,
               "distractors": [
                 "有名",
                 "便利",
@@ -295,6 +303,7 @@
               "ja": "あしたの[天気|てんき]は[雨|あめ]です。",
               "blank": "天気",
               "translation": "Cuaca besok hujan.",
+              "sentenceChapter": 12,
               "distractors": [
                 "食事",
                 "手紙",

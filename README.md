@@ -154,6 +154,7 @@ Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`.
 | `example_ja` | Kalimat dengan sintaks furigana | `[毎朝\|まいあさ]パンを[食\|た]べます。` |
 | `example_blank` | Bagian kalimat yang dikosongkan di tahap 4 | `食べます` |
 | `example_translation` | Terjemahan | `Setiap pagi saya makan roti.` |
+| `example_sentence_chapter` | **Wajib.** Bab Minna tertinggi yang dibutuhkan kalimat ini, dari kosakata maupun pola kalimatnya. `-` jika memakai kata atau pola di luar buku. Lihat [Kalimat tidak boleh mendahului pelajaran](#kalimat-tidak-boleh-mendahului-pelajaran) | `6` |
 | `example_distractors` | ***Wajib, minimal 3.*** Pengecoh buatan tim untuk tahap 4 | `飲みます;読みます;聞きます` |
 
 Kotoba tanpa contoh kalimat: tulis satu baris dengan keempat kolom `example_*` kosong.
@@ -241,6 +242,7 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 | `ja` | ya | Kalimat dengan sintaks furigana. |
 | `blank` | ya | Lihat [Aturan `blank`](#aturan-blank). |
 | `translation` | ya | Terjemahan bahasa Indonesia. |
+| `sentenceChapter` | ya | Bab Minna tertinggi yang dibutuhkan kalimat (kosakata dan pola kalimat), atau `null` jika memakai kata/pola di luar buku. Peringatan jika lebih tinggi dari `chapter` kotobanya. Ditampilkan di pratinjau. |
 | `distractors` | **ya** | Minimal 3 pengecoh buatan tim untuk tahap 4. Kurang dari itu adalah error. |
 
 ## Menulis pengecoh
@@ -292,7 +294,14 @@ Setiap pengecoh harus:
 ## Menulis kalimat contoh yang tidak ambigu
 
 Kalimat contoh dipakai sebagai soal di tahap 4, jadi konteksnya harus cukup untuk menentukan **satu**
-jawaban. Dua kalimat berikut pernah ada di materi contoh dan dibuang karena cacat ini.
+jawaban.
+
+> ⚠ **Pengecoh yang ternyata juga benar adalah jenis cacat yang paling sering ditemukan di proyek ini.**
+> Selama pengembangan, cacat ini muncul tiga kali (T-01 dan T-11 di `DECISIONS.md`), termasuk pada
+> kalimat yang ditulis dengan hati-hati. Kode tidak bisa mendeteksinya. Satu-satunya pengaman adalah
+> memeriksa setiap pengecoh di dalam kalimatnya, satu per satu, dan meminta orang lain mengerjakan soalnya.
+
+Tiga kasus berikut pernah ada di materi contoh dan diganti karena cacat ini.
 
 **Kasus 1 — konteks terlalu terbuka**
 
@@ -324,11 +333,34 @@ yang hanya cocok dengan kotoba sasaran** (雨 hanya cocok dengan 天気).
 Pelajarannya: jika kalimat memakai kata kerja yang maknanya banyak, periksa pengecoh terhadap **semua**
 makna kata kerja itu, bukan hanya makna yang dimaksud.
 
+### Kalimat tidak boleh mendahului pelajaran
+
+Kalimat contoh juga tidak boleh memakai kosakata atau pola kalimat yang **belum dipelajari** mahasiswa
+ketika kotoba itu diajarkan. Jika dilanggar, produk ini justru menambah beban, padahal beban itulah yang
+ingin dikurangi.
+
+Karena itu setiap kalimat wajib diberi `example_sentence_chapter`: **bab Minna tertinggi yang dibutuhkan
+kalimat itu**, dilihat dari semua kosakata dan pola kalimatnya, bukan hanya kotoba yang dikosongkan.
+Pemeriksa konten memberi **peringatan** jika nilainya lebih tinggi daripada bab kotoba yang diujikan.
+Peringatan, bukan error, karena kadang memang tidak terhindarkan; tetapi setiap peringatan harus dibaca dan
+diputuskan.
+
+**Contoh pelanggaran**
+
+| | Kalimat | Kotoba diujikan | Bab kalimat | Masalah |
+|---|---|---|---|---|
+| ⚠ | 電気をつけます。 | 電気 (bab 1) | 14 (つけます) | Mahasiswa sudah mengenal 電気 sejak bab 1, tetapi kata kerja つけます baru diajarkan jauh sesudahnya. Soal untuk kata bab 1 menuntut kata bab 14. |
+
+Cara menentukan nilainya: tulis bab setiap kata dan setiap pola kalimat di kalimat itu (termasuk partikel
+dan bentuk kata kerja seperti ～ています atau ～たいです), lalu ambil **yang tertinggi**.
+
 **Daftar periksa sebelum menulis satu kalimat**
 1. Tutup bagian `blank`, lalu pasang setiap pengecoh satu per satu. Apakah ada yang tetap
    menghasilkan kalimat wajar? Jika ya, ganti pengecohnya atau ganti kalimatnya.
 2. Apakah konteks kalimat memuat kata yang **hanya** cocok dengan kotoba sasaran?
-3. Minta anggota tim lain mengerjakan soalnya tanpa melihat jawaban.
+3. Apakah semua kata dan pola kalimat sudah dipelajari pada bab kotoba sasaran? Isi
+   `example_sentence_chapter` dengan bab tertinggi.
+4. Minta anggota tim lain mengerjakan soalnya tanpa melihat jawaban.
 
 ## Tampilan cara baca
 
@@ -353,6 +385,19 @@ Tim konten mencentang setiap baris setelah memeriksa nomor babnya langsung di �
   - [x] 電気 — bab 1
   - [ ] 元気 — bab 8 *(belum terverifikasi)*
   - [ ] 天気 — bab 12 *(belum terverifikasi)*
+
+**Bab yang dibutuhkan kalimat (`sentenceChapter`)** — semua nilai di data contoh adalah **perkiraan
+pengembang** dan belum diperiksa:
+
+- [ ] 毎朝パンを食べます。 — bab 6
+- [ ] レストランで晩ごはんを食べます。 — bab 8
+- [ ] 食堂で昼ごはんを食べます。 — bab 6
+- [ ] 家族と食事をします。 — bab 13
+- [ ] 毎晩お茶を飲みます。 — bab 6
+- [ ] 朝、牛乳を飲みます。 — bab 6
+- [ ] 電気をつけます。 — bab 14
+- [ ] お元気ですか。 — bab 8
+- [ ] あしたの天気は雨です。 — bab 12
 
 Bab yang sudah terverifikasi untuk konten mendatang (belum ada di data): 銀行員 — bab 1,
 自転車 — bab 5, 行きます — bab 5.

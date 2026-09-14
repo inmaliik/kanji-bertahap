@@ -1542,6 +1542,17 @@ rt {
   color: var(--muted);
 }
 
+.sentence-chapter {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.sentence-chapter--ahead {
+  color: var(--warning);
+  font-weight: 600;
+}
+
 .preview-list {
   margin: 0.25rem 0;
 }

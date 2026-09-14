@@ -37,7 +37,7 @@ const KOTOBA_KEYS = [
   "word", "reading", "readingType", "pos", "meaning", "chapter", "note",
   "readingDistractors", "readingDistractorsCross", "examples",
 ];
-const EXAMPLE_KEYS = ["ja", "blank", "translation", "distractors"];
+const EXAMPLE_KEYS = ["ja", "blank", "translation", "sentenceChapter", "distractors"];
 
 // Stable item ids derived from content, never from array positions, so that
 // reordering rows during revisions keeps progress and logs comparable.
@@ -146,12 +146,12 @@ function stringArray(obj, key, ctx, report, { required }) {
   return value;
 }
 
-function checkChapter(obj, ctx, report) {
-  const value = obj.chapter;
+function checkChapter(obj, ctx, report, key = "chapter") {
+  const value = obj[key];
   if (value === null) return null;
   if (!Number.isInteger(value) || value < CHAPTER_MIN || value > CHAPTER_MAX) {
     report.error(
-      ctx.field("chapter"),
+      ctx.field(key),
       "INVALID_CHAPTER",
       `Harus bilangan bulat ${CHAPTER_MIN}–${CHAPTER_MAX}, atau null jika tidak ada di buku. Ditemukan ${show(value)}.`
     );
@@ -474,7 +474,7 @@ function validateKotoba(kotoba, index, level, parentCtx, report, sentenceIds) {
     report.error(ctx.field("examples"), "EXPECTED_ARRAY", `Harus berupa daftar [...], ditemukan ${show(kotoba.examples)}. Tulis [] jika tidak ada contoh.`);
   } else {
     kotoba.examples.forEach((example, k) => {
-      validateExample(example, k, level, ctx.child("examples", ""), report, sentenceIds);
+      validateExample(example, k, { ...level, kotobaChapter: chapter }, ctx.child("examples", ""), report, sentenceIds);
     });
     exampleCount = kotoba.examples.length;
   }
@@ -509,6 +509,7 @@ function validateExample(example, index, level, parentCtx, report, sentenceIds) 
   }
 
   requireString(example, "translation", ctx, report);
+  checkSentenceChapter(example, parsed, level.kotobaChapter, ctx, report);
 
   const distractors = stringArray(example, "distractors", ctx, report, { required: true });
   (distractors ?? []).forEach((d, i) => {
@@ -537,6 +538,38 @@ function validateExample(example, index, level, parentCtx, report, sentenceIds) 
     } else {
       sentenceIds.set(id, ctx.where);
     }
+  }
+}
+
+// A sentence should not need vocabulary or grammar from a later Minna chapter
+// than the kotoba it tests (D-48). Only a warning: sometimes unavoidable.
+function checkSentenceChapter(example, parsed, kotobaChapter, ctx, report) {
+  const sctx = ctx.field("sentenceChapter");
+  if (!("sentenceChapter" in example)) {
+    report.error(
+      sctx,
+      "MISSING_SENTENCE_CHAPTER",
+      "Wajib ada: bab Minna tertinggi yang dibutuhkan kalimat ini, dari kosakata maupun pola kalimatnya " +
+        "(kolom example_sentence_chapter). Isi null jika kalimat memakai kata atau pola di luar buku."
+    );
+    return;
+  }
+  const sentenceChapter = checkChapter(example, ctx, report, "sentenceChapter");
+  const sentenceText = parsed ? `"${parsed.plain}"` : "ini";
+  if (sentenceChapter === null) {
+    report.warn(
+      sctx,
+      "SENTENCE_OUTSIDE_BOOK",
+      `Kalimat ${sentenceText} memakai kata atau pola kalimat di luar buku. Pastikan mahasiswa sudah mengenalnya.`
+    );
+  } else if (Number.isInteger(sentenceChapter) && Number.isInteger(kotobaChapter) && sentenceChapter > kotobaChapter) {
+    report.warn(
+      sctx,
+      "SENTENCE_AHEAD_OF_KOTOBA",
+      `Kalimat ${sentenceText} membutuhkan materi sampai bab ${sentenceChapter}, padahal kotoba yang diujikan ` +
+        `diajarkan di bab ${kotobaChapter}. Mahasiswa yang baru sampai bab ${kotobaChapter} bisa terbebani ` +
+        "kata atau pola yang belum dipelajari. Pertimbangkan kalimat yang lebih sederhana."
+    );
   }
 }
 

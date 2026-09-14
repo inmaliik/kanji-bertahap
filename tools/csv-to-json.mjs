@@ -24,7 +24,7 @@ const KOTOBA_COLUMNS = [
   "word", "word_reading", "reading_type", "pos", "word_meaning", "word_chapter",
   "word_note", "reading_distractors", "reading_distractors_cross",
 ];
-const EXAMPLE_COLUMNS = ["example_ja", "example_blank", "example_translation", "example_distractors"];
+const EXAMPLE_COLUMNS = ["example_ja", "example_blank", "example_translation", "example_sentence_chapter", "example_distractors"];
 const ALL_COLUMNS = [...LEVEL_COLUMNS, ...KOTOBA_COLUMNS, ...EXAMPLE_COLUMNS];
 
 // ---------------------------------------------------------------------------
@@ -265,6 +265,7 @@ function buildContent(records, revision, problems) {
           ja: cells.example_ja,
           blank: cells.example_blank,
           translation: cells.example_translation,
+          sentenceChapter: parseChapter(cells.example_sentence_chapter, "example_sentence_chapter", [row], problems),
           distractors: splitList(cells.example_distractors),
         });
       }

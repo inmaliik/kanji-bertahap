@@ -52,6 +52,19 @@ function list(label, values) {
   return values?.length ? h("p", { class: "preview-list" }, h("span", { class: "muted" }, `${label}: `), ja("span", {}, values.join("、"))) : null;
 }
 
+/** Minna chapter the sentence needs, flagged when it is later than the tested kotoba (D-48). */
+function sentenceChapterNote(example, kotoba) {
+  const value = example.sentenceChapter;
+  const ahead = Number.isInteger(value) && Number.isInteger(kotoba.chapter) && value > kotoba.chapter;
+  return h(
+    "p",
+    { class: `sentence-chapter${ahead ? " sentence-chapter--ahead" : ""}` },
+    "Bab yang dibutuhkan kalimat: ",
+    h("strong", {}, value === null ? "di luar buku" : `bab ${value}`),
+    ahead ? ` · ⚠ lebih tinggi dari bab kotoba (bab ${kotoba.chapter})` : null
+  );
+}
+
 /**
  * One level, as shown to validators.
  * @param {object} level
@@ -85,6 +98,7 @@ function levelSection(level, { number, total, revision, showItemIds = false }) {
         })
       ),
       h("p", { class: "example__translation" }, example.translation),
+      sentenceChapterNote(example, item.kotoba),
       list("Pengecoh kalimat", example.distractors)
     );
   };

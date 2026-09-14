@@ -35,11 +35,30 @@ test("reading alignment follows okurigana and hides ruby on request", () => {
   assert.deepEqual(splitReadingNotation("た(べる)"), { kanjiPart: "た", okurigana: "べる" });
 });
 
-test("sample content passes with only the chapter-order note", () => {
+test("sample content passes; its only warnings are sentences ahead of their kotoba", () => {
   const { errors, warnings, notes } = validateContent(loadSampleContent());
   assert.deepEqual(errors, []);
-  assert.deepEqual(warnings, []);
+  assert.ok(warnings.length > 0);
+  assert.deepEqual([...new Set(codes(warnings))], ["SENTENCE_AHEAD_OF_KOTOBA"]);
   assert.deepEqual(codes(notes), ["CHAPTER_SEQUENCE"]);
+});
+
+test("sentenceChapter is required and warns when later than the kotoba", () => {
+  const data = clone(loadSampleContent());
+  const kotoba = data.levels[1].kotoba[0]; // 飲みます, bab 6
+  delete kotoba.examples[0].sentenceChapter;
+  kotoba.examples[1].sentenceChapter = 9;
+  const { errors, warnings } = validateContent(data);
+  assert.ok(codes(errors).includes("MISSING_SENTENCE_CHAPTER"));
+  const ahead = warnings.filter((w) => w.code === "SENTENCE_AHEAD_OF_KOTOBA" && w.path.startsWith("levels[1]"));
+  assert.equal(ahead.length, 1);
+  assert.match(ahead[0].message, /bab 9.*bab 6/);
+
+  kotoba.examples[0].sentenceChapter = null;
+  kotoba.examples[1].sentenceChapter = 6;
+  const again = validateContent(data);
+  assert.ok(codes(again.warnings).includes("SENTENCE_OUTSIDE_BOOK"));
+  assert.ok(!again.warnings.some((w) => w.code === "SENTENCE_AHEAD_OF_KOTOBA" && w.path.startsWith("levels[1]")));
 });
 
 test("validator catches content mistakes", () => {
@@ -65,7 +84,7 @@ test("chapter order never blocks content", () => {
   data.levels.reverse(); // chapters now fall: still no error or warning
   const { errors, warnings, notes } = validateContent(data);
   assert.deepEqual(errors, []);
-  assert.deepEqual(warnings, []);
+  assert.ok(warnings.every((w) => w.code === "SENTENCE_AHEAD_OF_KOTOBA"), "no order warnings");
   assert.match(notes[0].message, /Bab turun/);
 });
 

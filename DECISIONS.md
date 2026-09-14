@@ -460,6 +460,21 @@ puncak daftar dan harus menggulir jauh untuk menemukan level berikutnya. Tombol 
 lompatan gulir yang membingungkan. **Alternatif ditolak:** Menggulir otomatis ke level berikutnya; tanpa
 pintasan.
 
+### D-48 · Kalimat contoh tidak boleh mendahului pelajaran: field `sentenceChapter`
+**Tanggal:** 2026-09-14. **Keputusan:** Setiap contoh kalimat wajib memuat `sentenceChapter` (kolom CSV
+`example_sentence_chapter`): bab Minna tertinggi yang dibutuhkan kalimat, dari kosakata maupun pola
+kalimatnya, diisi manual oleh penulis materi; `null` berarti memakai kata atau pola di luar buku. Pemeriksa
+konten memberi peringatan jika nilainya lebih tinggi daripada `chapter` kotoba yang diujikan, dan peringatan
+lain jika `null`. Halaman pratinjau menampilkan nilai ini dan menandainya bila lebih tinggi. Nilai untuk
+kalimat contoh di data adalah perkiraan pengembang dan tercantum di daftar verifikasi. **Alasan:** Temuan
+T-11 menunjukkan kalimat 電気をつけます menguji kata bab 1 dengan kata kerja yang diajarkan jauh sesudahnya.
+Aturan kalimat sebelumnya hanya menyangkut ambiguitas; kalimat yang memakai materi yang belum dipelajari
+justru menambah beban yang ingin dikurangi produk ini. Peringatan (bukan error) karena kadang tidak ada
+kalimat yang wajar dengan materi yang lebih awal. Kode tidak dapat menentukan bab kosakata dan pola kalimat
+secara otomatis, sehingga nilainya diisi manusia. **Alternatif ditolak:** Error yang memblokir materi;
+menghitung bab kalimat otomatis dari daftar kosakata (membutuhkan kamus bab dan analisis tata bahasa yang
+tidak tersedia).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -544,3 +559,11 @@ ternyata membentuk kalimat wajar `食事をつけます` ("menyertakan makan", m
 menjadi jawaban benar kedua. **Tindakan:** Pengecoh diganti 天気, 雨, dan 朝, yang tidak dapat "dinyalakan".
 **Dampak:** Contoh tambahan untuk bagian README "Menulis kalimat contoh yang tidak ambigu": kata kerja dengan
 banyak makna (つけます) memperluas kemungkinan jawaban benar kedua.
+
+### T-12 · Pola: pengecoh yang juga benar adalah kelas cacat paling dominan
+**Tanggal:** 2026-09-14. **Temuan:** Tiga cacat dari jenis yang sama ditemukan selama pengembangan: dua kalimat
+ambigu pada T-01 dan pengecoh 食事 untuk 電気をつけます pada T-11. Semuanya lolos dari penulisan yang hati-hati dan
+tidak dapat dideteksi kode. **Tindakan:** README menyatakan pola ini secara eksplisit di bagian penulisan kalimat,
+bukan hanya menampilkan contoh, dan daftar periksa sebelum validasi ahli mewajibkan anggota tim lain
+mengerjakan seluruh soal tanpa melihat jawaban. **Dampak:** Pemeriksaan pengecoh oleh manusia menjadi langkah
+kendali mutu yang wajib, bukan opsional.
