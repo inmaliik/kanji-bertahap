@@ -5,6 +5,7 @@ import { loadContent } from "./content.js";
 import { loadPrefs, loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
+import { startTabGuard } from "./tab-guard.js";
 import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
@@ -104,6 +105,7 @@ async function boot() {
   // Remote log sending never blocks the game; it does nothing unless enabled in config.js.
   onLogAppended(scheduleFlush);
   startLogSender();
+  startTabGuard(document.getElementById("tab-warning"));
 
   window.addEventListener("hashchange", navigate);
   navigate();

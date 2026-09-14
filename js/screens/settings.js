@@ -11,6 +11,7 @@ import { backLink } from "./common.js";
 const DELETE_CONFIRM_WORD = "HAPUS";
 const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 const LOOKS_LIKE_NIM = /^\d{8,}$/;
+const PARTICIPANT_CODE_EXAMPLE = "K4-01"; // suggested shape: letters, then numbers
 const STORAGE_CRITICAL_RATIO = 0.95;
 
 const formatTime = (iso) =>
@@ -134,10 +135,11 @@ export function settingsScreen(app) {
       class: "text-input",
       value: current ?? "",
       maxlength: "32",
+      placeholder: PARTICIPANT_CODE_EXAMPLE,
       autocomplete: "off",
       autocapitalize: "characters",
       spellcheck: "false",
-      "aria-describedby": "participant-help",
+      "aria-describedby": "participant-help participant-format",
     });
 
     const save = () => {
@@ -147,14 +149,18 @@ export function settingsScreen(app) {
         return;
       }
       if (!PARTICIPANT_CODE_PATTERN.test(code)) {
-        setMessage("participant", "error", "✗ Kode hanya boleh berisi huruf, angka, tanda - dan _, tanpa spasi (maksimal 32 karakter).");
+        setMessage(
+          "participant",
+          "error",
+          `✗ Kode hanya boleh berisi huruf, angka, tanda - dan _, tanpa spasi (maksimal 32 karakter). Contoh: ${PARTICIPANT_CODE_EXAMPLE}.`
+        );
         return;
       }
       if (LOOKS_LIKE_NIM.test(code)) {
         setMessage(
           "participant",
           "error",
-          "✗ Kode berupa 8 angka atau lebih terlihat seperti NIM. Gunakan kode anonim dari peneliti, misalnya P017."
+          `✗ Kode berupa 8 angka atau lebih terlihat seperti NIM. Gunakan kode anonim dari peneliti: huruf lalu angka, misalnya ${PARTICIPANT_CODE_EXAMPLE}.`
         );
         return;
       }
@@ -173,12 +179,19 @@ export function settingsScreen(app) {
         { id: "participant-help" },
         "Opsional. Isi hanya jika peneliti memberimu kode. Gunakan ",
         h("strong", {}, "kode anonim"),
-        " (misalnya P017), ",
+        ", ",
         h("strong", {}, "bukan nama atau NIM"),
         "."
       ),
       h("label", { for: "participant-code", class: "field-label" }, current ? `Kode saat ini: ${current}` : "Belum ada kode"),
       input,
+      h(
+        "p",
+        { id: "participant-format", class: "field-help" },
+        "Format yang disarankan: huruf lalu angka, misalnya ",
+        h("strong", {}, h("code", {}, PARTICIPANT_CODE_EXAMPLE)),
+        "."
+      ),
       h(
         "div",
         { class: "button-row" },

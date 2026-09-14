@@ -413,6 +413,34 @@ yang sudah terverifikasi. Kalimat 電気をつけます memakai つけます yan
 level contoh tetapi perlu ditinjau. **Alternatif ditolak:** Mengganti 元気 dengan 電気 (menghapus contoh
 na-adjektiva satu-satunya di data).
 
+### D-43 · Deteksi tab ganda sebagai peringatan, tanpa pemblokiran atau sinkronisasi
+**Tanggal:** 2026-09-14. **Keputusan:** Setiap tab aplikasi memberi tanda kehidupan lewat `BroadcastChannel`
+(cadangan: event `storage` di `localStorage`). Jika tab lain terdeteksi, spanduk peringatan di atas halaman
+menjelaskan bahwa progres di dua tab bisa saling menimpa dan menyarankan menutup salah satunya. Jika progres
+diubah dari tab lain, spanduk meminta halaman dimuat ulang dan menyediakan tombol untuk itu. Tidak ada yang
+diblokir dan tidak ada yang disinkronkan. Tab dianggap tertutup setelah berpamitan atau setelah 75 detik
+tanpa tanda. **Alasan:** Prosedur "satu tab per perangkat" (D-38) hanya dijaga manusia dan akan gagal ketika
+pengunjung pameran membuka tautan dua kali tanpa sadar. Peringatan membuat kegagalan terlihat dengan biaya
+kecil. Batas 75 detik dipilih karena browser memperlambat timer di tab latar. **Alternatif ditolak:**
+Sinkronisasi progres antartab; memblokir tab kedua; hanya mengandalkan prosedur.
+
+### D-44 · Format kode peserta yang disarankan: huruf lalu angka
+**Tanggal:** 2026-09-14. **Keputusan:** Kolom kode peserta menampilkan contoh `K4-01` sebagai placeholder dan
+sebagai teks bantuan di bawah kolom, dan pesan galat menyebut contoh yang sama. Aturan validasi D-35 tidak
+berubah. **Alasan:** Larangan tanpa contoh bentuk yang benar membuat orang mencoba-coba sampai lolos. Contoh
+yang selalu terlihat mengarahkan peneliti dan penjaga stan ke satu pola yang konsisten. **Alternatif
+ditolak:** Memaksakan pola `huruf-angka` secara ketat (skema kode peneliti belum ditetapkan).
+
+### D-45 · Label DRAF di alur isi sebagai cadangan tanda air
+**Tanggal:** 2026-09-14. **Keputusan:** Selain spanduk dan tanda air tetap, setiap level di pratinjau diawali
+label "DRAF — BELUM DIVERIFIKASI · revisi …" yang menjadi bagian alur isi halaman, dan kotak catatan validator
+menyebut revisi draf yang sama. **Alasan:** Halaman pratinjau adalah yang dipegang validator ahli, dan
+validasi dijadwalkan jauh sebelum pameran. Tanda air memakai elemen posisi tetap yang belum diuji di Safari
+dan Firefox; jika browser tersebut tidak mencetaknya di setiap halaman, label di alur isi tetap tercetak di
+halaman pertama setiap level dan di kotak catatannya. Keterbatasan: halaman lanjutan di tengah sebuah level
+hanya ditandai oleh tanda air. **Alternatif ditolak:** Mengandalkan tanda air saja; header berulang lewat
+tabel cetak (dukungan antarbrowser juga tidak pasti dan merumitkan tata letak).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -465,8 +493,8 @@ diperiksa. **Dampak:** Menegaskan kebiasaan memeriksa tangkapan layar di setiap 
 ### T-07 · Dua tab aplikasi saling menimpa progres
 **Tanggal:** 2026-09-13. **Temuan:** Saat pengujian, progres yang ditulis ke penyimpanan tertimpa oleh
 aplikasi yang masih terbuka di halaman yang sama, karena aplikasi menyimpan progres dari memorinya
-sendiri. Situasi yang sama terjadi jika aplikasi dibuka di dua tab. **Tindakan:** D-38. **Dampak:**
-Risiko dikendalikan lewat prosedur pameran; log jawaban tidak terdampak.
+sendiri. Situasi yang sama terjadi jika aplikasi dibuka di dua tab. **Tindakan:** D-38, lalu D-43 (deteksi otomatis).
+**Dampak:** Risiko dikendalikan lewat prosedur pameran dan spanduk peringatan; log jawaban tidak terdampak.
 
 ### T-08 · Pengiriman yang sedang berjalan dapat menandai baris baru sebagai terkirim
 **Tanggal:** 2026-09-13. **Temuan:** Pada tinjauan kode, ditemukan bahwa jika log dihapus ketika sebuah

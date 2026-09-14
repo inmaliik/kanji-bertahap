@@ -122,6 +122,7 @@ pre code {
 
 ruby {
   ruby-position: over;
+  ruby-align: center; /* keep the base kanji together when the furigana is wider */
 }
 
 rt {
@@ -1177,6 +1178,35 @@ rt {
   border: 0;
 }
 
+/* Second-tab warning ---------------------------------------------------------------- */
+
+.tab-warning {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 0.75rem max(var(--gutter), env(safe-area-inset-left));
+  background: var(--warning-soft);
+  border-bottom: 3px solid var(--warning);
+  color: var(--warning);
+}
+
+.tab-warning__text {
+  max-width: 40rem;
+  margin: 0 auto;
+  font-weight: 700;
+}
+
+.tab-warning__reload {
+  display: flex;
+  margin: 0.5rem auto 0;
+}
+
+@media print {
+  .tab-warning {
+    display: none !important;
+  }
+}
+
 /* Validation issues ------------------------------------------------------------ */
 
 .issues {
@@ -1424,6 +1454,23 @@ rt {
   color: var(--text);
 }
 
+.draft-inline {
+  margin: 0 0 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border: 3px solid var(--error);
+  border-radius: 8px;
+  color: var(--error);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.field-help {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 .draft-watermark {
   position: fixed;
   inset: 0;
@@ -1555,6 +1602,11 @@ rt {
 
   .hero__kanji {
     font-size: 54pt;
+  }
+
+  .draft-inline {
+    border-color: #000;
+    color: #000;
   }
 
   .draft-banner {

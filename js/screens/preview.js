@@ -59,6 +59,7 @@ function list(label, values) {
  */
 function levelSection(level, { number, total, revision, showItemIds = false }) {
   const items = buildLevelItems(level);
+  const draft = isDraftRevision(revision);
 
   const bushuOption = (opt) => {
     const correct = opt === level.bushu.char;
@@ -111,6 +112,9 @@ function levelSection(level, { number, total, revision, showItemIds = false }) {
   return h(
     "section",
     { class: "preview-level", "aria-labelledby": `level-title-${level.id}` },
+    // Part of the normal flow, so it prints even where a browser drops the
+    // fixed watermark: every level starts on a new page with this label.
+    draft ? h("p", { class: "draft-inline", role: "note" }, `DRAF — BELUM DIVERIFIKASI · revisi ${revision}`) : null,
     h(
       "header",
       { class: "hero" },
@@ -190,7 +194,11 @@ function levelSection(level, { number, total, revision, showItemIds = false }) {
         )
       : null,
 
-    h("div", { class: "validator-notes print-only" }, h("p", {}, `Catatan validator untuk ${level.id} (${level.kanji}):`))
+    h(
+      "div",
+      { class: "validator-notes print-only" },
+      h("p", {}, `Catatan validator untuk ${level.id} (${level.kanji})`, draft ? h("strong", {}, ` · DRAF revisi ${revision}`) : null, ":")
+    )
   );
 }
 
