@@ -1,12 +1,16 @@
-// Level list: grouped by JLPT level and chapter, with derived lock state and
-// review levels placed after the level they follow.
+// Level list: grouped by JLPT level in array order (the Hyouki teaching order),
+// with derived lock state, review levels after the level they follow, Minna
+// chapter labels, and an optional "chapters studied so far" marker.
 
 import { h, ja } from "../dom.js";
 import { APP_TITLE } from "../config.js";
 import { groupLevels, jlptLevelsPresent, buildLevelItems } from "../content.js";
-import { buildProgression, computeStatuses, evaluateEntry, LEVEL_STATUS, storageUsage } from "../state.js";
+import { chaptersAbove, chaptersLabel, kotobaChapters } from "../chapters.js";
+import { buildProgression, computeStatuses, evaluateEntry, LEVEL_STATUS, savePrefs, storageUsage } from "../state.js";
 import { STAGE_ORDER } from "../session.js";
-import { chapterLabel } from "./common.js";
+
+// Minna no Nihongo Shokyu I has 25 chapters; the chapter picker offers at least these.
+const MINNA_I_CHAPTERS = 25;
 
 const STATUS_TEXT = {
   [LEVEL_STATUS.LOCKED]: { icon: "🔒", text: "Terkunci" },
@@ -35,6 +39,37 @@ function card({ href, status, symbol, title, meta }) {
   return locked
     ? h("div", { class: "level-card level-card--locked", "aria-disabled": "true" }, children)
     : h("a", { class: "level-card", href }, children);
+}
+
+/**
+ * "The class has studied up to chapter N." Levels with kotoba from later
+ * chapters get a marker. This never locks anything (D-41).
+ */
+function chapterLimitControl(app) {
+  const contentMax = Math.max(0, ...app.content.levels.flatMap((l) => kotobaChapters(l)));
+  const max = Math.max(MINNA_I_CHAPTERS, contentMax);
+  const current = app.prefs.chapterLimit;
+  const select = h(
+    "select",
+    {
+      id: "chapter-limit",
+      class: "select",
+      onChange: () => {
+        app.prefs.chapterLimit = select.value === "" ? null : Number(select.value);
+        savePrefs(app.prefs);
+        app.render();
+      },
+    },
+    h("option", { value: "", selected: current === null }, "Tidak ditandai"),
+    Array.from({ length: max }, (_, i) => i + 1).map((n) => h("option", { value: String(n), selected: current === n }, `Bab ${n}`))
+  );
+  return h(
+    "div",
+    { class: "chapter-limit" },
+    h("label", { for: "chapter-limit", class: "chapter-limit__label" }, "Kelas sudah sampai bab Minna"),
+    select,
+    h("p", { class: "chapter-limit__help" }, "Level yang memuat kata dari bab sesudahnya diberi tanda. Tanda ini tidak mengunci level.")
+  );
 }
 
 // Exhibition staff need to see this without opening Settings.
@@ -88,12 +123,26 @@ export function levelListScreen(app) {
       const { mastered, total } = evaluateEntry(ids, progress.levels[level.id], { requiresProduction: true });
       extra = `${mastered}/${total} item`;
     }
+    const limit = app.prefs.chapterLimit;
+    const ahead = limit === null ? [] : chaptersAbove(level, limit);
+    const chapters = chaptersLabel(level);
     return card({
       href: `#/play/${encodeURIComponent(level.id)}`,
       status,
       symbol: ja("span", { class: "level-card__kanji" }, level.kanji),
       title: level.meaning,
-      meta: h("span", { class: "level-card__meta" }, `${level.id} · `, statusBadge(status, extra)),
+      meta: [
+        h("span", { class: "level-card__meta" }, chapters ? `${level.id} · ${chapters}` : level.id),
+        h("span", { class: "level-card__meta" }, statusBadge(status, extra)),
+        ahead.length
+          ? h(
+              "span",
+              { class: "chapter-marker" },
+              h("span", { "aria-hidden": "true" }, "⚠ "),
+              `Memuat kata dari bab yang belum dipelajari (bab ${ahead.join(", ")})`
+            )
+          : null,
+      ],
     });
   };
 
@@ -112,7 +161,10 @@ export function levelListScreen(app) {
       status,
       symbol: h("span", { class: "level-card__symbol", "aria-hidden": "true" }, "↻"),
       title: `Level ulangan ${node.id}`,
-      meta: h("span", { class: "level-card__meta" }, `Campuran ${first}–${last} · `, statusBadge(status, extra)),
+      meta: [
+        h("span", { class: "level-card__meta" }, `Campuran ${first}–${last}`),
+        h("span", { class: "level-card__meta" }, statusBadge(status, extra)),
+      ],
     });
   };
 
@@ -140,6 +192,7 @@ export function levelListScreen(app) {
     present.length > 1
       ? h("div", { class: "chips", role: "group", "aria-label": "Saring menurut level JLPT" }, filterButton("all", "Semua"), present.map((j) => filterButton(j, j)))
       : null,
+    chapterLimitControl(app),
     groups.map((group) =>
       h(
         "section",
@@ -148,19 +201,16 @@ export function levelListScreen(app) {
           "h2",
           { id: `group-${group.jlptLevel}`, class: "jlpt-group__title" },
           group.jlptLevel,
-          h("span", { class: "jlpt-group__count" }, `${group.chapters.reduce((n, c) => n + c.levels.length, 0)} level`)
+          h("span", { class: "jlpt-group__count" }, `${group.levels.length} level`)
         ),
-        group.chapters.map((chapter) => [
-          h("h3", { class: "chapter-heading" }, `${group.jlptLevel} · ${chapterLabel(chapter.chapter)}`),
-          h(
-            "ul",
-            { class: "level-list" },
-            chapter.levels.map((level) => [
-              h("li", {}, levelCard(level)),
-              reviewAfter.has(level.id) ? h("li", {}, reviewCard(reviewAfter.get(level.id))) : null,
-            ])
-          ),
-        ])
+        h(
+          "ul",
+          { class: "level-list" },
+          group.levels.map((level) => [
+            h("li", {}, levelCard(level)),
+            reviewAfter.has(level.id) ? h("li", {}, reviewCard(reviewAfter.get(level.id))) : null,
+          ])
+        )
       )
     )
   );

@@ -16,7 +16,7 @@ import { validateContent, SCHEMA_VERSION } from "../js/validate.js";
 import { printIssues, printSummary, red, green } from "./lib/print-issues.mjs";
 
 const LEVEL_COLUMNS = [
-  "level_id", "kanji", "level_meaning", "jlpt_level", "level_chapter",
+  "level_id", "kanji", "level_meaning", "jlpt_level",
   "bushu_char", "bushu_name", "bushu_meaning", "bushu_variants", "bushu_options",
   "kunyomi", "onyomi", "production_prompt",
 ];
@@ -159,6 +159,12 @@ function buildContent(records, revision, problems) {
         "lewat File → Download → Comma Separated Values (.csv)."
     );
   }
+  if (header.includes("level_chapter")) {
+    throw new Error(
+      "Kolom level_chapter sudah tidak dipakai: bab level kini dihitung otomatis dari kolom word_chapter. " +
+        "Hapus kolom level_chapter dari spreadsheet, ekspor ulang, lalu jalankan lagi."
+    );
+  }
   const unknown = header.filter((h) => h && !ALL_COLUMNS.includes(h));
   const missing = ALL_COLUMNS.filter((c) => !header.includes(c));
   if (unknown.length || missing.length) {
@@ -216,7 +222,6 @@ function buildContent(records, revision, problems) {
       kanji: lv.kanji,
       meaning: lv.level_meaning,
       jlptLevel: lv.jlpt_level,
-      chapter: parseChapter(lv.level_chapter, "level_chapter", levelRows, problems),
       bushu: {
         char: lv.bushu_char,
         name: lv.bushu_name,
@@ -325,8 +330,8 @@ function main() {
   }
 
   const { content, rowMap } = built;
-  const { errors, warnings } = validateContent(content);
-  printIssues([...errors, ...warnings], (issue) => {
+  const { errors, warnings, notes } = validateContent(content);
+  printIssues([...errors, ...warnings, ...notes], (issue) => {
     const rows = rowsForPath(rowMap, issue.path);
     return rows ? rowLabel(rows) : null;
   });

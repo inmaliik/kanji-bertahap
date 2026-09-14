@@ -12,6 +12,7 @@ import {
   isSingleChar,
 } from "./jp-text.js";
 import { DISTRACTORS_NEEDED, readingDistractorPool, sentenceDistractorPool } from "./distractors.js";
+import { levelChapter } from "./chapters.js";
 
 export const SCHEMA_VERSION = 1;
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"]; // display and unlock order
@@ -69,6 +70,7 @@ class Report {
   constructor() {
     this.errors = [];
     this.warnings = [];
+    this.notes = []; // information only: never blocks and never counts as a warning
   }
   add(list, severity, ctx, code, message, prominent) {
     list.push({ severity, code, path: ctx.path, where: ctx.where, message, prominent: !!prominent });
@@ -79,11 +81,15 @@ class Report {
   warn(ctx, code, message) {
     this.add(this.warnings, "warning", ctx, code, message, false);
   }
+  note(ctx, code, message) {
+    this.add(this.notes, "note", ctx, code, message, false);
+  }
   result() {
     const byProminence = (a, b) => Number(b.prominent) - Number(a.prominent);
     return {
       errors: [...this.errors].sort(byProminence),
       warnings: this.warnings,
+      notes: this.notes,
     };
   }
 }
@@ -169,7 +175,7 @@ function checkCharForFont(ch, ctx, report) {
 // Validation
 
 /**
- * @returns {{errors: Array<object>, warnings: Array<object>}}
+ * @returns {{errors: Array<object>, warnings: Array<object>, notes: Array<object>}}
  */
 export function validateContent(data) {
   const report = new Report();
@@ -252,10 +258,13 @@ function validateLevel(level, index, root, report, seen) {
     report.error(ctx.field("jlptLevel"), "INVALID_JLPT", `Harus salah satu dari ${JLPT_LEVELS.join(", ")}. Ditemukan ${show(level.jlptLevel)}.`);
   }
 
-  if (!("chapter" in level)) {
-    report.error(ctx.field("chapter"), "MISSING_CHAPTER", "Wajib ada. Isi null jika kanji ini tidak ada di buku.");
+  if ("chapter" in level) {
+    report.warn(
+      ctx.field("chapter"),
+      "LEVEL_CHAPTER_IGNORED",
+      "chapter level tidak dipakai lagi dan diabaikan: bab level dihitung otomatis dari chapter kotobanya. Hapus field ini."
+    );
   }
-  const chapter = "chapter" in level ? checkChapter(level, ctx, report) : undefined;
 
   const bushu = validateBushu(level, ctx, report);
   validateBushuOptions(level, bushu, ctx, report);
@@ -268,15 +277,10 @@ function validateLevel(level, index, root, report, seen) {
     const words = new Map();
     const sentenceIds = new Map();
     let exampleCount = 0;
-    let minChapter = { value: null, word: null };
-    let allChaptersValid = true;
 
     level.kotoba.forEach((kotoba, j) => {
       const result = validateKotoba(kotoba, j, { id, levelKanji }, ctx.child("kotoba", ""), report, sentenceIds);
-      if (!result) {
-        allChaptersValid = false;
-        return;
-      }
+      if (!result) return;
       exampleCount += result.exampleCount;
       if (result.word !== undefined) {
         if (words.has(result.word)) {
@@ -284,24 +288,7 @@ function validateLevel(level, index, root, report, seen) {
         }
         words.set(result.word, j);
       }
-      if (result.chapter === undefined) {
-        allChaptersValid = false;
-      } else if (result.chapter !== null && (minChapter.value === null || result.chapter < minChapter.value)) {
-        minChapter = { value: result.chapter, word: result.word };
-      }
     });
-
-    if (allChaptersValid && chapter !== undefined && chapter !== minChapter.value) {
-      const expected = minChapter.value === null
-        ? "null, karena semua kotobanya ber-chapter null"
-        : `${minChapter.value} (bab terkecil, dari kotoba "${minChapter.word}")`;
-      report.error(
-        ctx.field("chapter"),
-        "CHAPTER_MISMATCH",
-        `chapter level adalah ${show(chapter)}, seharusnya ${expected}. ` +
-          "Aturan: chapter level = bab terkecil dari kotoba di level ini."
-      );
-    }
 
     if (exampleCount === 0) {
       report.warn(kotobaCtx, "NO_EXAMPLES", "Level ini tidak punya contoh kalimat, jadi tahap Kotoba dalam Kalimat akan dilewati.");
@@ -615,35 +602,48 @@ function checkBlank(parsed, blank, level, ctx, report) {
 }
 
 function checkLevelOrder(levels, root, report) {
-  const sortKey = (l) => [l.rank, l.chapter === null ? Infinity : l.chapter];
-  const isBefore = (a, b) => {
-    const [ka, kb] = [sortKey(a), sortKey(b)];
-    return ka[0] < kb[0] || (ka[0] === kb[0] && ka[1] < kb[1]);
-  };
-  const describe = (l) => `${l.jlpt}, ${l.chapter === null ? "di luar buku" : `bab ${l.chapter}`}`;
-
-  // `furthest` is the latest position reached so far; any level that sorts
-  // before it is out of order.
-  let furthest = null;
+  // JLPT order is an error: the level list is grouped by JLPT level, so an N5
+  // level after an N4 level would be locked behind a level shown in another group.
+  let highest = null; // { rank, label, jlpt }
   levels.forEach((level, i) => {
     if (!isPlainObject(level)) return;
     const rank = JLPT_LEVELS.indexOf(level.jlptLevel);
-    if (rank === -1 || !(level.chapter === null || Number.isInteger(level.chapter))) return;
-
-    const current = { rank, chapter: level.chapter, jlpt: level.jlptLevel, label: levelLabel(level, i) };
-    if (furthest && isBefore(current, furthest)) {
+    if (rank === -1) return;
+    const label = levelLabel(level, i);
+    if (highest && rank < highest.rank) {
       report.error(
-        root.child(`levels[${i}]`, current.label),
+        root.child(`levels[${i}]`, label),
         "LEVEL_ORDER",
-        `URUTAN LEVEL SALAH: ${current.label} (${describe(current)}) diletakkan setelah ${furthest.label} (${describe(furthest)}). ` +
-          "Level harus berurutan menurut JLPT (N5 lebih dulu), lalu bab menaik. Jika dibiarkan, level bab awal " +
-          "terkunci di belakang level bab akhir. Pindahkan level ini ke posisi yang benar.",
+        `URUTAN JLPT SALAH: ${label} (${level.jlptLevel}) diletakkan setelah ${highest.label} (${highest.jlpt}). ` +
+          "Semua level N5 harus berada sebelum level N4. Jika dibiarkan, level ini terkunci di belakang level " +
+          "dari kelompok JLPT lain. Pindahkan level ini ke posisi yang benar.",
         { prominent: true }
       );
-    } else {
-      furthest = current;
+    } else if (!highest || rank > highest.rank) {
+      highest = { rank, label, jlpt: level.jlptLevel };
     }
   });
+
+  // Chapter order is information only (D-39): level order follows the Hyouki
+  // course, so Minna chapters are expected to jump around.
+  const sequence = levels
+    .filter(isPlainObject)
+    .map((level, i) => ({ label: typeof level.id === "string" ? level.id : `#${i + 1}`, chapter: levelChapter(level) }));
+  const descents = sequence.filter((cur, i) => {
+    const prev = sequence[i - 1];
+    return prev && cur.chapter !== null && prev.chapter !== null && cur.chapter < prev.chapter;
+  });
+  if (sequence.length > 1) {
+    const chain = sequence.map((l) => `${l.label} (${l.chapter === null ? "di luar buku" : `bab ${l.chapter}`})`).join(" → ");
+    report.note(
+      root.field("levels"),
+      "CHAPTER_SEQUENCE",
+      `Urutan bab terkecil per level: ${chain}. ` +
+        (descents.length
+          ? `Bab turun di ${descents.map((d) => d.label).join(", ")}. Ini wajar karena urutan level mengikuti mata kuliah Hyouki, bukan bab Minna.`
+          : "Bab tidak pernah turun.")
+    );
+  }
 }
 
 // Stages 2–3 combine manual and automatic distractors; warn when a question

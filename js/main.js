@@ -2,7 +2,7 @@
 
 import { CONTENT_URL } from "./config.js";
 import { loadContent } from "./content.js";
-import { loadProgress } from "./state.js";
+import { loadPrefs, loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
 import { isStorageAvailable } from "./storage.js";
@@ -21,7 +21,9 @@ const root = document.getElementById("app");
 const app = {
   content: null,
   warnings: [],
+  notes: [], // content notes (information only)
   progress: null,
+  prefs: null,
   notices: [], // { kind, text } shown on the level list
   jlptFilter: "all",
   render,
@@ -88,6 +90,8 @@ async function boot() {
   }
   app.content = result.content;
   app.warnings = result.warnings;
+  app.notes = result.notes;
+  app.prefs = loadPrefs();
 
   const { progress, recovered } = loadProgress();
   app.progress = progress;

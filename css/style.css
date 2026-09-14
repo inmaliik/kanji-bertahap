@@ -259,30 +259,61 @@ rt {
 /* Level list ---------------------------------------------------------------- */
 
 .jlpt-group__title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.5rem 0;
+  background: var(--bg);
   font-size: 1.5rem;
-  margin-top: 1.5rem;
+}
+
+.chapter-limit {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.chapter-limit__label {
+  font-weight: 600;
+}
+
+.chapter-limit__help {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.select {
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.chapter-marker {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--warning);
 }
 
 .jlpt-group__count {
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--muted);
-}
-
-.chapter-heading {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  margin: 0;
-  padding: 0.5rem 0;
-  background: var(--bg);
-  font-size: 0.875rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .level-list {
@@ -1194,6 +1225,16 @@ rt {
 .issue--warning .issue__icon,
 .issue--warning .issue__severity {
   color: var(--warning);
+}
+
+.issue--note {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.issue--note .issue__icon,
+.issue--note .issue__severity {
+  color: var(--primary);
 }
 
 .issue__message {

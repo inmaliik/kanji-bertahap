@@ -36,20 +36,26 @@ export function backLink(href, text) {
   return h("a", { class: "back-link", href }, h("span", { "aria-hidden": "true" }, "‹ "), text);
 }
 
+const SEVERITY = {
+  error: { icon: "✗", label: "Error" },
+  warning: { icon: "⚠", label: "Peringatan" },
+  note: { icon: "ℹ", label: "Catatan" },
+};
+
 export function issueList(issues) {
   return h(
     "ul",
     { class: "issues" },
     issues.map((issue) => {
-      const isError = issue.severity === "error";
+      const { icon, label } = SEVERITY[issue.severity];
       return h(
         "li",
-        { class: `issue ${isError ? "issue--error" : "issue--warning"}${issue.prominent ? " issue--prominent" : ""}` },
+        { class: `issue issue--${issue.severity}${issue.prominent ? " issue--prominent" : ""}` },
         h(
           "p",
           { class: "issue__head" },
-          h("span", { class: "issue__icon", "aria-hidden": "true" }, isError ? "✗" : "⚠"),
-          h("span", { class: "issue__severity" }, isError ? "Error" : "Peringatan"),
+          h("span", { class: "issue__icon", "aria-hidden": "true" }, icon),
+          h("span", { class: "issue__severity" }, label),
           h("span", { class: "issue__where" }, issue.where || "content.json")
         ),
         h("p", { class: "issue__message" }, issue.message),

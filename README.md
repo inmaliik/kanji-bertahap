@@ -129,7 +129,6 @@ Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`.
 | `kanji` | Tepat satu kanji | `食` |
 | `level_meaning` | Arti kanji | `makan` |
 | `jlpt_level` | `N5` atau `N4` | `N5` |
-| `level_chapter` | Bab level; harus = bab terkecil dari kotobanya. `-` jika di luar buku | `6` |
 | `bushu_char` | Bushu (jawaban benar tahap Bentuk) | `食` |
 | `bushu_name` | Nama bushu | `shoku` |
 | `bushu_meaning` | Arti bushu | `makan / makanan` |
@@ -143,7 +142,7 @@ Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`.
 | `reading_type` | `kunyomi`, `onyomi`, atau `special` | `kunyomi` |
 | `pos` | `verb`, `noun`, `i-adj`, `na-adj`, `adverb`, `other` | `verb` |
 | `word_meaning` | Arti kotoba | `makan` |
-| `word_chapter` | Bab kotoba muncul di buku. `-` jika di luar buku | `6` |
+| `word_chapter` | Bab Minna tempat kotoba ini diajarkan. `-` jika di luar buku. Bab level dihitung otomatis dari kolom ini (tidak ada kolom bab level) | `6` |
 | `word_note` | *Boleh kosong.* Catatan, misalnya perubahan bunyi | |
 | `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca **sejenis** buatan tim | `くべます;のべます;しらべます` |
 | `reading_distractors_cross` | *Daftar, boleh kosong.* Pengecoh cara baca **lintas jenis** (lihat [Menulis pengecoh](#menulis-pengecoh)) | `しょくべます` |
@@ -207,7 +206,6 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 | `kanji` | ya | Tepat satu kanji, unik di seluruh materi. |
 | `meaning` | ya | Arti kanji (bahasa Indonesia). |
 | `jlptLevel` | ya | `N5`, `N4` (juga `N3`–`N1` untuk masa depan). Menentukan kelompok di daftar level. |
-| `chapter` | ya | Bilangan 1–50 atau `null`. Harus sama dengan bab terkecil dari `kotoba[].chapter`. |
 | `bushu.char` | ya | Bushu; jawaban benar tahap Bentuk. |
 | `bushu.name`, `bushu.meaning` | ya | Nama dan arti bushu. |
 | `bushu.variants` | tidak | Bentuk lain dari bushu yang sama (misalnya 飠 untuk 食). **Belum dipakai logika mana pun**; disiapkan untuk varian soal tahap Bentuk yang masih dibahas dengan dosen. Boleh dikosongkan. Tidak boleh muncul sebagai pengecoh di `bushuOptions`. |
@@ -225,7 +223,7 @@ kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan 
 | `readingType` | ya | `kunyomi` → tahap 2, `onyomi` → tahap 3, `special` (jukujikun, bacaan campuran seperti 今日) → hanya tahap 4. Tahap tanpa item dilewati. |
 | `pos` | ya | Kelas kata. Pengecoh tahap 4 harus sekelas kata dengan kotoba ini. |
 | `meaning` | ya | Arti kotoba. |
-| `chapter` | ya | Bab kotoba muncul di みんなの日本語初級I, atau `null`. |
+| `chapter` | ya | Bab みんなの日本語 tempat kotoba ini diajarkan (1–50), atau `null` jika di luar buku. Hanya informasi: ditampilkan di kartu level dan dipakai penanda "sampai bab berapa". Tidak menentukan urutan level. |
 | `note` | tidak | Catatan untuk umpan balik, misalnya perubahan bunyi. |
 | `readingDistractors` | tidak | Pengecoh cara baca **sejenis** buatan tim; dipakai sebelum pengecoh otomatis. |
 | `readingDistractorsCross` | tidak | Pengecoh cara baca **lintas jenis** buatan tim, misalnya bacaan on'yomi untuk kotoba kun'yomi. Selalu ditampilkan dan ditandai `manual-cross` di log. |
@@ -311,6 +309,16 @@ konkret** yang hanya cocok dengan satu kata kerja.
 Pelajarannya: pola seperti いい＿ですね bisa diisi hampir semua kata benda. Tambahkan **keterangan
 yang hanya cocok dengan kotoba sasaran** (雨 hanya cocok dengan 天気).
 
+**Kasus 3 — kata kerja dengan banyak makna**
+
+| | Kalimat dan pengecoh | Masalah |
+|---|---|---|
+| ✗ | ＿＿をつけます。 dengan pengecoh 食事 | つけます tidak hanya berarti "menyalakan". 食事をつけます ("menyertakan makan", misalnya paket hotel) juga wajar, jadi 食事 menjadi jawaban benar kedua. |
+| ✓ | ＿＿をつけます。 dengan pengecoh 天気, 雨, 朝 | Tidak satu pun bisa "dinyalakan" atau "disertakan". |
+
+Pelajarannya: jika kalimat memakai kata kerja yang maknanya banyak, periksa pengecoh terhadap **semua**
+makna kata kerja itu, bukan hanya makna yang dimaksud.
+
 **Daftar periksa sebelum menulis satu kalimat**
 1. Tutup bagian `blank`, lalu pasang setiap pengecoh satu per satu. Apakah ada yang tetap
    menghasilkan kalimat wajar? Jika ya, ganti pengecohnya atau ganti kalimatnya.
@@ -327,32 +335,47 @@ ubah `readingNotation()` di `js/screens/common.js`; data tidak perlu diubah.
 
 ## Yang harus diverifikasi terhadap buku
 
-Nomor bab di bawah ini **belum diperiksa** terhadap みんなの日本語初級I. Tim konten mencentang
-setiap baris setelah memeriksanya langsung di buku. `contentRevision` tetap `draft-0` sampai
-semua baris dicentang.
+Tim konten mencentang setiap baris setelah memeriksa nomor babnya langsung di みんなの日本語初級I.
+`contentRevision` tetap `draft-0` sampai semua baris dicentang.
 
-Yang diperiksa adalah bab kotoba; bab level dihitung dan dicek otomatis dari kotobanya.
+- **L01 食**
+  - [x] 食べます — bab 6
+  - [x] 食堂 — bab 3
+  - [ ] 食事 — bab 13 *(tidak muncul di bab 1–6; belum terverifikasi)*
+- **L02 飲**
+  - [x] 飲みます — bab 6
+- **L03 気**
+  - [x] 電気 — bab 1
+  - [ ] 元気 — bab 8 *(belum terverifikasi)*
+  - [ ] 天気 — bab 12 *(belum terverifikasi)*
 
-- [ ] **L01 食** (bab level tercatat: 6)
-  - [ ] 食べます — bab 6
-  - [ ] 食事 — bab 13
-- [ ] **L02 飲** (bab level tercatat: 6)
-  - [ ] 飲みます — bab 6
-- [ ] **L03 気** (bab level tercatat: 8)
-  - [ ] 元気 — bab 8
-  - [ ] 天気 — bab 12
+Bab yang sudah terverifikasi untuk konten mendatang (belum ada di data): 銀行員 — bab 1,
+自転車 — bab 5, 行きます — bab 5.
 
-Daftar ini disalin manual dari `data/content.json` pada revisi `draft-0`. Perbarui daftar ini
-setiap kali level atau kotoba ditambahkan.
+Daftar ini disalin manual dari `data/content.json`. Perbarui setiap kali level atau kotoba ditambahkan.
 
-## Aturan urutan dan `chapter`
+## Urutan level dan `chapter`
 
-- `chapter` level = **bab terkecil dari kotoba yang ada di level itu**. Kotoba lain di buku yang
-  tidak dimasukkan ke level tidak dihitung (contoh: 食堂 muncul di 第3課, tetapi tidak ada di level 食,
-  jadi level 食 tetap bab 6).
-- Level harus berurutan menurut `jlptLevel` (N5 dulu), lalu `chapter` menaik (`null` di akhir
-  kelompoknya). Pelanggaran adalah **error**: jika dibiarkan, level bab awal akan terkunci di belakang
-  level bab akhir.
+みんなの日本語初級I tidak mengajarkan kanji secara bertahap: sejak 第1課 banyak kanji sudah muncul di
+daftar kosakata (先生, 学生, 会社員, 銀行員, 医者, 大学, 病院, 電気, …) tanpa dituntut dikuasai. Kanji
+diajarkan berurutan di mata kuliah Hyouki. Karena itu:
+
+- **Urutan level = urutan array di `content.json`**, mengikuti urutan pengajaran mata kuliah Hyouki.
+  Urutan ini juga urutan buka kunci level.
+- **Semua level N5 harus berada sebelum level N4.** Pelanggaran adalah **error**, karena daftar level
+  dikelompokkan per JLPT dan level N5 akan terkunci di belakang level dari kelompok N4.
+- **`chapter` kotoba hanya informasi**: bab Minna tempat kata itu diajarkan. Kartu level menampilkan
+  semua bab kotobanya ("Minna bab 3, 6, 13").
+- **Bab level dihitung otomatis** (bab terkecil dari kotobanya) dan tidak diisi manual. Field `chapter`
+  pada level diabaikan dan memunculkan peringatan; kolom `level_chapter` di CSV ditolak.
+- **Urutan bab yang tidak naik itu wajar.** Pemeriksa konten hanya menampilkannya sebagai **catatan**,
+  bukan peringatan, dan tidak pernah menghalangi pemuatan materi.
+
+**Penanda "Kelas sudah sampai bab Minna".** Di atas daftar level, pemain atau pengajar dapat memilih
+bab terakhir yang sudah dipelajari kelas. Level yang memuat kata dari bab sesudahnya diberi tanda
+"⚠ Memuat kata dari bab yang belum dipelajari". Tanda ini **tidak mengunci** level. Kotoba di luar buku
+(`chapter` = `null`) tidak diberi tanda karena babnya tidak diketahui. Pilihan disimpan di perangkat
+dan tidak ikut terhapus saat reset progres.
 
 ## Aturan ID
 
@@ -373,11 +396,12 @@ itu disengaja, karena soalnya memang berbeda.
 ## Menambah level
 
 1. Tambahkan baris di spreadsheet (atau satu objek di `levels` pada `content.json`) di **posisi yang
-   sesuai urutan bab**.
+   sesuai urutan pengajaran mata kuliah Hyouki**.
 2. Jalankan konverter atau pemeriksa konten.
 3. Muat ulang aplikasi. Tidak ada file JS yang perlu diubah.
 
-Level ber-`jlptLevel: "N4"` otomatis muncul di kelompok N4 beserta tombol saringnya.
+Level ber-`jlptLevel: "N4"` otomatis muncul di kelompok N4 beserta tombol saringnya. Letakkan level
+N4 setelah semua level N5.
 
 ## Aturan permainan
 

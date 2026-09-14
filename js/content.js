@@ -34,13 +34,14 @@ export function describeJsonError(err, text) {
 }
 
 /**
- * @returns {Promise<{content: object|null, errors: Array<object>, warnings: Array<object>}>}
+ * @returns {Promise<{content: object|null, errors: Array<object>, warnings: Array<object>, notes: Array<object>}>}
  */
 export async function loadContent(url) {
   const fail = (message) => ({
     content: null,
     errors: [{ severity: "error", code: "LOAD_FAILED", where: url, path: "", message, prominent: true }],
     warnings: [],
+    notes: [],
   });
 
   let text;
@@ -60,31 +61,19 @@ export async function loadContent(url) {
     return fail(describeJsonError(err, text).message);
   }
 
-  const { errors, warnings } = validateContent(data);
-  return { content: errors.length ? null : data, errors, warnings };
+  const { errors, warnings, notes } = validateContent(data);
+  return { content: errors.length ? null : data, errors, warnings, notes };
 }
 
 /**
- * Group levels for the level list: JLPT level, then chapter. Array order is
- * preserved (the validator guarantees it already follows this grouping).
- * @returns {Array<{jlptLevel: string, chapters: Array<{chapter: number|null, levels: object[]}>}>}
+ * Group levels by JLPT level for the level list. Array order is kept inside
+ * each group: it is the teaching order of the Hyouki course (D-39).
+ * @returns {Array<{jlptLevel: string, levels: object[]}>}
  */
 export function groupLevels(levels) {
-  const groups = [];
-  for (const level of levels) {
-    let group = groups.find((g) => g.jlptLevel === level.jlptLevel);
-    if (!group) {
-      group = { jlptLevel: level.jlptLevel, chapters: [] };
-      groups.push(group);
-    }
-    let chapter = group.chapters[group.chapters.length - 1];
-    if (!chapter || chapter.chapter !== level.chapter) {
-      chapter = { chapter: level.chapter, levels: [] };
-      group.chapters.push(chapter);
-    }
-    chapter.levels.push(level);
-  }
-  return groups.sort((a, b) => JLPT_LEVELS.indexOf(a.jlptLevel) - JLPT_LEVELS.indexOf(b.jlptLevel));
+  return JLPT_LEVELS.map((jlptLevel) => ({ jlptLevel, levels: levels.filter((l) => l.jlptLevel === jlptLevel) })).filter(
+    (group) => group.levels.length
+  );
 }
 
 export function jlptLevelsPresent(levels) {

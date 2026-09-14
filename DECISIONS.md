@@ -108,8 +108,9 @@ membuat level bab awal terkunci di belakang level bab akhir. Dengan 気, 食 tet
 yang utuh, dan scaffold sekaligus menguji dua kasus tahap kosong: 飲 tanpa kotoba on'yomi N5, 気 tanpa
 kotoba kun'yomi N5. **Alternatif ditolak:** Mengurutkan ulang menjadi 行 → 食 → 飲 (pengunjung pameran
 akan memainkan level placeholder lebih dulu), dan menurunkan aturan urutan bab menjadi peringatan.
+*Catatan 2026-09-14: alasan urutan bab tidak berlaku lagi sejak D-39; 気 tetap dipakai sebagai level contoh.*
 
-### D-11 · Definisi `chapter` dan urutan level
+### D-11 · Definisi `chapter` dan urutan level *(Digantikan oleh D-39)*
 **Tanggal:** 2026-09-13. **Keputusan:** Setiap kotoba mencatat nomor bab kemunculannya di
 みんなの日本語初級I. `chapter` level harus sama dengan bab terkecil dari kotoba yang ada di level itu, dan
 validator memeriksanya. Level harus berurutan menurut JLPT (N5 lebih dulu) lalu bab menaik; pelanggaran
@@ -368,6 +369,50 @@ menunjukkan bahwa dua tab yang terbuka bersamaan saling menimpa progres. Log jaw
 Sinkronisasi antartab menambah kerumitan yang tidak sebanding untuk pemakaian satu pengunjung per
 perangkat. **Alternatif ditolak:** Sinkronisasi progres lewat event `storage` antartab.
 
+### D-39 · Urutan level mengikuti mata kuliah Hyouki; `chapter` hanya informasi
+**Tanggal:** 2026-09-14. **Keputusan:** Urutan level ditentukan urutan array di `content.json`, yaitu urutan
+pengajaran kanji di mata kuliah Hyouki. `chapter` pada kotoba tetap berarti bab みんなの日本語 tempat kata itu
+diajarkan, tetapi hanya sebagai informasi. Bab level tidak lagi diisi manual: nilainya dihitung dari bab
+terkecil kotobanya; field `chapter` pada level diabaikan dengan peringatan, dan kolom `level_chapter` di CSV
+ditolak. Urutan bab antarlevel yang tidak naik ditampilkan sebagai catatan di pemeriksa konten, bukan
+peringatan, dan tidak pernah menghalangi pemuatan materi. Urutan JLPT (semua N5 sebelum N4) tetap error.
+**Alasan:** Verifikasi terhadap buku (T-10) menunjukkan bahwa みんなの日本語初級I tidak mengajarkan kanji
+secara bertahap; kanji diajarkan berurutan di mata kuliah Hyouki dengan urutannya sendiri. Bab level yang
+diisi manual di samping bab kotoba menciptakan dua sumber kebenaran. Urutan JLPT tetap diwajibkan karena
+daftar level dikelompokkan per JLPT, dan level N5 yang diletakkan setelah level N4 akan terkunci di belakang
+level dari kelompok lain; ini juga sesuai rencana tahap 1 (N5) lalu tahap 2 (N4). **Alternatif ditolak:**
+Mempertahankan aturan bab menaik (D-11); menurunkan urutan JLPT menjadi catatan juga; menghapus perhitungan
+urutan bab sepenuhnya (informasinya tetap berguna bagi tim konten).
+
+### D-40 · Daftar level dikelompokkan per JLPT dengan label bab di setiap kartu
+**Tanggal:** 2026-09-14. **Keputusan:** Daftar level hanya dikelompokkan per `jlptLevel`, dengan urutan array
+di dalam kelompok. Setiap kartu level menampilkan semua bab kotobanya, misalnya "Minna bab 3, 6, 13", dan
+"di luar buku" jika ada kotoba ber-`chapter` null. **Alasan:** Setelah D-39, pengelompokan per bab akan
+memecah daftar menjadi potongan yang urutannya melompat-lompat dan tidak mencerminkan urutan belajar.
+Menampilkan semua bab memberi tahu pemain dari bab mana saja kata dalam level berasal. **Alternatif
+ditolak:** Pengelompokan per bab; label hanya bab terkecil.
+
+### D-41 · Penanda "Kelas sudah sampai bab" tanpa penguncian
+**Tanggal:** 2026-09-14. **Keputusan:** Di atas daftar level tersedia pilihan opsional bab Minna terakhir yang
+sudah dipelajari kelas. Level yang memuat kotoba dari bab sesudahnya diberi tanda "Memuat kata dari bab yang
+belum dipelajari (bab …)". Penanda tidak memengaruhi aturan kunci level. Kotoba ber-`chapter` null tidak
+diberi tanda. Pilihan disimpan sebagai preferensi perangkat (`kanjiGame.prefs.v1`), tidak ikut terhapus saat
+reset progres, dan tidak dicatat di log. **Alasan:** Pengajar perlu tahu materi mana yang memuat kata yang
+belum dipelajari tanpa mengubah alur buka kunci yang sudah ditetapkan (D-13, D-23). Bab kotoba di luar buku
+tidak diketahui sehingga tidak dapat dibandingkan. Pilihan kelas berlaku untuk perangkat, bukan untuk satu
+pemain. **Alternatif ditolak:** Mengunci level yang melewati bab pilihan; menyimpan pilihan di progres
+pemain (akan hilang setiap reset di pameran).
+
+### D-42 · Level contoh ditambah 食堂 dan 電気
+**Tanggal:** 2026-09-14. **Keputusan:** Level 食 ditambah kotoba on'yomi 食堂 (bab 3, terverifikasi) dan level
+気 ditambah kotoba on'yomi 電気 (bab 1, terverifikasi). Contoh kalimat `[食堂|しょくどう]で[昼|ひる]ごはんを[食|た]べます。`
+dan `[電気|でんき]をつけます。` beserta pengecohnya adalah draf yang perlu diperiksa tim konten. 食事, 元気, dan 天気
+tetap ada dan tetap tercantum sebagai belum terverifikasi. **Alasan:** 食堂 diajarkan lebih awal daripada 食事
+dan sama-sama memakai bacaan ショク, sehingga menguatkan kontras on'yomi sejak awal. Kedua kata memiliki bab
+yang sudah terverifikasi. Kalimat 電気をつけます memakai つけます yang diajarkan setelah bab 1; ini diterima untuk
+level contoh tetapi perlu ditinjau. **Alternatif ditolak:** Mengganti 元気 dengan 電気 (menghapus contoh
+na-adjektiva satu-satunya di data).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -437,3 +482,18 @@ antarhalaman, dan tanda air DRAF hanya terlihat penuh di halaman pertama karena 
 **Tindakan:** Kotoba boleh berlanjut ke halaman berikutnya (unit kecil seperti contoh kalimat tetap utuh),
 judul dijaga agar tidak terpisah dari isinya, dan latar kartu dibuat transparan saat dicetak.
 **Dampak:** Tanda air DRAF tercetak di setiap halaman dan tata letak cetak tidak membuang kertas.
+
+### T-10 · みんなの日本語初級I tidak mengajarkan kanji secara bertahap
+**Tanggal:** 2026-09-14. **Temuan:** Verifikasi nomor bab terhadap buku oleh kelompok menunjukkan bahwa kanji
+sudah muncul di daftar kosakata sejak 第1課 (lebih dari 30 kanji di pelajaran 1 saja, misalnya 先生, 学生,
+会社員, 銀行員, 医者, 大学, 病院, 電気), tanpa mahasiswa dituntut menguasainya di bab itu. Kanji diajarkan
+berurutan di mata kuliah Hyouki. Asumsi "urutan level = urutan bab Minna" (D-11) karenanya tidak dapat
+dipakai. **Tindakan:** D-39, D-40, D-41. Nomor bab yang terverifikasi dicatat di README. **Dampak:** Urutan
+level kini menunggu urutan kanji dari mata kuliah Hyouki; urutan level yang ada di data bersifat sementara.
+
+### T-11 · Pengecoh draf untuk kalimat 電気 ternyata dapat benar
+**Tanggal:** 2026-09-14. **Temuan:** Saat menyusun kalimat `電気をつけます。`, pengecoh 食事 yang semula dipilih
+ternyata membentuk kalimat wajar `食事をつけます` ("menyertakan makan", misalnya pada paket hotel), sehingga
+menjadi jawaban benar kedua. **Tindakan:** Pengecoh diganti 天気, 雨, dan 朝, yang tidak dapat "dinyalakan".
+**Dampak:** Contoh tambahan untuk bagian README "Menulis kalimat contoh yang tidak ambigu": kata kerja dengan
+banyak makna (つけます) memperluas kemungkinan jawaban benar kedua.

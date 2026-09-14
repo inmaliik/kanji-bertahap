@@ -6,6 +6,7 @@ import { h, ja } from "../dom.js";
 import { buildLevelItems } from "../content.js";
 import { renderRuby } from "../ruby.js";
 import { STAGE_ORDER } from "../session.js";
+import { chaptersLabel, kotobaChapters } from "../chapters.js";
 import { backLink, chapterLabel, issueList, LABELS, readingsTable, wordWithRuby } from "./common.js";
 
 export const ALL_LEVELS_ROUTE_ID = "all";
@@ -121,7 +122,7 @@ function levelSection(level, { number, total, revision, showItemIds = false }) {
         { class: "badges" },
         h("span", { class: "badge badge--plain" }, level.id),
         h("span", { class: "badge" }, level.jlptLevel),
-        h("span", { class: "badge" }, chapterLabel(level.chapter))
+        h("span", { class: "badge" }, chaptersLabel(level))
       )
     ),
 
@@ -204,7 +205,7 @@ function summaryTable(levels) {
       h(
         "thead",
         {},
-        h("tr", {}, ["No.", "ID", "Kanji", "Arti", "JLPT", "Bab", "Kotoba", "Kalimat"].map((t) => h("th", { scope: "col" }, t)))
+        h("tr", {}, ["No.", "ID", "Kanji", "Arti", "JLPT", "Bab Minna", "Kotoba", "Kalimat"].map((t) => h("th", { scope: "col" }, t)))
       ),
       h(
         "tbody",
@@ -218,7 +219,7 @@ function summaryTable(levels) {
             h("td", {}, ja("span", { class: "summary-table__kanji" }, level.kanji)),
             h("td", {}, level.meaning),
             h("td", {}, level.jlptLevel),
-            h("td", {}, chapterLabel(level.chapter)),
+            h("td", {}, kotobaChapters(level).join(", ") || "–"),
             h("td", {}, String(level.kotoba.length)),
             h("td", {}, String(exampleCount(level)))
           )
@@ -279,6 +280,9 @@ export function contentCheckScreen(app) {
           h("p", {}, `Materi bisa dimainkan, tetapi ada ${app.warnings.length} peringatan yang sebaiknya diperiksa tim konten.`),
           issueList(app.warnings),
         ]
-      : h("p", {}, "✓ Tidak ada error dan tidak ada peringatan.")
+      : h("p", {}, "✓ Tidak ada error dan tidak ada peringatan."),
+    app.notes.length
+      ? [h("h2", {}, "Catatan"), h("p", { class: "muted" }, "Informasi saja; tidak perlu diperbaiki."), issueList(app.notes)]
+      : null
   );
 }

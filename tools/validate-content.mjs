@@ -28,9 +28,9 @@ try {
   process.exit(1);
 }
 
-const { errors, warnings } = validateContent(data);
+const { errors, warnings, notes } = validateContent(data);
 console.log(`Memeriksa ${file}\n`);
-printIssues([...errors, ...warnings]);
+printIssues([...errors, ...warnings, ...notes]);
 if (!errors.length) {
   console.log(`contentRevision: ${data.contentRevision} · ${data.levels.length} level`);
 }

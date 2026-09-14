@@ -6,6 +6,7 @@ export const red = (t) => paint("31;1", t);
 export const yellow = (t) => paint("33;1", t);
 export const green = (t) => paint("32;1", t);
 export const dim = (t) => paint("2", t);
+export const blue = (t) => paint("34;1", t);
 
 /**
  * @param {Array<object>} issues items from validateContent()
@@ -13,8 +14,8 @@ export const dim = (t) => paint("2", t);
  */
 export function printIssues(issues, extraLocation = () => null) {
   for (const issue of issues) {
-    const isError = issue.severity === "error";
-    const tag = isError ? red("✗ ERROR") : yellow("⚠ PERINGATAN");
+    const tags = { error: red("✗ ERROR"), warning: yellow("⚠ PERINGATAN"), note: blue("ℹ CATATAN") };
+    const tag = tags[issue.severity];
     const banner = issue.prominent ? red(" ████ ") : " ";
     console.log(`${tag}${banner}${issue.where || "(akar file)"}`);
     const extra = extraLocation(issue);

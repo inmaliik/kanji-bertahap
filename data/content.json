@@ -7,7 +7,6 @@
       "kanji": "食",
       "meaning": "makan",
       "jlptLevel": "N5",
-      "chapter": 6,
       "bushu": {
         "char": "食",
         "name": "shoku",
@@ -72,6 +71,33 @@
           ]
         },
         {
+          "word": "食堂",
+          "reading": "しょくどう",
+          "readingType": "onyomi",
+          "pos": "noun",
+          "meaning": "kantin / ruang makan",
+          "chapter": 3,
+          "note": "",
+          "readingDistractors": [
+            "じきどう",
+            "いんどう",
+            "きどう"
+          ],
+          "readingDistractorsCross": [],
+          "examples": [
+            {
+              "ja": "[食堂|しょくどう]で[昼|ひる]ごはんを[食|た]べます。",
+              "blank": "食堂",
+              "translation": "Saya makan siang di kantin.",
+              "distractors": [
+                "天気",
+                "新聞",
+                "手紙"
+              ]
+            }
+          ]
+        },
+        {
           "word": "食事",
           "reading": "しょくじ",
           "readingType": "onyomi",
@@ -106,7 +132,6 @@
       "kanji": "飲",
       "meaning": "minum",
       "jlptLevel": "N5",
-      "chapter": 6,
       "bushu": {
         "char": "飠",
         "name": "shokuhen",
@@ -177,7 +202,6 @@
       "kanji": "気",
       "meaning": "semangat / udara / perasaan",
       "jlptLevel": "N5",
-      "chapter": 8,
       "bushu": {
         "char": "气",
         "name": "kigamae",
@@ -198,6 +222,33 @@
         ]
       },
       "kotoba": [
+        {
+          "word": "電気",
+          "reading": "でんき",
+          "readingType": "onyomi",
+          "pos": "noun",
+          "meaning": "listrik / lampu",
+          "chapter": 1,
+          "note": "",
+          "readingDistractors": [
+            "でんけ",
+            "でんしょく",
+            "でんいん"
+          ],
+          "readingDistractorsCross": [],
+          "examples": [
+            {
+              "ja": "[電気|でんき]をつけます。",
+              "blank": "電気",
+              "translation": "Saya menyalakan lampu.",
+              "distractors": [
+                "天気",
+                "雨",
+                "朝"
+              ]
+            }
+          ]
+        },
         {
           "word": "元気",
           "reading": "げんき",

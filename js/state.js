@@ -42,6 +42,9 @@ export const STORAGE_WARNING_RATIO = 0.8;
 
 export const PROGRESS_KEY = "kanjiGame.progress.v1";
 
+// Device preferences. Not player progress, so a progress reset keeps them.
+export const PREFS_KEY = "kanjiGame.prefs.v1";
+
 export const LEVEL_STATUS = Object.freeze({
   // Stored
   IN_PROGRESS: "in_progress",
@@ -260,4 +263,17 @@ export function storageUsage() {
   const used = usedChars("kanjiGame.");
   const ratio = used / STORAGE_BUDGET_CHARS;
   return { used, budget: STORAGE_BUDGET_CHARS, ratio, warning: ratio >= STORAGE_WARNING_RATIO };
+}
+
+// ---------------------------------------------------------------------------
+// Device preferences
+
+/** @returns {{chapterLimit: number|null}} chapterLimit: last Minna chapter the class has studied */
+export function loadPrefs() {
+  const { value } = readJson(PREFS_KEY);
+  return { chapterLimit: Number.isInteger(value?.chapterLimit) ? value.chapterLimit : null };
+}
+
+export function savePrefs(prefs) {
+  return writeJson(PREFS_KEY, prefs);
 }
