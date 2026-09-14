@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pemeriksa Materi — Kanji Bertahap</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Same limitation as the app (DECISIONS D-01): modules do not load from file://. -->
+  <div id="file-protocol-help" class="boot" hidden>
+    <h1>Buka lewat tautan, bukan dari folder</h1>
+    <p>Halaman ini tidak bisa dibuka dengan klik ganda, karena browser memblokir kode pemeriksa jika dibuka langsung dari disk.</p>
+    <p>Buka dengan salah satu cara berikut:</p>
+    <ul>
+      <li><strong>Tautan Netlify</strong> aplikasi, lalu tambahkan <code>/tools/convert.html</code> di belakangnya. Contoh: <code>https://nama-situs.netlify.app/tools/convert.html</code>.</li>
+      <li><strong>Server lokal</strong> (lihat README bagian Menjalankan), lalu buka <code>http://localhost:8000/tools/convert.html</code>.</li>
+    </ul>
+  </div>
+
+  <main id="app" class="converter" hidden>
+    <h1>Pemeriksa dan konverter materi</h1>
+    <p>Untuk tim konten. Tidak perlu memasang apa pun. File tidak diunggah ke mana pun: semua pemeriksaan berjalan di browser ini.</p>
+
+    <ol class="converter__steps">
+      <li>Di Google Sheets: <strong>File → Download → Comma Separated Values (.csv)</strong>.</li>
+      <li>Pilih file CSV itu di bawah, isi nama revisi, lalu tekan <strong>Periksa</strong>.</li>
+      <li>Perbaiki semua <strong>error</strong> di spreadsheet, unduh ulang CSV-nya, dan periksa lagi.</li>
+      <li>Jika lolos, tekan <strong>Unduh content.json</strong> dan serahkan file itu ke pengelola aplikasi.</li>
+    </ol>
+
+    <form id="converter-form" class="card converter__form">
+      <label class="field-label" for="csv-file">File CSV</label>
+      <input id="csv-file" type="file" accept=".csv,text/csv" required>
+
+      <label class="field-label" for="revision">Nama revisi</label>
+      <input id="revision" class="text-input" type="text" value="draft-0" required autocomplete="off" spellcheck="false">
+      <p class="field-help">Tetap <code>draft-0</code> sampai semua nomor bab diperiksa terhadap buku. Setelah itu, misalnya <code>rev-1</code>.</p>
+
+      <button type="submit" class="button button--primary button--block">Periksa</button>
+    </form>
+
+    <section id="results" class="converter__results" aria-live="polite"></section>
+  </main>
+
+  <script>
+    (function () {
+      if (location.protocol === "file:") document.getElementById("file-protocol-help").hidden = false;
+      else document.getElementById("app").hidden = false;
+    })();
+  </script>
+
+  <script type="module">
+    // Same conversion and validation modules as tools/csv-to-json.mjs and the app.
+    import { convertCsvToContent, csvLocation, rowLabel } from "../js/csv-content.js";
+    import { validateContent } from "../js/validate.js";
+    import { h } from "../js/dom.js";
+    import { issueList } from "../js/screens/common.js";
+
+    const form = document.getElementById("converter-form");
+    const fileInput = document.getElementById("csv-file");
+    const revisionInput = document.getElementById("revision");
+    const results = document.getElementById("results");
+
+    const readText = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file, "UTF-8");
+      });
+
+    function downloadJson(content) {
+      const url = URL.createObjectURL(new Blob([`${JSON.stringify(content, null, 2)}\n`], { type: "application/json" }));
+      const link = h("a", { href: url, download: "content.json", hidden: true });
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    function show(...nodes) {
+      results.replaceChildren(...nodes.flat().filter(Boolean));
+      results.querySelector("h2")?.focus();
+    }
+
+    fileInput.addEventListener("change", () => results.replaceChildren());
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const file = fileInput.files[0];
+      const revision = revisionInput.value.trim();
+      if (!file) return;
+
+      let text;
+      try {
+        text = await readText(file);
+      } catch (err) {
+        show(h("p", { class: "notice notice--error" }, `✗ File tidak bisa dibaca: ${err.message}`));
+        return;
+      }
+
+      const { fatal, problems, content, rowMap } = convertCsvToContent(text, revision);
+      const heading = (ok, text) => h("h2", { tabindex: "-1", class: ok ? "converter__ok" : "converter__fail" }, text);
+
+      if (fatal) {
+        show(heading(false, "✗ File belum bisa diperiksa"), h("p", { class: "notice notice--error converter__fatal" }, fatal));
+        return;
+      }
+
+      if (problems.length) {
+        show(
+          heading(false, `✗ Gagal: ${problems.length} masalah di CSV`),
+          h("p", {}, "Perbaiki baris-baris berikut di spreadsheet, unduh ulang CSV-nya, lalu periksa lagi."),
+          issueList(
+            problems.map((p) => ({ severity: "error", code: "CSV", where: "Spreadsheet", path: "", message: p.message, rows: p.rows })),
+            (issue) => rowLabel(issue.rows)
+          )
+        );
+        return;
+      }
+
+      const { errors, warnings, notes } = validateContent(content);
+      const locate = (issue) => csvLocation(rowMap, issue);
+      const ok = errors.length === 0;
+      show(
+        heading(
+          ok,
+          ok
+            ? `✓ Lolos: ${content.levels.length} level${warnings.length ? `, ${warnings.length} peringatan` : ", tanpa peringatan"}`
+            : `✗ Gagal: ${errors.length} error, ${warnings.length} peringatan`
+        ),
+        ok
+          ? [
+              /^draft/i.test(revision)
+                ? h("p", { class: "notice notice--warning" }, `⚠ Revisi "${revision}" diawali "draft": pratinjau materi akan bertanda DRAF.`)
+                : null,
+              warnings.length ? h("p", {}, "Materi bisa dipakai, tetapi baca setiap peringatan dan putuskan apakah perlu diperbaiki.") : null,
+              h("button", { type: "button", class: "button button--primary button--block", onClick: () => downloadJson(content) }, "Unduh content.json"),
+            ]
+          : h("p", {}, "content.json belum bisa diunduh. Perbaiki semua error di spreadsheet, unduh ulang CSV-nya, lalu periksa lagi."),
+        errors.length ? [h("h3", {}, `Error (${errors.length})`), issueList(errors, locate)] : null,
+        warnings.length ? [h("h3", {}, `Peringatan (${warnings.length})`), issueList(warnings, locate)] : null,
+        notes.length ? [h("h3", {}, "Catatan"), issueList(notes, locate)] : null
+      );
+    });
+  </script>
+</body>
+</html>

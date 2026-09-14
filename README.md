@@ -61,6 +61,7 @@ js/tab-guard.js             peringatan jika aplikasi terbuka di tab lain
 js/content.js               memuat content.json, mengelompokkan level, menurunkan item soal
 js/chapters.js              bab Minna sebuah level, dihitung dari kotobanya
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
+js/csv-content.js           konversi CSV spreadsheet → struktur content.json (dipakai browser DAN terminal)
 js/ruby.js                  parser sintaks furigana [漢字|かんじ] dan render <ruby>
 js/jp-text.js               pengenalan hiragana/katakana/kanji, pemisah notasi た(べる)
 js/dom.js                   pembuat elemen HTML
@@ -80,7 +81,8 @@ js/screens/play.js          layar bermain: menjalankan sesi, mencatat log
 js/screens/preview.js       pratinjau materi (per level dan semua level, bisa dicetak), pemeriksaan konten
 js/screens/settings.js      pengaturan: reset, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 
-tools/csv-to-json.mjs       konversi CSV spreadsheet → data/content.json
+tools/convert.html          pemeriksa dan konverter CSV → content.json di browser (untuk tim konten)
+tools/csv-to-json.mjs       konversi CSV → data/content.json dari terminal
 tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
 tools/content-template.csv  contoh CSV (level 食)
@@ -94,29 +96,38 @@ DECISIONS.md                catatan keputusan desain beserta alasannya
 
 ## Alur kerja tim konten
 
-Materi ditulis di Google Sheets, bukan langsung di JSON.
+Materi ditulis di Google Sheets, bukan langsung di JSON. **Tidak perlu memasang apa pun.**
 
 1. Isi spreadsheet dengan kolom persis seperti [Kolom spreadsheet](#kolom-spreadsheet).
    Contoh yang benar ada di `tools/content-template.csv` (bisa di-*import* ke Google Sheets).
 2. Unduh: **File → Download → Comma Separated Values (.csv)**.
-3. Jalankan konverter (butuh [Node.js](https://nodejs.org) versi 22 atau lebih baru):
-   ```bash
-   node tools/csv-to-json.mjs ~/Downloads/materi.csv --revision rev-1
-   ```
-   - `--revision` wajib. Nama ini dicatat di setiap baris log, supaya data sebelum dan sesudah
-     tiap putaran revisi bisa dibandingkan. Ganti setiap kali materi direvisi
-     (`draft-0` → `rev-1` → `rev-2`).
-   - `--out` opsional (bawaan: `data/content.json`).
-   - File hanya ditulis jika **tidak ada error**. Setiap error menyebut nomor baris CSV.
-4. Muat ulang aplikasi di browser.
+3. Buka **pemeriksa materi** di browser:
+   - dari situs Netlify: `https://nama-situs.netlify.app/tools/convert.html`, atau
+   - dari server lokal: `http://localhost:8000/tools/convert.html`.
 
-Jika `content.json` diedit langsung, periksa dengan:
+   Halaman ini **tidak bisa** dibuka dengan klik ganda pada file `tools/convert.html`, karena alasan yang
+   sama dengan aplikasinya (lihat [Menjalankan](#menjalankan)). File CSV tidak diunggah ke mana pun;
+   pemeriksaan berjalan di browser.
+4. Pilih file CSV, isi **Nama revisi**, tekan **Periksa**.
+   - Nama revisi dicatat di setiap baris log, supaya data sebelum dan sesudah tiap putaran revisi bisa
+     dibandingkan. Tetap `draft-0` sampai semua nomor bab terverifikasi, lalu `rev-1`, `rev-2`, dan seterusnya.
+   - Setiap error dan peringatan menyebut **nomor baris CSV**.
+5. Perbaiki semua **error** di spreadsheet, unduh ulang CSV-nya, periksa lagi. Baca setiap **peringatan**.
+6. Jika lolos, tekan **Unduh content.json** dan serahkan file itu ke pengelola aplikasi, yang meletakkannya di
+   folder `data/` lalu mengunggah ulang aplikasi ke Netlify (lihat [Menaruh aplikasi di Netlify](#menaruh-aplikasi-di-netlify)).
+
+Anggota tim konten sebaiknya memeriksa bagiannya sendiri dengan halaman ini sebelum menyerahkan pekerjaan.
+
+**Alternatif untuk pengelola aplikasi (terminal, butuh Node.js 22+).** Logikanya sama persis dengan halaman
+pemeriksa; keduanya memakai `js/csv-content.js` dan `js/validate.js`.
 ```bash
-node tools/validate-content.mjs            # bawaan: data/content.json
+node tools/csv-to-json.mjs ~/Downloads/materi.csv --revision rev-1   # menulis data/content.json jika lolos
+node tools/validate-content.mjs                                     # memeriksa data/content.json
 ```
-Pemeriksaan yang sama berjalan otomatis saat aplikasi dibuka. Jika ada error, aplikasi berhenti dan
-menampilkan daftar error. Peringatan tidak menghentikan aplikasi; daftarnya bisa dibuka dari
-tautan "peringatan konten" di daftar level.
+
+Pemeriksaan yang sama juga berjalan otomatis saat aplikasi dibuka. Jika ada error, aplikasi berhenti dan
+menampilkan daftar error. Peringatan tidak menghentikan aplikasi; daftarnya bisa dibuka dari tautan
+"peringatan konten" di daftar level.
 
 ---
 

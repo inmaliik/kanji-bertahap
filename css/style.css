@@ -1309,6 +1309,11 @@ rt {
   color: var(--primary);
 }
 
+.issue__location {
+  margin: 0.25rem 0 0;
+  font-weight: 700;
+}
+
 .issue__message {
   margin: 0.25rem 0;
 }
@@ -1709,4 +1714,41 @@ rt {
   .table-scroll {
     overflow: visible;
   }
+}
+
+/* Content converter (tools/convert.html) -------------------------------------------- */
+
+.converter > * + * {
+  margin-top: 1rem;
+}
+
+.converter__steps {
+  padding-left: 1.25rem;
+}
+
+.converter__form input[type="file"] {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  font: inherit;
+}
+
+.converter__form .button {
+  margin-top: 1rem;
+}
+
+.converter__results > * + * {
+  margin-top: 0.75rem;
+}
+
+.converter__ok {
+  color: var(--success);
+}
+
+.converter__fail {
+  color: var(--error);
+}
+
+.converter__fatal {
+  white-space: pre-line;
 }

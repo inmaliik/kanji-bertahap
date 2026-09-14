@@ -42,12 +42,17 @@ const SEVERITY = {
   note: { icon: "ℹ", label: "Catatan" },
 };
 
-export function issueList(issues) {
+/**
+ * @param {Array<object>} issues items from validateContent()
+ * @param {(issue: object) => string|null} [locate] extra location line, e.g. CSV row numbers
+ */
+export function issueList(issues, locate = () => null) {
   return h(
     "ul",
     { class: "issues" },
     issues.map((issue) => {
       const { icon, label } = SEVERITY[issue.severity];
+      const location = locate(issue);
       return h(
         "li",
         { class: `issue issue--${issue.severity}${issue.prominent ? " issue--prominent" : ""}` },
@@ -58,6 +63,7 @@ export function issueList(issues) {
           h("span", { class: "issue__severity" }, label),
           h("span", { class: "issue__where" }, issue.where || "content.json")
         ),
+        location ? h("p", { class: "issue__location" }, location) : null,
         h("p", { class: "issue__message" }, issue.message),
         issue.path ? h("p", { class: "issue__path" }, h("code", {}, issue.path), ` · ${issue.code}`) : null
       );

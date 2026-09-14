@@ -475,6 +475,20 @@ secara otomatis, sehingga nilainya diisi manusia. **Alternatif ditolak:** Error 
 menghitung bab kalimat otomatis dari daftar kosakata (membutuhkan kamus bab dan analisis tata bahasa yang
 tidak tersedia).
 
+### D-49 · Pemeriksa dan konverter materi di browser (`tools/convert.html`)
+**Tanggal:** 2026-09-14. **Keputusan:** Tim konten memeriksa dan mengonversi CSV lewat halaman
+`tools/convert.html`: memilih file, mengisi nama revisi, melihat error dan peringatan beserta nomor baris CSV,
+lalu mengunduh `content.json` jika tidak ada error. Logika konversi dipindahkan dari skrip Node ke modul
+bersama `js/csv-content.js`, sehingga halaman ini dan `tools/csv-to-json.mjs` memakai kode yang sama persis
+bersama `js/validate.js`. Halaman dibuka dari situs Netlify atau server lokal, bukan dengan klik ganda; jika
+dibuka dari disk, halaman menjelaskan cara membukanya. **Alasan:** Penulis materi bukan programmer dan tidak
+akan memasang Node.js. Menyimpan satu salinan logika mencegah hasil pemeriksaan browser dan terminal
+berbeda. Pembukaan dengan klik ganda tidak dimungkinkan karena browser memblokir ES modules dari `file://`
+(sama dengan D-01); situs Netlify yang memang dibutuhkan untuk validator sekaligus menyediakan halaman ini
+tanpa pemasangan. **Alternatif ditolak:** Menyalin logika ke dalam satu berkas HTML (dua salinan yang bisa
+berbeda); membangun berkas gabungan otomatis (membutuhkan build step); aplikasi desktop atau makro
+spreadsheet.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
