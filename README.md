@@ -7,9 +7,10 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Status:** langkah 4 dari 5. Semua fitur inti sudah ada: lima tahap, level ulangan, Pengaturan
-> lengkap, pengiriman log ke Google Apps Script, dan pratinjau materi yang bisa dicetak. Langkah 5
-> adalah pemolesan dan pengujian dengan 30 level.
+> **Status:** scaffold selesai (langkah 5 dari 5). Semua fitur ada dan teruji dengan data uji 33 level.
+> `data/content.json` masih berisi **tiga level contoh** dengan urutan sementara; materi sungguhan
+> menunggu urutan kanji dari mata kuliah Hyouki. Lihat [Sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)
+> dan [Sebelum pameran](#daftar-periksa-sebelum-pameran) di akhir dokumen ini.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
@@ -56,7 +57,9 @@ js/session.js               antrean soal satu level: putaran belajar, produksi, 
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
+js/tab-guard.js             peringatan jika aplikasi terbuka di tab lain
 js/content.js               memuat content.json, mengelompokkan level, menurunkan item soal
+js/chapters.js              bab Minna sebuah level, dihitung dari kotobanya
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
 js/ruby.js                  parser sintaks furigana [漢字|かんじ] dan render <ruby>
 js/jp-text.js               pengenalan hiragana/katakana/kanji, pemisah notasi た(べる)
@@ -82,8 +85,10 @@ tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
 tools/content-template.csv  contoh CSV (level 食)
 tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
-```
+
+tests/                      uji otomatis logika inti (lihat "Uji otomatis")
 DECISIONS.md                catatan keputusan desain beserta alasannya
+```
 
 ---
 
@@ -483,7 +488,7 @@ Dibuka dari tombol **⚙ Pengaturan** di daftar level.
 | Bagian | Isi |
 |---|---|
 | Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). |
-| Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti, misalnya `P017`. Tercatat di setiap baris log. |
+| Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
 | Materi | Revisi materi, tanda DRAF, tautan pratinjau semua level dan per level, pemeriksaan konten. |
 
@@ -718,11 +723,20 @@ Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi.
 ### Setiap kali pengunjung berganti
 
 1. Pengaturan → **Reset progres** → **Ya, reset progres**.
-2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**, lalu
-   **Simpan kode**. Jangan pernah mengisi nama atau NIM.
+2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**
+   (bentuknya huruf lalu angka, misalnya `K4-01`), lalu **Simpan kode**. Jangan pernah mengisi nama atau NIM.
 3. Tekan **‹ Daftar level**, serahkan perangkat ke pengunjung.
 
 Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim.
+
+### Jika muncul spanduk kuning "Aplikasi ini juga terbuka di tab lain"
+
+Artinya aplikasi terbuka dua kali di perangkat yang sama, dan progres bisa saling menimpa.
+
+1. Tutup semua tab aplikasi kecuali satu (di ponsel: buka daftar tab browser, geser tab yang berlebih).
+2. Jika spanduk meminta **Muat ulang halaman ini**, tekan tombol itu.
+3. Jika pengunjung sedang bermain, progres level yang sedang dimainkan mungkin perlu diulang. Jawaban
+   yang sudah tercatat di log tidak hilang.
 
 ### Setiap satu jam atau saat istirahat
 
@@ -764,7 +778,128 @@ Pengaturan → Materi → **Pratinjau semua materi (bisa dicetak)** membuka `#/p
 - revisi materi dan tanggal dicetak di bagian atas.
 
 Tekan **Cetak / simpan PDF**. Pada hasil cetak, setiap level dimulai di halaman baru dan diakhiri
-**kotak catatan validator**. Jika revisi materi diawali `draft`, spanduk **DRAF — BELUM DIVERIFIKASI**
-tampil di atas dan tanda air **DRAF** tercetak di setiap halaman.
+**kotak catatan validator**. Jika revisi materi diawali `draft`, materi ditandai DRAF dengan tiga cara:
+
+1. spanduk **DRAF — BELUM DIVERIFIKASI** di halaman pertama;
+2. tanda air **DRAF** di setiap halaman (bergantung pada dukungan cetak browser);
+3. label **DRAF — BELUM DIVERIFIKASI · revisi …** di awal setiap level dan di kotak catatan validator. Label
+   ini bagian dari isi halaman, sehingga tetap tercetak walaupun browser tidak mencetak tanda air.
 
 Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeriksaan teknis.
+
+## Daftar level
+
+- Level dikelompokkan per JLPT (N5, lalu N4) dengan urutan sesuai `content.json`.
+- Tombol biru **Mulai / Lanjutkan** di bagian atas langsung membuka level yang sedang dikerjakan, atau
+  level pertama yang terbuka. Berguna ketika daftar sudah berisi puluhan level.
+- Setiap kartu menampilkan ID level, bab Minna dari kotobanya, dan status (terkunci, belum dimulai,
+  sedang dikerjakan beserta jumlah item yang dikuasai, atau lulus).
+- Penanda **Kelas sudah sampai bab Minna** dijelaskan di [Urutan level dan `chapter`](#urutan-level-dan-chapter).
+
+## Uji otomatis
+
+Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa npm dan tanpa dependensi.
+
+```bash
+node --test tests/*.test.mjs
+```
+
+Uji ini memeriksa aturan konten (furigana, validator, bab, pengecoh), aturan permainan (sesi, penyela,
+kunci level, level ulangan), log (penyimpanan penuh, migrasi kolom, antrean pengiriman, CSV), alat
+baris perintah, skrip Apps Script (dengan tiruan layanan Google), dan bahwa tidak ada materi bahasa
+Jepang yang ditulis langsung di kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di
+sini; periksa manual di ponsel.
+
+---
+
+## Pengujian yang wajib dijalankan tim
+
+Tiga hal berikut **belum bisa diuji oleh pengembang**. Kerjakan sesuai urutan; urutannya mengikuti
+jadwal: validasi ahli jauh lebih dulu daripada pameran.
+
+### 1. Cetak pratinjau di Safari dan Firefox — sebelum validasi ahli
+
+**Kenapa paling mendesak:** halaman pratinjau adalah yang dipegang validator ahli. Cetak baru diuji di
+Chrome. Jika tanda DRAF tidak tercetak di browser lain, dokumen draf bisa sampai ke validator tanpa ada
+yang sadar.
+
+Lakukan di **Safari** (Mac atau iPhone) dan **Firefox**:
+
+1. Buka aplikasi dari tautan Netlify → ⚙ Pengaturan → **Pratinjau semua materi (bisa dicetak)**.
+2. Tekan **Cetak / simpan PDF** → pilih **Simpan sebagai PDF**.
+3. Buka PDF-nya dan periksa setiap halaman:
+   - [ ] Halaman pertama berisi spanduk **DRAF — BELUM DIVERIFIKASI**.
+   - [ ] Setiap level dimulai di halaman baru dengan label **DRAF — BELUM DIVERIFIKASI · revisi …**.
+   - [ ] Tanda air besar **DRAF** terlihat di setiap halaman. *(Jika tidak ada, catat nama browsernya.
+         Label di awal level tetap menandai dokumen sebagai draf, tetapi beri tahu pengembang.)*
+   - [ ] Huruf Jepang dan furigana terbaca, tidak berubah menjadi kotak.
+   - [ ] Setiap level diakhiri kotak **Catatan validator**.
+4. Jika ada yang gagal, **jangan kirim PDF dari browser tersebut**. Pakai PDF dari browser yang lolos.
+
+### 2. Endpoint Apps Script di akun Google sungguhan — jauh sebelum pameran
+
+**Kenapa:** ini jalur utama pengumpulan data di pameran. Skrip baru diuji dengan tiruan layanan Google,
+belum di akun Google yang sebenarnya. Masalah izin atau akses hanya muncul di akun sungguhan.
+
+1. Ikuti [Pengiriman log ke Google Apps Script](#pengiriman-log-ke-google-apps-script) langkah 1–4.
+2. Periksa:
+   - [ ] Membuka URL `/exec` di browser menampilkan `{"ok":true,...}`.
+   - [ ] Setelah bermain beberapa soal, Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
+   - [ ] Sheet `log` berisi baris baru; huruf Jepang tampil benar.
+   - [ ] Matikan Wi-Fi, jawab beberapa soal, nyalakan lagi: dalam 1 menit semua terkirim, dan tidak ada
+         baris ganda di sheet (periksa kolom `rowId`).
+   - [ ] Uji dari minimal dua ponsel berbeda yang akan dipakai di pameran.
+
+### 3. Unduhan CSV di iPhone — sebelum pameran
+
+**Kenapa:** ekspor CSV adalah cadangan saat jaringan pameran mati. Unduhan file di iPhone berbeda dari
+Android dan komputer, dan belum pernah dicoba.
+
+1. Di iPhone, buka aplikasi di Safari, mainkan beberapa soal.
+2. ⚙ Pengaturan → **Ekspor CSV**. Jika Safari bertanya, pilih **Unduh**.
+3. Periksa:
+   - [ ] File muncul di aplikasi **File** → **Unduhan**.
+   - [ ] File bisa dibuka (Numbers atau Google Sheets) dan huruf Jepang tampil benar.
+   - [ ] File bisa dikirim ke koordinator data (AirDrop, WhatsApp, atau email).
+4. Ulangi di satu ponsel Android untuk perbandingan.
+
+---
+
+## Daftar periksa sebelum validasi ahli
+
+Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dikirim ke validator.
+
+- [ ] Urutan kanji dari mata kuliah Hyouki sudah diterima, dan urutan level di spreadsheet mengikutinya.
+- [ ] Semua level sudah ditulis di spreadsheet, dikonversi, dan pemeriksa konten menyatakan **lolos tanpa
+      error**. Peringatan yang tersisa sudah dibaca dan diputuskan.
+- [ ] **Seluruh nomor bab** di [Yang harus diverifikasi terhadap buku](#yang-harus-diverifikasi-terhadap-buku)
+      sudah dicentang setelah dicek langsung di buku.
+- [ ] **Pengecoh manual lengkap di semua level**: setiap contoh kalimat punya minimal 3 pengecoh, dan setiap
+      pengecoh sudah diperiksa dengan cara di [Menulis kalimat contoh yang tidak ambigu](#menulis-kalimat-contoh-yang-tidak-ambigu).
+- [ ] Minimal satu anggota tim lain sudah mengerjakan seluruh soal tanpa melihat jawaban, dan tidak menemukan
+      soal dengan dua jawaban benar.
+- [ ] Keputusan yang menunggu dosen (daftar di awal `DECISIONS.md`) sudah dibahas, atau diputuskan untuk
+      dibiarkan sementara.
+- [ ] `contentRevision` **sudah dinaikkan** dari `draft-0` (misalnya menjadi `rev-1`) saat konversi CSV.
+- [ ] Pratinjau dibuka ulang: spanduk dan label **DRAF sudah tidak muncul**, dan revisi yang tertulis sesuai.
+- [ ] Pengujian tim nomor 1 (cetak di Safari dan Firefox) sudah lolos.
+- [ ] PDF pratinjau untuk validator dibuat dari browser yang lolos, dan nama filenya memuat nama revisi.
+
+## Daftar periksa sebelum pameran
+
+Dijalankan oleh koordinator data dan penjaga stan.
+
+- [ ] Aplikasi dengan materi final sudah di-deploy ke Netlify, dan tautannya sudah dicoba.
+- [ ] Pengujian tim nomor 2 (endpoint Apps Script) sudah lolos, dan `LOG_REMOTE_ENABLED` aktif di versi
+      yang di-deploy.
+- [ ] Pengujian tim nomor 3 (CSV di iPhone) sudah lolos.
+- [ ] Setiap perangkat pameran sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, satu level
+      dimainkan sampai lulus, dan Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
+- [ ] Setiap perangkat sudah di-**Reset progres** dan log uji coba sudah dihapus setelah diekspor.
+- [ ] Bagian [Prosedur pameran](#prosedur-pameran-untuk-penjaga-stan) sudah **dicetak** dan ada di meja stan.
+- [ ] Penjaga stan sudah berlatih: reset, mengisi kode peserta, membaca status pengiriman, ekspor CSV, dan
+      menangani spanduk tab ganda.
+- [ ] Jika ada peserta penelitian: daftar kode peserta anonim (misalnya `K4-01`, `K4-02`, …) sudah disiapkan
+      peneliti, terpisah dari daftar nama.
+- [ ] Nomor telepon koordinator data tertulis di lembar prosedur.
+- [ ] Pengisi daya dan koneksi internet cadangan (misalnya hotspot ponsel) tersedia.

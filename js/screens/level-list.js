@@ -170,6 +170,28 @@ export function levelListScreen(app) {
 
   const groups = groupLevels(content.levels).filter((g) => app.jlptFilter === "all" || g.jlptLevel === app.jlptFilter);
 
+  // With dozens of levels the next one can be far down the list: offer a shortcut
+  // to the first level that is started, or else the first one available.
+  const nextNode =
+    nodes.find((n) => statuses.get(n.id) === LEVEL_STATUS.IN_PROGRESS) ??
+    nodes.find((n) => statuses.get(n.id) === LEVEL_STATUS.AVAILABLE);
+  const continueShortcut = nextNode
+    ? h(
+        "a",
+        { class: "continue-card", href: `#/play/${encodeURIComponent(nextNode.id)}` },
+        nextNode.type === "review"
+          ? h("span", { class: "level-card__symbol", "aria-hidden": "true" }, "↻")
+          : ja("span", { class: "continue-card__kanji" }, nextNode.level.kanji),
+        h(
+          "span",
+          { class: "continue-card__body" },
+          h("span", { class: "continue-card__label" }, statuses.get(nextNode.id) === LEVEL_STATUS.IN_PROGRESS ? "Lanjutkan" : "Mulai"),
+          h("span", { class: "continue-card__title" }, nextNode.type === "review" ? `Level ulangan ${nextNode.id}` : `Level ${nextNode.id} · ${nextNode.level.meaning}`)
+        ),
+        h("span", { class: "level-card__chevron", "aria-hidden": "true" }, "›")
+      )
+    : null;
+
   return h(
     "div",
     { class: "screen" },
@@ -181,6 +203,7 @@ export function levelListScreen(app) {
     ),
     notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, h("span", { "aria-hidden": "true" }, "⚠ "), n.text)),
     storageNotice(),
+    continueShortcut,
     app.warnings.length
       ? h(
           "a",

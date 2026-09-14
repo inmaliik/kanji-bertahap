@@ -272,6 +272,48 @@ rt {
   font-size: 1.5rem;
 }
 
+.continue-card {
+  display: grid;
+  grid-template-columns: 3rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+}
+
+.continue-card .level-card__symbol,
+.continue-card .level-card__chevron {
+  color: #fff;
+}
+
+.continue-card__kanji {
+  font-size: 2.25rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.continue-card__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.continue-card__label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.continue-card__title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .chapter-limit {
   display: grid;
   grid-template-columns: 1fr auto;

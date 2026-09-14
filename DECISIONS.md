@@ -441,6 +441,25 @@ halaman pertama setiap level dan di kotak catatannya. Keterbatasan: halaman lanj
 hanya ditandai oleh tanda air. **Alternatif ditolak:** Mengandalkan tanda air saja; header berulang lewat
 tabel cetak (dukungan antarbrowser juga tidak pasti dan merumitkan tata letak).
 
+### D-46 · Uji otomatis logika inti disimpan di repo
+**Tanggal:** 2026-09-14. **Keputusan:** Uji logika inti disimpan di folder `tests/` dan dijalankan dengan runner
+bawaan Node (`node --test tests/*.test.mjs`), tanpa npm dan tanpa dependensi. Cakupannya: aturan konten,
+aturan permainan, log, alat baris perintah, skrip Apps Script dengan tiruan layanan Google, dan pemeriksaan
+bahwa tidak ada materi bahasa Jepang di kode aplikasi. Uji tampilan di browser tetap manual. Uji ini sudah
+dibuktikan dapat gagal dengan merusak sementara logika penyela dan penanda generasi log. **Alasan:** Uji yang
+selama pengembangan hanya ada di folder sementara hilang ketika sesi berganti, padahal aturan seperti
+penyela (D-21) dan penanda generasi log (T-08) mudah rusak tanpa terlihat saat kode diubah. Aplikasi tetap
+tanpa build step; uji hanya dijalankan pengembang. **Alternatif ditolak:** Kerangka uji pihak ketiga
+(membutuhkan npm); tanpa uji di repo.
+
+### D-47 · Pintasan "Mulai / Lanjutkan" di atas daftar level
+**Tanggal:** 2026-09-14. **Keputusan:** Daftar level diawali tombol yang membuka level atau level ulangan yang
+sedang dikerjakan, atau jika tidak ada, level pertama yang terbuka. Daftar tidak digulir otomatis.
+**Alasan:** Uji keterbacaan dengan 33 level menunjukkan bahwa setelah menyelesaikan level, pemain kembali ke
+puncak daftar dan harus menggulir jauh untuk menemukan level berikutnya. Tombol eksplisit menghindari
+lompatan gulir yang membingungkan. **Alternatif ditolak:** Menggulir otomatis ke level berikutnya; tanpa
+pintasan.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
