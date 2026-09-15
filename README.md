@@ -1,5 +1,7 @@
 # Kanji Bertahap
 
+> **Baru pertama kali membuka proyek ini?** Baca [`MULAI-DI-SINI.md`](MULAI-DI-SINI.md) dulu.
+
 Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semester 1 yang memakai
 みんなの日本語初級I. Dikembangkan untuk mata kuliah 教材開発.
 
@@ -57,7 +59,7 @@ Buat folder baru, misalnya `kanji-bertahap-situs`, lalu **salin** isi berikut da
 |---|---|
 | `index.html` | `.git` (folder tersembunyi) |
 | `css/` | `tests/` |
-| `js/` | `README.md`, `DECISIONS.md`, `BLOCKERS.md` |
+| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` |
 | `data/` | file CSV ekspor log jawaban |
 | `tools/` (berisi pemeriksa materi untuk tim konten) | |
 
@@ -159,6 +161,7 @@ tools/content-template.csv  contoh CSV (level 食)
 tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
 tests/                      uji otomatis logika inti (lihat "Uji otomatis")
+MULAI-DI-SINI.md            titik masuk: arahan per peran
 DECISIONS.md                catatan keputusan desain beserta alasannya
 BLOCKERS.md                 hal yang masih menghalangi uji coba sungguhan
 ```

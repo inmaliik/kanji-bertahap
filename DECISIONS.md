@@ -510,7 +510,7 @@ pengiriman selama teks placeholder) dan D-53 (penarikan persetujuan).*
 
 ### D-51 · Deploy lewat unggah folder Netlify, tanpa dokumen internal
 **Tanggal:** 2026-09-15. **Keputusan:** Aplikasi ditaruh di Netlify dengan menyeret folder unggahan berisi
-`index.html`, `css/`, `js/`, `data/`, dan `tools/`. Folder `.git`, `tests/`, `README.md`, `DECISIONS.md`,
+`index.html`, `css/`, `js/`, `data/`, dan `tools/`. Folder `.git`, `tests/`, `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`,
 `BLOCKERS.md`, dan file ekspor log tidak ikut diunggah. Langkahnya ditulis di README untuk orang yang tidak
 memakai baris perintah, termasuk cara memperbarui dan mengembalikan versi sebelumnya. **Alasan:** Tim membutuhkan
 tautan untuk validator lebih cepat dari rencana, dan tidak ada anggota tim yang diharapkan memakai baris
