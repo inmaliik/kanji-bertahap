@@ -84,3 +84,16 @@ test("no Japanese learning material is hardcoded in the app code", () => {
   }
   assert.deepEqual(offenders, []);
 });
+
+test("rows recorded under a placeholder consent text are never sendable", async () => {
+  const { sendableRows } = await import(new URL("../js/log-sender.js", import.meta.url).href);
+  const { LOG_COLUMNS } = await import(new URL("../js/logger.js", import.meta.url).href);
+  const { validateConsentText } = await import(new URL("../js/consent.js", import.meta.url).href);
+  const row = (version) => LOG_COLUMNS.map((c) => (c === "consentVersion" ? version : ""));
+  const rows = [row("placeholder-0"), row("v1-2026-10"), row("placeholder-draft2")];
+  assert.deepEqual(sendableRows(rows), [rows[1]]);
+  const text = { version: "v1", title: "t", sections: [{ heading: "h", paragraphs: ["p"] }] };
+  assert.deepEqual(validateConsentText({ ...text, isPlaceholder: false }), []);
+  assert.ok(validateConsentText({ ...text, isPlaceholder: true }).length, "placeholder flag needs a placeholder version");
+  assert.ok(validateConsentText({ ...text, version: "placeholder-1", isPlaceholder: false }).length, "final text cannot use a placeholder version");
+});

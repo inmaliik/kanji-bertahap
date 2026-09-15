@@ -22,9 +22,9 @@ export const LOG_COLUMNS = [
   "contentRevision", // content.json revision the answer was given against
   "playerId", // random per device/player; new after progress reset
   "participantCode", // optional anonymous code entered in Settings
-  "consentStatus", // always "agreed": rows are written only after consent
+  "consentStatus", // "agreed" for answers; "withdrawn" for the one row written when consent is withdrawn
   "consentVersion", // version of data/consent.json the player agreed to
-  "consentAt", // when the player agreed
+  "consentAt", // when the player agreed (also on the withdrawal row)
   "sessionId", // one per opening of a level
   "levelId", // level or review level (R01…) where the answer was given
   "isReview", // 1 for review levels
@@ -234,6 +234,48 @@ function csvCell(value) {
 export function logToCsv(rows = getLogRows()) {
   const lines = [LOG_COLUMNS.join(","), ...rows.map((row) => row.map(csvCell).join(","))];
   return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
+
+const toRecord = (row) => Object.fromEntries(LOG_COLUMNS.map((column, i) => [column, row[i]]));
+
+/**
+ * Delete the rows matching `predicate(record)` from the local log, e.g. when a
+ * participant withdraws consent (D-53). The sent and exported markers are
+ * recounted so rows that were not sent yet still get sent.
+ * @returns {number} rows deleted
+ */
+export function deleteRows(predicate) {
+  const m = loadMeta();
+  const stored = readStoredRows();
+  const keepStored = stored.map((row) => !predicate(toRecord(row)));
+  const keepMemory = memoryRows.map((row) => !predicate(toRecord(row)));
+  const keptWithin = (flags, count) => flags.slice(0, count).filter(Boolean).length;
+
+  const keptRows = stored.filter((_, i) => keepStored[i]);
+  const deleted = stored.length - keptRows.length + keepMemory.filter((keep) => !keep).length;
+  if (!deleted) return 0;
+
+  // Write the new chunks over the old keys first, then drop leftover keys.
+  const chunks = [];
+  for (let i = 0; i < keptRows.length; i += LOG_CHUNK_SIZE) chunks.push(keptRows.slice(i, i + LOG_CHUNK_SIZE));
+  chunks.forEach((chunk, i) => writeJson(chunkKey(i), chunk));
+  for (let i = chunks.length; i < m.chunkCount; i++) removeKey(chunkKey(i));
+
+  const allKeep = [...keepStored, ...keepMemory];
+  saveMeta({
+    ...m,
+    chunkCount: chunks.length,
+    rowCount: keptRows.length,
+    sentCount: keptWithin(keepStored, m.sentCount),
+    exportedRowCount: keptWithin(allKeep, m.exportedRowCount),
+  });
+  lastChunk = chunks[chunks.length - 1] ?? [];
+  memorySentCount = keptWithin(keepMemory, memorySentCount);
+  const keptMemory = memoryRows.filter((_, i) => keepMemory[i]);
+  memoryRows.length = 0;
+  memoryRows.push(...keptMemory);
+  generation += 1; // row positions changed: an in-flight send must not mark anything
+  return deleted;
 }
 
 export function clearLog() {

@@ -14,6 +14,7 @@ import {
   LOG_REMOTE_URL,
 } from "./config.js";
 import { getLogStatus, getUnsentBatch, LOG_COLUMNS, markSent } from "./logger.js";
+import { isPlaceholderConsentVersion } from "./consent.js";
 
 const APP_ID = "kanji-bertahap"; // checked by the Apps Script
 const FLUSH_DELAY_MS = 2000; // group answers given in quick succession
@@ -27,6 +28,7 @@ const status = {
 const listeners = new Set();
 let flushTimer = null;
 let started = false;
+let blockedReason = null; // set while sending is forced off (D-52)
 
 class SendError extends Error {}
 
@@ -38,6 +40,7 @@ export function getSenderStatus() {
   return {
     enabled: LOG_REMOTE_ENABLED,
     configured: isRemoteLogEnabled(),
+    blockedReason,
     ...status,
     unsentRows: getLogStatus().unsentRows,
   };
@@ -97,9 +100,20 @@ async function postBatch(rows) {
   }
 }
 
+const CONSENT_VERSION_COLUMN = LOG_COLUMNS.indexOf("consentVersion");
+
+/**
+ * Rows that may leave the device: never those recorded under a placeholder
+ * consent text, even after the final text is in place (D-52). Filtered rows
+ * are still marked as processed, so they stay only in the local log and CSV.
+ */
+export function sendableRows(rows) {
+  return rows.filter((row) => !isPlaceholderConsentVersion(row[CONSENT_VERSION_COLUMN]));
+}
+
 /** Send all unsent rows now. Safe to call at any time. */
 export async function flushLog() {
-  if (!isRemoteLogEnabled() || status.sending) return;
+  if (!isRemoteLogEnabled() || blockedReason || status.sending) return;
   if (globalThis.navigator?.onLine === false) {
     status.lastError = "Perangkat sedang offline. Log tetap tersimpan dan akan dikirim saat jaringan kembali.";
     notify();
@@ -112,7 +126,8 @@ export async function flushLog() {
     for (;;) {
       const batch = getUnsentBatch(LOG_REMOTE_BATCH_SIZE);
       if (!batch.rows.length) break;
-      await postBatch(batch.rows);
+      const rows = sendableRows(batch.rows);
+      if (rows.length) await postBatch(rows);
       markSent(batch);
       status.lastSuccessAt = new Date().toISOString();
       status.lastError = null;
@@ -128,14 +143,18 @@ export async function flushLog() {
 
 /** Debounced flush, called after every logged answer. */
 export function scheduleFlush() {
-  if (!isRemoteLogEnabled()) return;
+  if (!isRemoteLogEnabled() || blockedReason) return;
   clearTimeout(flushTimer);
   flushTimer = setTimeout(flushLog, FLUSH_DELAY_MS);
 }
 
-/** Start background sending: now, when the network returns, and periodically. */
-export function startLogSender() {
-  if (started || !isRemoteLogEnabled()) return;
+/**
+ * Start background sending: now, when the network returns, and periodically.
+ * @param {{blockedReason?: string|null}} [options] a reason forces sending off for this page
+ */
+export function startLogSender({ blockedReason: reason = null } = {}) {
+  blockedReason = reason;
+  if (started || !isRemoteLogEnabled() || blockedReason) return;
   started = true;
   window.addEventListener("online", flushLog);
   setInterval(() => {

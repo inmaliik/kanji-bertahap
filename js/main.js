@@ -1,7 +1,7 @@
 // App bootstrap and hash routing.
 
 import { CONSENT_URL, CONTENT_URL } from "./config.js";
-import { loadConsentText } from "./consent.js";
+import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { loadPrefs, loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
@@ -114,7 +114,13 @@ async function boot() {
 
   // Remote log sending never blocks the game; it does nothing unless enabled in config.js.
   onLogAppended(scheduleFlush);
-  startLogSender();
+  // A placeholder consent text is not valid consent for research: nothing is sent (D-52).
+  startLogSender({
+    blockedReason:
+      app.consentText && isPlaceholderConsentVersion(app.consentText.version)
+        ? `teks persetujuan belum final (versi ${app.consentText.version})`
+        : null,
+  });
   startTabGuard(document.getElementById("tab-warning"));
 
   window.addEventListener("hashchange", navigate);

@@ -625,6 +625,13 @@ pilihannya; perubahan berlaku untuk jawaban berikutnya.
 > ⚠ **Teks persetujuan saat ini adalah PLACEHOLDER** dan belum boleh dipakai untuk peserta penelitian.
 > Redaksinya harus disetujui dosen pembimbing.
 
+**Pengaman teks placeholder.** Selama versi teks persetujuan diawali `placeholder` (saat ini `placeholder-0`),
+**pengiriman log ke server dimatikan paksa**, walaupun sudah diaktifkan di `js/config.js`. Jawaban tetap
+tersimpan di perangkat supaya pencatatan bisa diuji, dan Pengaturan menampilkan alasannya. Jawaban yang direkam
+dengan persetujuan versi placeholder **tidak pernah dikirim**, termasuk setelah teks final dipasang; jawaban itu
+hanya ada di perangkat dan di file CSV ekspor. Tujuannya membuat mustahil, tanpa disengaja, merekam data
+penelitian atas dasar persetujuan yang redaksinya belum disetujui.
+
 ### Mengganti teks persetujuan
 
 Teksnya ada di `data/consent.json`, bukan di kode:
@@ -643,7 +650,8 @@ Teksnya ada di `data/consent.json`, bukan di kode:
 1. Tulis redaksi yang sudah disetujui dosen pembimbing di `title` dan `sections`. Jumlah bagian bebas.
 2. Ubah `isPlaceholder` menjadi `false` (spanduk "TEKS SEMENTARA" hilang).
 3. **Ganti `version`** setiap kali redaksi berubah. Semua pemain akan diminta memilih ulang, dan log mencatat
-   versi yang disetujui. Data yang direkam dengan versi `placeholder-0` dapat disaring dari analisis.
+   versi yang disetujui. Versi final **tidak boleh** diawali `placeholder`; pemeriksa menolak `isPlaceholder` dan
+   `version` yang tidak cocok.
 4. Unggah ulang aplikasi ke Netlify.
 
 ### Data yang secara teknis direkam (bahan penyusunan teks)
@@ -660,9 +668,38 @@ Daftar ini fakta teknis untuk membantu penyusun teks, **bukan** redaksi persetuj
 Aplikasi tidak merekam nama, NIM, alamat email, lokasi, atau informasi perangkat. Data disimpan di perangkat
 dan, jika pengiriman diaktifkan, dikirim ke Google Sheet milik tim.
 
-**Belum diputuskan:** jika peserta berhenti atau mengubah pilihan menjadi "Main tanpa merekam", jawaban yang
-**sudah** terekam sebelumnya tidak dihapus otomatis. Kebijakan penanganannya perlu diputuskan bersama dosen
-pembimbing (lihat daftar di awal `DECISIONS.md`).
+### Peserta yang menarik persetujuan
+
+Jika peserta yang sudah setuju membuka layar persetujuan (⚙ Pengaturan → Persetujuan perekaman) lalu memilih
+**Main tanpa merekam**, aplikasi menanyakan apa yang dilakukan dengan jawaban yang sudah terekam:
+
+- **Hapus juga data saya yang sudah terekam** — semua jawaban pemain itu dihapus dari perangkat, lalu aplikasi
+  menulis **satu baris penarikan** (`consentStatus` = `withdrawn`) berisi `playerId`, kode peserta jika ada, waktu,
+  dan jumlah baris yang dihapus dari perangkat (kolom `answer`). Baris ini ikut dikirim ke spreadsheet, kecuali
+  persetujuannya dulu diberikan atas teks placeholder.
+- **Biarkan data yang sudah terekam** — hanya berhenti merekam jawaban berikutnya.
+
+Jawaban yang **sudah terkirim** ke spreadsheet tidak bisa dihapus oleh aplikasi. Peneliti menghapusnya secara
+manual; lihat [Untuk peneliti: menghapus data peserta yang menarik persetujuan](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan).
+
+## Untuk peneliti: menghapus data peserta yang menarik persetujuan
+
+Lakukan setiap kali memeriksa spreadsheet log, minimal sebelum data dianalisis, dan paling lambat satu minggu
+setelah baris penarikan muncul.
+
+1. Buka Google Sheet log, sheet `log`. Pilih **Data → Buat filter**.
+2. Pada kolom `consentStatus`, tampilkan hanya **withdrawn**. Setiap baris yang muncul adalah satu permintaan
+   penarikan. Catat nilai `playerId` dan `participantCode`-nya.
+3. Untuk setiap `playerId` yang dicatat:
+   1. Ubah filter: kolom `consentStatus` kembali ke semua nilai, kolom `playerId` hanya nilai tersebut.
+   2. Pilih semua baris yang tampil **kecuali baris penarikan itu sendiri**, klik kanan → **Hapus baris yang dipilih**.
+   3. Jika peserta memakai kode peserta dan pernah bermain di perangkat lain atau setelah reset (sehingga punya
+      `playerId` lain), ulangi dengan filter kolom `participantCode`.
+4. Biarkan baris penarikan tetap ada sebagai bukti bahwa permintaan sudah diproses. Tambahkan kolom `diproses`
+   di sebelah kanan dan isi tanggal penghapusan.
+5. Hapus juga data peserta itu dari **semua file CSV ekspor** yang pernah dibuat (buka di spreadsheet, filter
+   `playerId` yang sama, hapus barisnya, simpan ulang), termasuk salinan di laptop atau drive tim.
+6. Catat penghapusan di catatan penelitian: tanggal, `playerId`/kode peserta, dan jumlah baris yang dihapus.
 
 ## Pengaturan
 
@@ -689,7 +726,7 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | `rowId` | ID unik tiap baris. Dipakai spreadsheet untuk membuang baris yang terkirim dua kali. |
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
 | `participantCode` | Kode peserta anonim, jika diisi. |
-| `consentStatus`, `consentVersion`, `consentAt` | Selalu `agreed` (baris hanya ditulis setelah persetujuan), versi teks persetujuan yang disetujui, dan waktunya. |
+| `consentStatus`, `consentVersion`, `consentAt` | `agreed` untuk jawaban (baris hanya ditulis setelah persetujuan), atau `withdrawn` untuk baris penarikan; versi teks persetujuan yang disetujui dan waktu persetujuan diberikan. Pada baris penarikan, `timestamp` adalah waktu penarikan dan `answer` jumlah baris yang dihapus dari perangkat. |
 | `levelId`, `isReview` | Level tempat soal dijawab (`L01`, `R01`, …) dan 1 jika level ulangan. |
 | `phase` | `learning`, `consolidation`, `spacer`, `production`, atau `review`. |
 | `stage` | `shape`, `kunyomi`, `onyomi`, `sentence`, atau `production`. |
@@ -1090,7 +1127,9 @@ Dijalankan oleh koordinator data dan penjaga stan.
 - [ ] Teks persetujuan di `data/consent.json` sudah diganti dengan redaksi yang disetujui dosen pembimbing,
       `isPlaceholder` bernilai `false`, dan `version` sudah diganti. Layar persetujuan dibuka ulang dan spanduk
       **TEKS SEMENTARA** sudah tidak muncul.
-- [ ] Kebijakan untuk jawaban peserta yang berhenti di tengah jalan sudah diputuskan dan dijelaskan di teks persetujuan.
+- [ ] Teks persetujuan menjelaskan bahwa peserta boleh berhenti dan meminta datanya dihapus, sesuai prosedur di
+      [Peserta yang menarik persetujuan](#peserta-yang-menarik-persetujuan).
+- [ ] Peneliti yang memegang spreadsheet sudah membaca [prosedur penghapusan manual](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan).
 - [ ] Jika ada peserta penelitian: daftar kode peserta anonim (misalnya `K4-01`, `K4-02`, …) sudah disiapkan
       peneliti, terpisah dari daftar nama.
 - [ ] Nomor telepon koordinator data tertulis di lembar prosedur.

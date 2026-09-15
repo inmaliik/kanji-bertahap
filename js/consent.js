@@ -1,6 +1,14 @@
 // Consent text for recording answers (data/consent.json). The wording must be
 // approved by the thesis supervisor, so it lives in data, not in code (D-50).
 
+/**
+ * Consent text versions starting with this prefix are placeholders. Answers
+ * recorded under them never leave the device (D-52).
+ */
+export const PLACEHOLDER_VERSION_PREFIX = "placeholder";
+export const isPlaceholderConsentVersion = (version) =>
+  typeof version === "string" && version.startsWith(PLACEHOLDER_VERSION_PREFIX);
+
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const isText = (v) => typeof v === "string" && v.trim() !== "";
 
@@ -11,6 +19,12 @@ export function validateConsentText(data) {
   if (!isText(data.version)) problems.push('"version" wajib diisi, misalnya "v1-2026-10".');
   if (!isText(data.title)) problems.push('"title" wajib diisi.');
   if ("isPlaceholder" in data && typeof data.isPlaceholder !== "boolean") problems.push('"isPlaceholder" harus true atau false.');
+  if (isText(data.version) && Boolean(data.isPlaceholder) !== isPlaceholderConsentVersion(data.version)) {
+    problems.push(
+      `"isPlaceholder" dan "version" tidak cocok: teks sementara harus berversi diawali "${PLACEHOLDER_VERSION_PREFIX}", ` +
+        `dan teks final tidak boleh berversi diawali "${PLACEHOLDER_VERSION_PREFIX}".`
+    );
+  }
   if (!Array.isArray(data.sections) || data.sections.length === 0) {
     problems.push('"sections" harus berisi minimal satu bagian.');
   } else {

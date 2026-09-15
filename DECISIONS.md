@@ -21,9 +21,8 @@ Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan a
 - **D-18** — Tabel cara baca menampilkan okurigana redup (た + べる kecil) alih-alih notasi bentuk kamus た(べる): apakah tampilan ini diterima?
 - **D-20** — Pengecoh lintas jenis bacaan (misalnya しょくべます untuk 食べます): bolehkah bentuk yang salah ditampilkan kepada pemula?
 - **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
-- **D-50** — Jika peserta berhenti atau menarik persetujuan, apakah jawaban yang sudah terekam dihapus, dan bagaimana caranya?
 
-*Terakhir diperbarui: 2026-09-15.*
+*Terakhir diperbarui: 2026-09-16.*
 
 ---
 
@@ -506,8 +505,8 @@ pemain sesuai dengan pemakaian perangkat bergantian. Mencatat versi teks memungk
 teks placeholder atau versi lama dipisahkan saat analisis. Redaksi persetujuan adalah dokumen etika penelitian
 yang harus disetujui pembimbing, sehingga tidak dikarang pengembang dan tidak disimpan di kode. **Alternatif
 ditolak:** Persetujuan per perangkat (terbawa ke pengunjung berikutnya); teks di dalam kode; memblokir tombol
-setuju selama teks masih placeholder (menghalangi uji coba internal pencatatan). **Belum diputuskan:** penanganan
-jawaban yang sudah terekam jika peserta menarik persetujuan (saat ini tidak dihapus otomatis).
+setuju selama teks masih placeholder (menghalangi uji coba internal pencatatan). *Dilengkapi oleh D-52 (pengaman
+pengiriman selama teks placeholder) dan D-53 (penarikan persetujuan).*
 
 ### D-51 · Deploy lewat unggah folder Netlify, tanpa dokumen internal
 **Tanggal:** 2026-09-15. **Keputusan:** Aplikasi ditaruh di Netlify dengan menyeret folder unggahan berisi
@@ -519,6 +518,32 @@ perintah. Semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya, 
 data peserta tidak boleh ikut. `tools/` tetap diunggah karena memuat pemeriksa materi untuk tim konten (D-49).
 **Alternatif ditolak:** Menghubungkan repositori Git ke Netlify (membutuhkan repositori daring dan akses Git);
 mengunggah seluruh folder proyek.
+
+### D-52 · Pengiriman log dimatikan paksa selama teks persetujuan masih placeholder
+**Tanggal:** 2026-09-16. **Keputusan:** Versi teks persetujuan yang diawali `placeholder` menandai teks sementara.
+Selama teks yang berlaku berversi placeholder, pengiriman log ke Apps Script dimatikan paksa walaupun diaktifkan di
+konfigurasi, dan Pengaturan menampilkan alasannya. Log tetap ditulis di perangkat agar pencatatan dapat diuji.
+Selain itu, setiap baris yang direkam dengan persetujuan versi placeholder tidak pernah dikirim, termasuk setelah
+teks final dipasang. Pemeriksa teks persetujuan menolak `isPlaceholder` dan `version` yang tidak cocok. **Alasan:**
+Persetujuan atas teks yang redaksinya belum disetujui dosen tidak sah untuk data penelitian; jika uji coba dimulai
+sebelum teks final, data itu tidak dapat dipakai di skripsi. Pengaman ini membuat kesalahan tersebut mustahil
+terjadi tanpa disengaja, sementara tombol setuju tetap aktif untuk pengujian (D-50). Penyaringan per baris
+diperlukan karena tanpa itu baris lama akan terkirim begitu teks final dipasang. **Alternatif ditolak:** Hanya
+peringatan di Pengaturan; hanya mematikan pengiriman global tanpa menyaring baris lama; menonaktifkan tombol setuju.
+
+### D-53 · Penarikan persetujuan: hapus data lokal, kirim baris penarikan, hapus manual di spreadsheet
+**Tanggal:** 2026-09-16. **Keputusan:** Jika peserta yang sudah setuju beralih ke "Main tanpa merekam", aplikasi
+menawarkan pilihan "Hapus juga data saya yang sudah terekam". Jika dipilih, semua baris log pemain itu (menurut
+`playerId`) dihapus dari penyimpanan lokal, penanda baris terkirim dan terekspor dihitung ulang, lalu satu baris
+penarikan ditulis dengan `consentStatus` = `withdrawn`, `playerId`, kode peserta, waktu, dan jumlah baris yang
+dihapus. Baris penarikan dikirim ke spreadsheet dan menjadi penanda bagi peneliti untuk menghapus baris yang sudah
+terkirim secara manual, dengan prosedur yang ditulis di README. Pilihan "Biarkan data yang sudah terekam" hanya
+menghentikan perekaman berikutnya. **Alasan:** Hak peserta untuk menarik data adalah praktik baku etika penelitian,
+sehingga tidak perlu menunggu keputusan dosen. Aplikasi tidak dapat menghapus baris yang sudah ada di spreadsheet,
+jadi yang dapat dijamin aplikasi adalah penghapusan lokal dan jejak yang jelas bagi peneliti. `playerId` dicatat
+selain kode peserta karena kode peserta bersifat opsional. **Alternatif ditolak:** Penghapusan otomatis di
+spreadsheet oleh skrip Apps Script (memberi siapa pun yang mengetahui URL kemampuan menghapus data); tidak
+menawarkan penghapusan sama sekali.
 
 ---
 

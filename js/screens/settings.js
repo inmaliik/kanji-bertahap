@@ -265,6 +265,19 @@ export function settingsScreen(app) {
 
   function senderBlock() {
     const s = getSenderStatus();
+    if (s.blockedReason) {
+      return h(
+        "div",
+        { class: "sender", id: "sender-status" },
+        h("h3", {}, "Pengiriman ke server"),
+        h(
+          "p",
+          { class: "notice notice--warning" },
+          `⚠ Pengiriman dimatikan paksa: ${s.blockedReason}. Jawaban tetap tersimpan di perangkat ini, tetapi tidak ` +
+            "akan pernah dikirim ke server, karena persetujuan atas teks sementara tidak sah untuk data penelitian."
+        )
+      );
+    }
     if (!s.configured) {
       return h(
         "div",
@@ -307,9 +320,10 @@ export function settingsScreen(app) {
       : "Belum pernah diekspor dari perangkat ini.";
 
     const deleteDetails = [`${log.totalRows} jawaban di perangkat ini akan dihapus permanen.`];
-    if (sender.configured && sender.unsentRows) deleteDetails.push(`⚠ ${sender.unsentRows} jawaban BELUM terkirim ke server.`);
+    const sending = sender.configured && !sender.blockedReason;
+    if (sending && sender.unsentRows) deleteDetails.push(`⚠ ${sender.unsentRows} jawaban BELUM terkirim ke server.`);
     if (log.rowsSinceExport) deleteDetails.push(`⚠ ${log.rowsSinceExport} jawaban belum pernah diekspor ke CSV.`);
-    if ((!sender.configured || !sender.unsentRows) && !log.rowsSinceExport) {
+    if ((!sending || !sender.unsentRows) && !log.rowsSinceExport) {
       deleteDetails.push("Semua jawaban sudah terkirim atau sudah diekspor.");
     }
     deleteDetails.push("Progres pemain tidak ikut terhapus.");

@@ -31,17 +31,17 @@ sendiri.
 
 ### 4. Keputusan dosen — **Terbuka**
 Lihat daftar "Menunggu keputusan dosen" di awal `DECISIONS.md`: varian soal tahap Bentuk (D-15), tampilan
-okurigana (D-18), pengecoh lintas jenis bacaan (D-20), redaksi teks persetujuan, dan kebijakan data peserta yang
-berhenti (D-50).
+okurigana (D-18), pengecoh lintas jenis bacaan (D-20), dan redaksi teks persetujuan (D-50).
 
 ---
 
 ## Penelitian (bukan pekerjaan kode, tetapi menentukan)
 
 ### 5. Persetujuan peserta — **Sebagian**
-Layar persetujuan dan pilihan "Main tanpa merekam" sudah dibangun (D-50). Yang belum: redaksi teks yang
-disetujui dosen pembimbing (saat ini placeholder) dan kebijakan untuk jawaban yang sudah terekam jika peserta
-menarik persetujuan.
+Layar persetujuan, pilihan "Main tanpa merekam", penarikan persetujuan dengan penghapusan data (D-53), dan
+pengaman yang mematikan pengiriman selama teks masih placeholder (D-52) sudah dibangun. Yang belum: **redaksi teks
+persetujuan yang disetujui dosen pembimbing** (saat ini placeholder). Selama itu belum ada, tidak ada data yang
+dapat terkirim ke spreadsheet.
 
 ### 6. Instrumen penelitian — **Terbuka**
 Pretest dan posttest, lembar validasi ahli, daftar kode peserta anonim yang disimpan terpisah dari daftar nama,

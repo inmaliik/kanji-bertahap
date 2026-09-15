@@ -75,3 +75,28 @@ test("CSV has a BOM, escapes quotes, and neutralizes formulas", async () => {
   assert.equal(csv.charCodeAt(0), 0xfeff);
   assert.ok(csv.includes(`"'=HYPERLINK(""x""), ""ok"""`));
 });
+
+test("deleting a player's rows keeps unsent and exported markers correct", async () => {
+  const { logger, col } = await freshLogger();
+  for (let i = 0; i < 250; i++) logger.logAnswer({ playerId: i % 2 ? "keep" : "gone", responseMs: i });
+  // Rows 0–99 have been sent.
+  let sent = 0;
+  while (sent < 100) {
+    const batch = logger.getUnsentBatch(Math.min(50, 100 - sent));
+    logger.markSent(batch);
+    sent += batch.rows.length;
+  }
+  const stale = logger.getUnsentBatch(50);
+  assert.equal(logger.getLogStatus().unsentRows, 150);
+
+  const deleted = logger.deleteRows((record) => record.playerId === "gone");
+  assert.equal(deleted, 125);
+  const rows = logger.getLogRows();
+  assert.equal(rows.length, 125);
+  assert.ok(rows.every((r) => r[col("playerId")] === "keep"));
+  assert.equal(logger.getLogStatus().unsentRows, 75, "kept rows 100–249 are still unsent");
+  logger.markSent(stale);
+  assert.equal(logger.getLogStatus().unsentRows, 75, "a batch taken before the deletion marks nothing");
+  const next = logger.getUnsentBatch(1);
+  assert.equal(next.rows[0][col("responseMs")], 101, "sending resumes at the first unsent kept row");
+});
