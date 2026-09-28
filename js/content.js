@@ -1,7 +1,7 @@
-// Loads data/content.json, validates it, and exposes helpers that turn a
-// level into playable items. Only loadContent() touches the network.
+// Loads data/content.json and validates it. Only loadContent() touches the
+// network.
 
-import { validateContent, itemId, JLPT_LEVELS } from "./validate.js";
+import { validateContent } from "./validate.js";
 import { parseRuby } from "./ruby.js";
 
 /**
@@ -65,26 +65,23 @@ export async function loadContent(url) {
   return { content: errors.length ? null : data, errors, warnings, notes };
 }
 
-/**
- * Group levels by JLPT level for the level list. Array order is kept inside
- * each group: it is the teaching order of the Hyouki course (D-39).
- * @returns {Array<{jlptLevel: string, levels: object[]}>}
- */
-export function groupLevels(levels) {
-  return JLPT_LEVELS.map((jlptLevel) => ({ jlptLevel, levels: levels.filter((l) => l.jlptLevel === jlptLevel) })).filter(
-    (group) => group.levels.length
-  );
-}
+// ---------------------------------------------------------------------------
+// Schema v1 (levels). Kept only while the v1 session engine and its tests
+// still exist on this branch; step 2 replaces both with quest items built
+// from schema v2 (see js/model.js).
 
-export function jlptLevelsPresent(levels) {
-  return JLPT_LEVELS.filter((j) => levels.some((l) => l.jlptLevel === j));
-}
+const legacyItemId = {
+  shape: (levelId) => `${levelId}:shape`,
+  reading: (levelId, word) => `${levelId}:reading:${word}`,
+  sentence: (levelId, plainSentence) => `${levelId}:sentence:${plainSentence}`,
+};
 
 /**
- * Derive the items of stages 1–4 for one level. Stage 5 (production) has no
- * scored items.
+ * Derive the items of stages 1–4 for one v1 level. Stage 5 (production) has
+ * no scored items.
  */
 export function buildLevelItems(level) {
+  const itemId = legacyItemId;
   const shape = [{ id: itemId.shape(level.id), stage: "shape", levelId: level.id }];
 
   const readingItems = (type) =>

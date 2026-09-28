@@ -6,8 +6,17 @@ import { fileURLToPath } from "node:url";
 export const ROOT = fileURLToPath(new URL("..", import.meta.url));
 export const jsModule = (name, fresh = "") => new URL(`../js/${name}${fresh ? `?${fresh}` : ""}`, import.meta.url).href;
 
+/** data/content.json: schema v2 sample (region B06). */
 export function loadSampleContent() {
   return JSON.parse(readFileSync(new URL("../data/content.json", import.meta.url), "utf8"));
+}
+
+/**
+ * The schema v1 sample (three levels) kept in data/archive. Used only by the
+ * v1 session-rule tests until step 2 replaces that engine.
+ */
+export function loadV1Archive() {
+  return JSON.parse(readFileSync(new URL("../data/archive/content-v1.json", import.meta.url), "utf8"));
 }
 
 export const clone = (value) => JSON.parse(JSON.stringify(value));

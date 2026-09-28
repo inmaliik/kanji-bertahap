@@ -1,14 +1,16 @@
 // Game rules: level session, unlocking, review sampling.
+// These test the v1 engine against the archived v1 sample; step 2 of the
+// desain-peta branch replaces them with equivalent quest tests.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clone, jsModule, loadSampleContent, seededRandom } from "./helpers.mjs";
+import { clone, jsModule, loadV1Archive, seededRandom } from "./helpers.mjs";
 
 const { buildLevelItems } = await import(jsModule("content.js"));
 const { createLevelSession, PHASE, STAGE_ORDER } = await import(jsModule("session.js"));
 const S = await import(jsModule("state.js"));
 
-const content = loadSampleContent();
+const content = loadV1Archive();
 const L01 = content.levels[0];
 const fresh = () => ({ status: "in_progress", itemStreaks: {}, attempts: 1, learningDone: false, productionSubmitted: false });
 

@@ -21,8 +21,9 @@ Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan a
 - **D-18** — Tabel cara baca menampilkan okurigana redup (た + べる kecil) alih-alih notasi bentuk kamus た(べる): apakah tampilan ini diterima?
 - **D-20** — Pengecoh lintas jenis bacaan (misalnya しょくべます untuk 食べます): bolehkah bentuk yang salah ditampilkan kepada pemula?
 - **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
+- **D-66** — Lisensi data urutan guratan KanjiVG (CC BY-SA 3.0): boleh dipakai, dan bagaimana atribusinya? Sampai diputuskan, tidak ada data guratan di repo.
 
-*Terakhir diperbarui: 2026-09-16.*
+*Terakhir diperbarui: 2026-09-29.*
 
 ---
 
@@ -63,6 +64,7 @@ harus dilaporkan dengan jelas, bukan gagal diam-diam. **Alternatif ditolak:** Me
 membingungkan tim konten maupun analisis data. **Alternatif ditolak:** Mempertahankan nama `id`.
 
 ### D-05 · ID item diturunkan dari isi materi; revisi materi dicatat di setiap baris log (A5)
+*Diubah oleh D-57 di cabang `desain-peta`: format ID item baru.*
 **Tanggal:** 2026-09-13. **Keputusan:** ID item dibentuk dari isinya (`L01:shape`,
 `L01:reading:食べます`, `L01:sentence:<kalimat>`, `L01:production`), bukan dari posisi dalam array.
 Versi dipecah menjadi `schemaVersion` (struktur data) dan `contentRevision` (revisi materi), dan
@@ -103,6 +105,7 @@ bushu dari 食 itu sendiri. Menampilkan varian sebagai pengecoh membuat soal mem
 dianggap benar. **Alternatif ditolak:** Contoh pada spesifikasi awal yang mencatat bushu 食 sebagai 飠.
 
 ### D-10 · Level placeholder 行 diganti 気
+*Tidak berlaku lagi di cabang `desain-peta`: level diganti wilayah (D-58).*
 **Tanggal:** 2026-09-13. **Keputusan:** Tiga level contoh adalah 食 (bab 6), 飲 (bab 6), dan 気 (bab 8).
 **Alasan:** 行 muncul di bab 5, sehingga urutan 食 → 飲 → 行 melanggar aturan bab menaik (D-11) dan akan
 membuat level bab awal terkunci di belakang level bab akhir. Dengan 気, 食 tetap menjadi level pertama
@@ -128,6 +131,7 @@ dalam bentuk kotoba apa pun (tidak dapat diperiksa dari data), dan definisi tanp
 spesifikasi awal dan konvensi daftar JLPT.
 
 ### D-13 · Level ulangan wajib diselesaikan sebelum level berikutnya terbuka (A10)
+*Diubah oleh D-63 di cabang `desain-peta`: 復習 per wilayah.*
 **Tanggal:** 2026-09-13. **Keputusan:** Setiap tiga level, satu level ulangan disisipkan (R01 setelah
 L03). Level ulangan harus lulus sebelum level sesudahnya terbuka. **Alasan:** Level yang boleh dilewati
 akan dilewati, dan tujuan level ulangan, yaitu mencegah lupa pada materi lama, hilang. Tanpa itu produk
@@ -153,6 +157,7 @@ mencegah tim konten mengisi ulang puluhan level nanti. **Alternatif ditolak:** M
 sendiri pada tahap scaffold.
 
 ### D-16 · Materi ditulis di spreadsheet, dikonversi dan diperiksa dengan alat baris perintah
+*Diubah oleh D-59 di cabang `desain-peta`: lima tab.*
 **Tanggal:** 2026-09-13. **Keputusan:** Tim konten menulis materi di Google Sheets (satu baris = satu
 contoh kalimat), mengekspornya ke CSV, lalu menjalankan `tools/csv-to-json.mjs`. Konverter hanya menulis
 `content.json` jika tidak ada error, dan setiap error menyebut nomor baris CSV. Aturan validasi berada di
@@ -180,6 +185,7 @@ data bersifat lossless, sehingga perubahan keputusan kelak cukup di lapisan tamp
 ditolak:** Menampilkan notasi mentah, dan mengubah format data.
 
 ### D-19 · Pengecoh tahap 4 wajib manual, minimal 3
+*Diperluas oleh D-60 di cabang `desain-peta`: berlaku untuk baris ber-`blank` di percakapan uji.*
 **Tanggal:** 2026-09-13. **Keputusan:** `distractors` pada setiap contoh kalimat wajib diisi manual,
 minimal tiga pengecoh berbeda; jumlah yang kurang adalah error sehingga materi tidak dapat dimuat.
 Pengecoh otomatis hanya dipakai untuk tahap 2–3. **Alasan:** Soal dengan lebih dari satu jawaban benar
@@ -300,6 +306,7 @@ dipastikan mengacu ke revisi tertentu. **Alternatif ditolak:** Menghapus pratinj
 ---
 
 ### D-32 · Level ulangan: sampel berimbang, disimpan, tanpa putaran belajar dan Produksi
+*Diubah oleh D-63 di cabang `desain-peta`: komposisi 70/30.*
 **Tanggal:** 2026-09-13. **Keputusan:** Level ulangan berisi `REVIEW_ITEM_COUNT` (10) item tahap 1–4 dari
 level-level sebelumnya yang sudah lulus. Item diambil acak secara bergiliran per level, sehingga setiap
 level terwakili sebelum level yang sama diambil lagi. Sampel disimpan pada kunjungan pertama. Sesi
@@ -371,6 +378,7 @@ Sinkronisasi antartab menambah kerumitan yang tidak sebanding untuk pemakaian sa
 perangkat. **Alternatif ditolak:** Sinkronisasi progres lewat event `storage` antartab.
 
 ### D-39 · Urutan level mengikuti mata kuliah Hyouki; `chapter` hanya informasi
+*Digantikan oleh D-55 di cabang `desain-peta` (tetap berlaku di `main`).*
 **Tanggal:** 2026-09-14. **Keputusan:** Urutan level ditentukan urutan array di `content.json`, yaitu urutan
 pengajaran kanji di mata kuliah Hyouki. `chapter` pada kotoba tetap berarti bab みんなの日本語 tempat kata itu
 diajarkan, tetapi hanya sebagai informasi. Bab level tidak lagi diisi manual: nilainya dihitung dari bab
@@ -386,6 +394,7 @@ Mempertahankan aturan bab menaik (D-11); menurunkan urutan JLPT menjadi catatan 
 urutan bab sepenuhnya (informasinya tetap berguna bagi tim konten).
 
 ### D-40 · Daftar level dikelompokkan per JLPT dengan label bab di setiap kartu
+*Digantikan oleh D-64 (peta per bab) di cabang `desain-peta` (tetap berlaku di `main`).*
 **Tanggal:** 2026-09-14. **Keputusan:** Daftar level hanya dikelompokkan per `jlptLevel`, dengan urutan array
 di dalam kelompok. Setiap kartu level menampilkan semua bab kotobanya, misalnya "Minna bab 3, 6, 13", dan
 "di luar buku" jika ada kotoba ber-`chapter` null. **Alasan:** Setelah D-39, pengelompokan per bab akan
@@ -394,6 +403,7 @@ Menampilkan semua bab memberi tahu pemain dari bab mana saja kata dalam level be
 ditolak:** Pengelompokan per bab; label hanya bab terkecil.
 
 ### D-41 · Penanda "Kelas sudah sampai bab" tanpa penguncian
+*Digantikan oleh D-55 (wilayah sudah berupa bab) di cabang `desain-peta` (tetap berlaku di `main`).*
 **Tanggal:** 2026-09-14. **Keputusan:** Di atas daftar level tersedia pilihan opsional bab Minna terakhir yang
 sudah dipelajari kelas. Level yang memuat kotoba dari bab sesudahnya diberi tanda "Memuat kata dari bab yang
 belum dipelajari (bab …)". Penanda tidak memengaruhi aturan kunci level. Kotoba ber-`chapter` null tidak
@@ -454,6 +464,7 @@ tanpa build step; uji hanya dijalankan pengembang. **Alternatif ditolak:** Keran
 (membutuhkan npm); tanpa uji di repo.
 
 ### D-47 · Pintasan "Mulai / Lanjutkan" di atas daftar level
+*Digantikan oleh peta (langkah 3) di cabang `desain-peta` (tetap berlaku di `main`).*
 **Tanggal:** 2026-09-14. **Keputusan:** Daftar level diawali tombol yang membuka level atau level ulangan yang
 sedang dikerjakan, atau jika tidak ada, level pertama yang terbuka. Daftar tidak digulir otomatis.
 **Alasan:** Uji keterbacaan dengan 33 level menunjukkan bahwa setelah menyelesaikan level, pemain kembali ke
@@ -462,6 +473,7 @@ lompatan gulir yang membingungkan. **Alternatif ditolak:** Menggulir otomatis ke
 pintasan.
 
 ### D-48 · Kalimat contoh tidak boleh mendahului pelajaran: field `sentenceChapter`
+*Diubah oleh D-58 di cabang `desain-peta`: dibandingkan dengan bab wilayah, per percakapan.*
 **Tanggal:** 2026-09-14. **Keputusan:** Setiap contoh kalimat wajib memuat `sentenceChapter` (kolom CSV
 `example_sentence_chapter`): bab Minna tertinggi yang dibutuhkan kalimat, dari kosakata maupun pola
 kalimatnya, diisi manual oleh penulis materi; `null` berarti memakai kata atau pola di luar buku. Pemeriksa
@@ -544,6 +556,199 @@ jadi yang dapat dijamin aplikasi adalah penghapusan lokal dan jejak yang jelas b
 selain kode peserta karena kode peserta bersifat opsional. **Alternatif ditolak:** Penghapusan otomatis di
 spreadsheet oleh skrip Apps Script (memberi siapa pun yang mengetahui URL kemampuan menghapus data); tidak
 menawarkan penghapusan sama sekali.
+
+### D-54 · Versi peta dibangun di cabang `desain-peta`; `main` menjadi cadangan
+**Tanggal:** 2026-09-29. **Keputusan:** Arah baru dari tim (peta wilayah per bab, quest percakapan, index kanji,
+karakter pemain, tabel kana) dibangun di cabang git `desain-peta` dalam lima langkah dengan titik berhenti. Cabang
+`main` tidak diubah dan tetap bisa dipakai sebagai cadangan jika versi peta belum siap saat validasi ahli. Tim konten
+menulis materi langsung dalam struktur baru; di langkah 5 dibuat alat ekspor satu arah dari struktur baru ke struktur
+lama (kanji sasaran menjadi level, kotoba quest menjadi kotoba level, baris ber-`blank` menjadi contoh kalimat),
+supaya materi yang sama bisa dimuat di `main`. Arah tim: struktur permainan dibangun lebih dulu dengan aset
+placeholder, lalu tim cukup mengganti berkas asetnya (D-70). **Alasan:** Tanpa alat ekspor, cadangan di `main` hanya
+ada di atas kertas, karena materi sungguhan belum ditulis dan akan ditulis sekali saja. **Alternatif ditolak:**
+Membangun langsung di `main` (tidak ada versi utuh selama pembangunan); menulis materi dua kali untuk dua struktur;
+membuat alat ekspor lebih awal (belum dibutuhkan sebelum struktur baru stabil).
+
+### D-55 · Urutan dan isi materi mengikuti bab Minna dan pilihan tim, bukan mata kuliah Hyouki
+**Tanggal:** 2026-09-29. **Keputusan:** Membalik D-39. Satu wilayah = satu bab みんなの日本語初級I; urutan wilayah
+= urutan bab. Isi wilayah adalah kotoba bab itu **yang dipilih tim**, bukan semua kanji yang muncul di kosakata bab
+tersebut. Unit quest berpindah dari kanji ke kotoba (1–2 kanji sasaran, D-61), sedangkan index tetap berpusat pada
+kanji. **Alasan:** (1) D-39 dibuat karena Minna tidak mengajarkan kanji secara bertahap, sehingga urutan diambil dari
+mata kuliah Hyouki; akibatnya seluruh penyusunan materi terhambat menunggu urutan Hyouki (blocker nomor 1 di
+`BLOCKERS.md`). Dengan kotoba sebagai unit dan bab sebagai urutan, materi bisa disusun sekarang dari buku yang
+dipegang mahasiswa. (2) Mahasiswa semester 1 bertemu kotoba per bab di kelas; memetakan wilayah ke bab membuat
+permainan sejalan dengan kemajuan kelas tanpa penanda tambahan (D-41 tidak diperlukan lagi). (3) Memilih kotoba,
+bukan memasukkan semua kanji, menjaga beban per bab tetap wajar, karena sejak bab 1 banyak kanji muncul tanpa
+dituntut dikuasai. **Alternatif ditolak:** Tetap mengikuti Hyouki di dalam peta (wilayah tidak lagi berarti bab);
+memasukkan semua kanji di kosakata setiap bab (beban terlalu berat, dan banyak kanji belum saatnya dikuasai).
+**Dampak:** D-39, D-40, D-41, dan D-47 digantikan di cabang ini.
+
+### D-56 · Kontras kun'yomi–on'yomi melemah — kompromi yang disengaja
+**Tanggal:** 2026-09-29. **Keputusan:** Diterima dengan sadar bahwa pengelompokan per bab memisahkan bacaan satu
+kanji ke wilayah berbeda (食べます bab 6, 食堂 bab 3), padahal di struktur level ketiganya berada dalam satu level.
+Peredamnya: (1) kartu kontras mengambil kotoba lain dengan kanji yang sama **dari wilayah yang sudah terbuka**;
+(2) jendela pengantar bab menandai kanji yang muncul lagi dengan bacaan berbeda; (3) jendela detail kanji di index
+menampilkan semua bacaan dan kotobanya. **Alasan:** Perubahan bacaan adalah salah satu kesulitan utama menurut
+analisis kebutuhan, tetapi keuntungan D-55 lebih besar. Ketiga peredam memanfaatkan data yang sudah ada, tanpa beban
+menulis tambahan. **Alternatif ditolak:** Menarik kotoba dari bab lain ke satu wilayah demi kontras (melanggar
+aturan bab di D-58).
+
+### D-57 · Struktur data versi 2: wilayah → quest → percakapan, dengan tabel kanji dan kotoba bersama
+**Tanggal:** 2026-09-29. **Keputusan:** `schemaVersion` 2. `regions[]` (satu per bab: `chapter`, `title`, `intro`,
+`pin`, `quests[]`); setiap quest (`id`, `kotoba`, `targetKanji`, `productionPrompt`) memuat percakapan pengantar
+(`intro`) dan percakapan uji (`tests[]`) di dalamnya; `kanji[]` dan `kotoba[]` adalah tabel bersama yang dirujuk
+dengan ID. Kotoba punya field baru `ruby`, furigana **per kanji** (`[食|しょく][堂|どう]`), yang diperiksa terhadap
+`word` dan `reading`. Relasi kanji ⇄ kotoba, bacaan setiap kanji di dalam kotoba, dan contoh kalimat index tidak
+ditulis tim, tetapi dihitung dari data (`js/model.js`). ID wilayah diturunkan dari bab (`B06`). ID item soal:
+`K:<kanji>:shape`, `W:<kotoba_id>:reading`, `C:<conversation_id>:test`, `Q:<quest_id>:production`. Materi schemaVersion
+1 ditolak dengan pesan yang menunjuk ke format baru. **Alasan:** Satu himpunan data harus melayani quest (berpusat
+pada kotoba) dan index (berpusat pada kanji); relasi yang ditulis dua kali akan saling bertentangan. Percakapan
+disarangkan di quest karena setiap percakapan milik tepat satu quest. `ruby` per kanji dibutuhkan index dan kartu
+kontras. **Perubahan dari D-05:** ID item uji kini dari `conversation_id`, bukan dari teks kalimat, sehingga
+menyunting kalimat tanpa mengganti ID tidak membuat item baru; perbedaannya tetap terlihat dari `contentRevision` dan
+kolom `prompt` di log. ID kotoba ditulis tim (`kotoba_id`) supaya homograf seperti 一日 (ついたち/いちにち) tetap bisa
+dibedakan. **Alternatif ditolak:** Kotoba disarangkan di dalam kanji seperti di versi 1 (kotoba dua kanji harus
+ditulis dua kali); relasi kanji–kotoba diisi manual; kotoba dirujuk dengan tulisannya (homograf tidak bisa dibedakan).
+
+### D-58 · Cakupan materi bab 1–12 dan aturan bab
+**Tanggal:** 2026-09-29. **Keputusan:** Bab wilayah dan bab kotoba harus 1–12 (**error** jika di luar). Bab kotoba
+quest harus sama dengan bab wilayahnya (**error**). `sentenceChapter` kini dimiliki setiap **percakapan** dan
+dibandingkan dengan **bab wilayah**, bukan bab kotoba (**peringatan** jika lebih tinggi, seperti D-48). Kotoba yang
+babnya belum punya wilayah memunculkan peringatan. Materi yang keluar dari data dipindahkan ke `data/archive/`
+beserta catatannya, tidak dihapus tanpa jejak. Dalam data contoh: 食事 (bab 13) keluar karena di luar cakupan; 食堂,
+電気, 元気, 天気, dan kanji 気 diarsipkan karena materi dimulai dari satu bab (B06). **Alasan:** Cakupan produk adalah
+Minna I bab 1–12; pemeriksaan otomatis mencegah materi di luar cakupan lolos tanpa disadari. **Alternatif ditolak:**
+Menjadikan bab di luar cakupan sebagai peringatan (materi di luar cakupan bisa terbawa ke validasi).
+
+### D-59 · Spreadsheet lima tab, konverter menerima banyak berkas
+**Tanggal:** 2026-09-29. **Keputusan:** Menggantikan satu lembar di D-16. Spreadsheet terdiri dari lima tab
+(`wilayah`, `kanji`, `kotoba`, `quest`, `percakapan` — satu baris percakapan = satu ucapan), masing-masing diunduh
+sebagai CSV. Konverter di browser dan di terminal menerima kelima berkas sekaligus dan mengenali jenis tab dari baris
+judul, sehingga nama berkas tidak penting. Setiap masalah menyebut tab dan nomor baris, termasuk rujukan ID yang putus
+antartab dan percakapan yang tidak dipakai quest mana pun. Urutan wilayah mengikuti bab; urutan quest di dalam wilayah
+mengikuti urutan baris tab quest. Tab wilayah tidak punya kolom ID (diturunkan dari bab) dan tidak punya daftar quest
+(tab quest menunjuk babnya), supaya satu fakta hanya ditulis sekali; ini menyederhanakan rancangan kolom yang
+disetujui. Desimal `42,5` dan `42.5` sama-sama diterima untuk posisi pin; `pemain` di kolom pembicara disimpan sebagai
+`player`. **Alasan:** Lima jenis data dengan jumlah baris berbeda tidak muat dalam satu lembar tanpa pengulangan kolom
+yang rawan salah. Gesekan mengunduh lima tab diterima tim; urutan unduhnya ditulis di README dan di halaman
+konverter. **Alternatif ditolak:** Satu lembar dengan kolom berulang; mengunggah berkas `.xlsx` (butuh pembaca format
+zip di browser tanpa pustaka).
+
+### D-60 · Uji di konteks lain menggantikan tahap Kotoba dalam kalimat
+**Tanggal:** 2026-09-29. **Keputusan:** Tahap 4 lama (kalimat dengan bagian kosong) tidak ada lagi di quest. Fungsinya
+diambil alih percakapan uji: satu baris dengan bagian kosong di percakapan yang konteksnya berbeda dari percakapan
+pengantar. Aturan pengecoh manual minimal 3 (D-19) dan terjemahan tersembunyi dengan petunjuk "Tampilkan arti" (D-27)
+pindah ke baris itu. Tahap Bentuk, cara baca, dan Produksi tetap. **Alasan:** Keduanya berupa isian dengan pengecoh
+manual; jika dua-duanya ada, beban menulis kalimat dan pengecoh berlipat dua, padahal pengecoh adalah cacat paling
+dominan di proyek ini (T-12). **Alternatif ditolak:** Mempertahankan tahap kalimat di samping uji konteks.
+
+### D-61 · Kanji sasaran per quest dan penguasaan kanji global
+**Tanggal:** 2026-09-29. **Keputusan:** Setiap quest menyebut 1–2 `targetKanji`. Soal Bentuk dan data bushu hanya
+untuk kanji sasaran; kotoba tiga kanji (会社員, 銀行員) tetap bisa menjadi quest dengan tim memilih sasarannya. Setiap
+kanji sasaran wajib punya entri di tabel kanji dan furigana tersendiri di `ruby` (kecuali `readingType` special);
+bacaannya dicocokkan dengan daftar bacaan kanji (peringatan jika tidak ada, atau jika jenisnya berbeda). Soal Bentuk
+satu kanji adalah **satu item di seluruh materi** (`K:学:shape`): dikuasai lewat 学生, tidak diulang di 大学.
+**Alasan:** Kotoba Minna bab 1–12 tidak selalu satu atau dua kanji; tim yang menentukan kanji mana yang layak
+dilatih. Mengulang soal Bentuk yang sudah dikuasai hanya menambah panjang quest. **Alternatif ditolak:** Melatih semua
+kanji penyusun kotoba; soal Bentuk per quest.
+
+### D-62 · Aturan percakapan
+**Tanggal:** 2026-09-29. **Keputusan:** Diperiksa otomatis: percakapan antara tepat dua pembicara, salah satunya
+karakter pemain; percakapan pengantar menyorot kotoba quest (`highlight`) dan tidak punya bagian kosong; percakapan uji
+punya tepat satu baris ber-`blank` dengan minimal 3 pengecoh dan tidak boleh memakai sorotan; jawaban tidak boleh
+tertulis di baris lain percakapan uji (error), kanji sasaran di baris lain memunculkan peringatan; kalimat ber-`blank`
+tidak boleh sama persis dengan kalimat pengantar. Percakapan sementara (`isPlaceholder`) dikecualikan dari aturan dua
+pembicara, tetapi selalu memunculkan peringatan yang ditampilkan paling atas. Data contoh B06 memakai empat percakapan
+sementara satu baris dari contoh kalimat lama; pengembang tidak menulis percakapan. Tidak diperiksa kode, wajib dijaga
+penulis (README "Menulis percakapan"): semua percakapan ditulis tim dan tidak disalin dari 会話 buku Minna; lihat juga
+D-72. **Alasan:** Kebocoran jawaban di baris lain dan sorotan di percakapan uji membuat soal bisa dijawab dengan
+menyalin, sejenis dengan T-02. **Alternatif ditolak:** Percakapan dengan jumlah pembicara bebas (karakter pemain bisa
+tidak ikut bicara).
+
+### D-63 · 復習 per wilayah: 70% wilayah ini, 30% wilayah sebelumnya
+**Tanggal:** 2026-09-29. **Keputusan:** 復習 wajib tuntas sebelum wilayah berikutnya terbuka, menggantikan aturan
+"setiap 3 level" (D-13). Isinya memakai mekanisme level ulangan yang ada (D-32), dengan komposisi 70% item dari
+wilayah ini dan 30% dari wilayah sebelumnya, diatur sebagai konstanta. **Alasan:** Tujuan awal level ulangan adalah
+retensi; jika hanya mencakup satu wilayah, wilayah pertama tidak pernah diulang lagi setelah wilayah kedua dimulai.
+**Alternatif ditolak:** Cakupan satu wilayah saja. **Diterapkan:** langkah 3.
+
+### D-64 · Peta dari gambar dan pin 48 piksel
+**Tanggal:** 2026-09-29. **Keputusan:** Peta adalah satu gambar dari tim; batas wilayah ada di dalam gambar dan tidak
+digambar oleh kode. Setiap wilayah punya pin di koordinat persen dari data (`pin`), berupa tombol minimal 48×48 piksel
+dengan ikon status dan persentase dalam bentuk teks, bukan warna saja. Daftar wilayah di bawah peta menjadi jalur
+cadangan untuk pembaca layar. Pin kosong ditaruh di posisi sementara. **Alasan:** Dua belas wilayah bersekat tidak
+beraturan di layar 375 piksel menghasilkan area sentuh di bawah 48 piksel. Gambar dan koordinat cocok dengan arah
+"ganti aset" (D-70). **Alternatif ditolak:** Wilayah SVG yang bisa diklik (area sentuh kecil, dan batas wilayah
+menjadi urusan kode). **Diterapkan:** langkah 3.
+
+### D-65 · Furigana: tiga mode setelan, pengantar boleh berfurigana, D-29 selalu menang
+**Tanggal:** 2026-09-29. **Keputusan:** Setelan furigana tiga tingkat (selalu tampil / tampil setelah menjawab /
+tidak pernah), bawaan "selalu tampil", disimpan per pemain, dicatat di setiap baris log sebagai `furiganaMode`. Aturan
+anti-bocor D-29 berlaku penuh di latihan, uji konteks, dan putaran pemantapan, dan **selalu menang** atas setelan.
+Percakapan pengantar adalah momen mengajar, sehingga kotoba sasaran boleh tampil dengan furigana; di sana mode
+"tampil setelah menjawab" berperilaku seperti "selalu tampil" karena tidak ada yang dijawab. **Alasan:** Percakapan
+pengantar memang bertugas memperkenalkan bacaan. **Konsekuensi yang disadari:** jawaban benar pertama di soal cara
+baca hanya mengukur ingatan jangka pendek; ukuran penguasaan tetap dari putaran pemantapan (D-06). **Diterapkan:**
+langkah 2.
+
+### D-66 · Data urutan guratan: slot kosong sampai lisensi diputuskan
+**Tanggal:** 2026-09-29. **Keputusan:** Belum ada data guratan apa pun di repo. Entri kanji punya field `strokes`
+yang selalu `null`; validator hanya menerima `null` atau jalur berkas gambar `.svg`/`.png`/`.webp`, sehingga berkas
+KanjiVG maupun gambar buatan tim masuk lewat slot yang sama tanpa mengubah kode. Tab kanji belum punya kolomnya.
+Jumlah guratan (`stroke_count`) diisi manual oleh tim dan diverifikasi. **Status:** *Menunggu dosen* — lisensi
+KanjiVG (CC BY-SA 3.0: atribusi dan berbagi-serupa) dipastikan tim dengan dosen. **Alternatif ditolak:** Memasukkan
+data KanjiVG sebelum lisensinya diputuskan.
+
+### D-67 · Subtitle: teks Jepang berfurigana dengan terjemahan
+**Tanggal:** 2026-09-29. **Keputusan:** Subtitle percakapan berisi kalimat Jepang dengan furigana (mengikuti D-65)
+dan terjemahan bahasa Indonesia di bawahnya. Di percakapan pengantar terjemahan selalu tampil; di percakapan uji
+terjemahan disembunyikan dan bisa dibuka dengan "Tampilkan arti", yang dicatat sebagai `hintUsed` (D-27).
+**Diterapkan:** langkah 2.
+
+### D-68 · Index: hanya di luar quest, isi terbatas wilayah terbuka, pembukaan dicatat sebagai peristiwa
+**Tanggal:** 2026-09-29. **Keputusan:** Index bisa dibuka kapan pun kecuali saat pemain berada di dalam quest atau
+復習, dan hanya menampilkan kanji dan kotoba dari wilayah yang sudah terbuka. Index adalah rujukan, bukan progres:
+membukanya tidak menuntaskan apa pun. Setiap pembukaan dicatat sebagai **satu baris peristiwa** (bukan jawaban),
+berisi kanji atau kotoba yang dilihat dan penanda apakah pemain sedang punya quest yang belum tuntas. **Alasan:**
+Jalur mencontek yang tersisa (keluar dari quest, buka index, kembali) hanya bisa diukur jika peristiwa ini tercatat;
+biayanya kecil. **Alternatif ditolak:** Index bisa dibuka dari dalam quest; tidak mencatat pembukaan index.
+**Diterapkan:** langkah 4.
+
+### D-69 · Menu peta tiga pintu, terkunci di dalam quest dan 復習
+**Tanggal:** 2026-09-29. **Keputusan:** Layar peta punya menu dengan tiga pintu: Index, Panduan hiragana/katakana, dan
+Pengaturan. Ketiganya bisa dibuka dari mana pun di luar quest dan 復習 (peta, jendela pengantar bab, layar lain), dan
+tidak tersedia di dalam quest atau 復習. Pemain selalu punya jalan keluar yang jelas dari quest ke peta; keluar di
+tengah quest mengikuti aturan sesi yang belum selesai (progres tersimpan, quest bisa dilanjutkan). Ikon ketiga tombol
+termasuk slot aset (D-70). **Alasan:** Satu quest selalu dikerjakan dalam satu kondisi furigana, sehingga data tidak
+tercampur; index tidak bisa dipakai di tengah soal. **Diterapkan:** langkah 3.
+
+### D-70 · Kontrak aset
+**Tanggal:** 2026-09-29. **Keputusan:** (1) `ASSETS.md` mendaftar setiap slot aset dalam satu tabel untuk anggota tim
+yang menggambar: nama berkas persis, folder, format, ukuran piksel, rasio, latar transparan, batas ukuran berkas, dan
+layar tempat aset muncul. (2) Mengganti aset = menimpa berkas dengan nama yang sama; JSON dan kode tidak perlu diubah.
+(3) Setiap placeholder adalah gambar yang menuliskan nama slot dan spesifikasinya. (4) Gambar dipaskan ke wadahnya,
+sehingga aset dengan rasio atau ukuran yang sedikit keliru tidak merusak tata letak. (5) Halaman Pemeriksaan konten
+memuat pemeriksa aset: slot yang masih placeholder, berkas yang hilang, dan berkas yang melebihi batas ukuran.
+(6) Karakter: pilihan jadi saja; struktur datanya direncanakan supaya kustomisasi berlapis bisa ditambahkan kemudian,
+tetapi tidak dibangun sekarang. (7) Pratinjau dan cetak untuk validator tidak bergantung pada aset. `MULAI-DI-SINI.md`
+mendapat peran baru: pembuat aset. **Alasan:** Arah tim adalah struktur dulu, aset belakangan; batas ukuran penting
+karena aplikasi dibuka di Android kelas bawah lewat jaringan pameran. **Diterapkan:** langkah 3 (peta, menu) dan
+langkah 5 (karakter).
+
+### D-71 · Keputusan kecil versi peta
+**Tanggal:** 2026-09-29. **Keputusan:** Quest di dalam satu wilayah bebas urutan. Persentase wilayah = quest tuntas
+dibagi jumlah quest; 復習 tampil sebagai tanda tersendiri. Wilayah tuntas = semua quest dan 復習 selesai. Header layar
+quest hanya "Bab 6 · Quest 3", tanpa kotoba (lanjutan D-22). Setelan furigana disimpan per pemain dan ikut terhapus
+saat reset. Disclaimer ("materi mengikuti cakupan みんなの日本語初級I bab 1–12; semua kalimat dan percakapan ditulis tim
+pengembang") tampil di layar pertama sebelum pemilihan karakter, di menu Tentang, dan di kepala halaman pratinjau.
+**Diterapkan:** langkah 2–5.
+
+### D-72 · Aturan penulisan baris karakter pemain dan nama tokoh
+**Tanggal:** 2026-09-29. **Keputusan:** Baris milik karakter pemain tidak memuat nama pemain maupun ragam bahasa yang
+terikat jenis kelamin; tokoh lain tidak memanggil pemain dengan nama; nama tokoh buatan tim, bukan tokoh buku.
+Aturan ini ditulis di README bagian "Menulis percakapan". **Alasan:** Pemain bisa memilih karakter mana pun, jadi
+ucapan karakter pemain harus cocok untuk semua karakter; nama buatan tim selaras dengan larangan menyalin percakapan
+buku (D-62).
 
 ---
 

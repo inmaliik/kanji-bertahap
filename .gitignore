@@ -3,9 +3,9 @@
 Thumbs.db
 
 # Participant data must never be committed.
-# Log exports from the Settings screen, and any other CSV except the content template.
+# Log exports from the Settings screen, and any other CSV except the five content templates.
 *.csv
-!tools/content-template.csv
+!tools/templates/*.csv
 exports/
 logs/
 

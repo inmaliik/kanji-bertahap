@@ -384,7 +384,7 @@ export function settingsScreen(app) {
   // --- Content -------------------------------------------------------------------------
 
   function contentCard() {
-    const { contentRevision, levels } = app.content;
+    const { contentRevision } = app.content;
     const isDraft = /^draft/i.test(contentRevision);
     return h(
       "section",
@@ -394,17 +394,8 @@ export function settingsScreen(app) {
       isDraft
         ? h("p", { class: "notice notice--error" }, "✗ DRAF — nomor bab belum diverifikasi terhadap buku. Jangan kirim ke validator ahli.")
         : null,
-      h(
-        "p",
-        {},
-        h("a", { class: "button button--block", href: "#/preview/all" }, "Pratinjau semua materi (bisa dicetak)")
-      ),
-      h("p", {}, "Pratinjau per level:"),
-      h(
-        "ul",
-        { class: "link-list" },
-        levels.map((l) => h("li", {}, h("a", { href: `#/preview/${encodeURIComponent(l.id)}` }, `${l.id} · ${l.meaning}`)))
-      ),
+      // desain-peta branch: the printable preview is rebuilt for regions and conversations in step 5.
+      h("p", { class: "muted" }, "Pratinjau materi untuk validator sedang dibangun ulang untuk versi peta."),
       h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten"))
     );
   }
@@ -415,7 +406,7 @@ export function settingsScreen(app) {
     const screen = h(
       "div",
       {},
-      backLink("#/", "Daftar level"),
+      backLink("#/", "Beranda"),
       h("h1", { tabindex: "-1" }, "Pengaturan"),
       isStorageAvailable()
         ? null

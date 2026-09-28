@@ -10,9 +10,8 @@ import { startTabGuard } from "./tab-guard.js";
 import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
-import { levelListScreen } from "./screens/level-list.js";
-import { playScreen } from "./screens/play.js";
-import { previewScreen, contentCheckScreen } from "./screens/preview.js";
+import { buildStatusScreen } from "./screens/build-status.js";
+import { contentCheckScreen } from "./screens/content-check.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -34,10 +33,9 @@ const app = {
   render,
 };
 
+// desain-peta branch, step 1: the game and preview routes return in steps 2–5.
 const ROUTES = [
-  { pattern: /^#?\/?$/, screen: () => levelListScreen(app) },
-  { pattern: /^#\/play\/([^/]+)$/, screen: (id) => playScreen(app, decodeURIComponent(id)) },
-  { pattern: /^#\/preview\/([^/]+)$/, screen: (id) => previewScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#?\/?$/, screen: () => buildStatusScreen(app) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
   {
@@ -50,9 +48,9 @@ function notFoundScreen() {
   return h(
     "div",
     { class: "screen" },
-    h("a", { class: "back-link", href: "#/" }, "‹ Daftar level"),
+    h("a", { class: "back-link", href: "#/" }, "‹ Beranda"),
     h("h1", { tabindex: "-1" }, "Halaman tidak ditemukan"),
-    h("p", {}, "Halaman yang dicari tidak ada.")
+    h("p", {}, "Halaman yang dicari tidak ada, atau belum dibangun ulang di versi peta.")
   );
 }
 

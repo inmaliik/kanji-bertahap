@@ -1753,6 +1753,11 @@ rt {
   white-space: pre-line;
 }
 
+.converter__files {
+  padding-left: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
 /* Consent screen ------------------------------------------------------------------ */
 
 .consent__placeholder {

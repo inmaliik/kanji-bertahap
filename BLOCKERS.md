@@ -8,12 +8,17 @@ pekerjaan kode. Disusun di akhir pembangunan scaffold (2026-09-14) dan diperbaru
 
 Rincian alasan keputusan ada di `DECISIONS.md`; langkah kerja ada di `README.md`.
 
+> **Cabang `desain-peta` (2026-09-29):** butir 1 tidak menghalangi versi peta, karena materi mengikuti bab Minna
+> (D-55). Butir 2 dan 3 berganti bentuk: yang ditulis kini wilayah per bab dengan quest dan percakapan (perkiraan
+> beban satu bab: sekitar 20 percakapan, 90 baris kalimat, dan 30 set pengecoh). Daftar ini diperbarui menyeluruh di
+> akhir langkah 5; butir lain berlaku untuk kedua cabang.
+
 ---
 
 ## Materi (paling berat)
 
-### 1. Urutan kanji dari mata kuliah Hyouki belum diterima — **Terbuka**
-Urutan level mengikuti urutan pengajaran Hyouki (D-39). Tanpa urutan itu, materi sungguhan belum bisa mulai
+### 1. Urutan kanji dari mata kuliah Hyouki belum diterima — **Terbuka** (hanya untuk `main`)
+Urutan level mengikuti urutan pengajaran Hyouki (D-39). Tidak berlaku di cabang `desain-peta` (D-55). Tanpa urutan itu, materi sungguhan belum bisa mulai
 disusun; tiga level di `data/content.json` hanya contoh dengan urutan sementara.
 
 ### 2. Penulisan 25–30 level — **Terbuka**

@@ -1,5 +1,9 @@
 # Mulai di sini — Kanji Bertahap
 
+> **Anda sedang melihat cabang `desain-peta`**: versi peta (wilayah per bab, quest percakapan, index kanji) yang
+> sedang dibangun. Baru struktur datanya yang selesai; permainannya belum bisa dimainkan di cabang ini. Bagian
+> "penulis materi" di bawah sudah mengikuti struktur baru; bagian lain masih menjelaskan versi di cabang `main`.
+
 **Kanji Bertahap** adalah web game untuk belajar kanji dan kotoba tingkat N5 (kemudian N4), bagi mahasiswa
 semester 1 Pendidikan Bahasa Jepang yang memakai みんなの日本語初級I. Produk ini dikembangkan untuk mata kuliah
 教材開発, akan divalidasi ahli, direvisi dua putaran, dipamerkan, dan menjadi bahan skripsi. Setiap level melatih
@@ -18,16 +22,19 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 ## Saya penulis materi
 
 1. Baca README: [Alur kerja tim konten](README.md#alur-kerja-tim-konten), lalu
-   [Kolom spreadsheet](README.md#kolom-spreadsheet), [Sintaks furigana](README.md#sintaks-furigana), dan
-   [Aturan `blank`](README.md#aturan-blank).
-2. Sebelum menulis kalimat, **wajib** baca [Menulis pengecoh](README.md#menulis-pengecoh) dan
-   [Menulis kalimat contoh yang tidak ambigu](README.md#menulis-kalimat-contoh-yang-tidak-ambigu). Pengecoh yang
-   ternyata juga benar adalah kesalahan yang paling sering terjadi di proyek ini.
-3. Mulai dari contoh yang benar: `tools/content-template.csv` (bisa di-*import* ke Google Sheets).
+   [Kolom spreadsheet](README.md#kolom-spreadsheet) (lima tab), [Sintaks furigana](README.md#sintaks-furigana), dan
+   [Aturan `highlight` dan `blank`](README.md#aturan-highlight-dan-blank).
+2. Sebelum menulis percakapan, **wajib** baca [Menulis percakapan](README.md#menulis-percakapan),
+   [Menulis pengecoh](README.md#menulis-pengecoh), dan
+   [Menulis kalimat uji yang tidak ambigu](README.md#menulis-kalimat-uji-yang-tidak-ambigu). Pengecoh yang
+   ternyata juga benar adalah kesalahan yang paling sering terjadi di proyek ini. Percakapan ditulis tim
+   sendiri dan tidak boleh disalin dari 会話 buku Minna.
+3. Mulai dari contoh bentuk kolom di `tools/templates/` (lima file CSV, satu per tab; bisa di-*import* ke Google
+   Sheets). Percakapan di template masih sementara dan bukan contoh percakapan yang baik.
 4. Periksa pekerjaan Anda sendiri dengan **pemeriksa materi** di browser:
    `https://NAMA-SITUS.netlify.app/tools/convert.html`. Tidak perlu memasang apa pun. Minta tautan persisnya ke
    pengelola aplikasi.
-5. Setiap nomor bab yang Anda periksa di buku dicentang di
+5. Setiap nomor bab dan jumlah guratan yang Anda periksa dicentang di
    [Yang harus diverifikasi terhadap buku](README.md#yang-harus-diverifikasi-terhadap-buku).
 
 ## Saya yang menjalankan aplikasi (pengelola, koordinator data, penjaga stan)

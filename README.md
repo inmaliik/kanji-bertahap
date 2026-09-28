@@ -9,11 +9,12 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Status:** scaffold selesai (langkah 5 dari 5). Semua fitur ada dan teruji dengan data uji 33 level.
-> `data/content.json` masih berisi **tiga level contoh** dengan urutan sementara; materi sungguhan
-> menunggu urutan kanji dari mata kuliah Hyouki. Lihat [Sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)
-> dan [Sebelum pameran](#daftar-periksa-sebelum-pameran) di akhir dokumen ini. Hal yang masih menghalangi uji
-> coba sungguhan dicatat di [`BLOCKERS.md`](BLOCKERS.md).
+> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 1 dari 5 selesai: struktur data).**
+> Struktur materi sudah berpindah ke wilayah, quest, dan percakapan (schemaVersion 2), lengkap dengan
+> pemeriksa dan konverter lima tab. Permainannya **belum bisa dimainkan** di cabang ini: mesin quest dibangun di
+> langkah 2, peta di langkah 3. Bagian README tentang tim konten sudah mengikuti struktur baru; bagian tentang
+> aturan permainan, daftar level, dan pratinjau masih menjelaskan versi lama dan diperbarui di langkah berikutnya.
+> Versi yang bisa dimainkan, dan menjadi cadangan untuk validasi ahli, ada di cabang `main`.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
@@ -117,7 +118,8 @@ unggahan.
 ```
 index.html                  halaman utama + pesan untuk file://
 css/style.css               tampilan (mobile-first)
-data/content.json           SELURUH materi pembelajaran
+data/content.json           SELURUH materi pembelajaran (schemaVersion 2: wilayah, quest, percakapan, kanji, kotoba)
+data/archive/               materi yang keluar dari data aktif (tidak dibaca aplikasi); lihat README di dalamnya
 data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
 
 js/main.js                  bootstrap aplikasi, routing antar layar
@@ -129,10 +131,11 @@ js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
 js/tab-guard.js             peringatan jika aplikasi terbuka di tab lain
 js/consent.js               memuat dan memeriksa teks persetujuan (data/consent.json)
-js/content.js               memuat content.json, mengelompokkan level, menurunkan item soal
-js/chapters.js              bab Minna sebuah level, dihitung dari kotobanya
+js/content.js               memuat dan memeriksa content.json
+js/model.js                 relasi wilayah ⇄ quest ⇄ percakapan dan kanji ⇄ kotoba, ID item soal
+js/chapters.js              (versi lama) bab Minna sebuah level; dihapus bersama daftar level di langkah 3
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
-js/csv-content.js           konversi CSV spreadsheet → struktur content.json (dipakai browser DAN terminal)
+js/csv-content.js           konversi lima CSV spreadsheet → struktur content.json (dipakai browser DAN terminal)
 js/ruby.js                  parser sintaks furigana [漢字|かんじ] dan render <ruby>
 js/jp-text.js               pengenalan hiragana/katakana/kanji, pemisah notasi た(べる)
 js/dom.js                   pembuat elemen HTML
@@ -149,15 +152,17 @@ js/stages/production.js     tahap 5 — Produksi
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
 js/screens/level-list.js    daftar level, status terkunci, kartu level ulangan
 js/screens/play.js          layar bermain: menjalankan sesi, mencatat log
-js/screens/preview.js       pratinjau materi (per level dan semua level, bisa dicetak), pemeriksaan konten
+js/screens/preview.js       (versi lama) pratinjau materi per level; dibangun ulang di langkah 5
+js/screens/content-check.js daftar peringatan konten
+js/screens/build-status.js  SEMENTARA: beranda cabang desain-peta sampai peta selesai (langkah 3)
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
 
 tools/convert.html          pemeriksa dan konverter CSV → content.json di browser (untuk tim konten)
-tools/csv-to-json.mjs       konversi CSV → data/content.json dari terminal
+tools/csv-to-json.mjs       konversi lima CSV → data/content.json dari terminal
 tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
-tools/content-template.csv  contoh CSV (level 食)
+tools/templates/            contoh CSV, satu per tab (wilayah, kanji, kotoba, quest, percakapan)
 tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
 tests/                      uji otomatis logika inti (lihat "Uji otomatis")
@@ -170,11 +175,23 @@ BLOCKERS.md                 hal yang masih menghalangi uji coba sungguhan
 
 ## Alur kerja tim konten
 
-Materi ditulis di Google Sheets, bukan langsung di JSON. **Tidak perlu memasang apa pun.**
+Materi ditulis di **satu Google Sheet dengan lima tab**, bukan langsung di JSON. **Tidak perlu memasang apa pun.**
 
-1. Isi spreadsheet dengan kolom persis seperti [Kolom spreadsheet](#kolom-spreadsheet).
-   Contoh yang benar ada di `tools/content-template.csv` (bisa di-*import* ke Google Sheets).
-2. Unduh: **File → Download → Comma Separated Values (.csv)**.
+| Tab | Satu baris = | Isi |
+|---|---|---|
+| `wilayah` | satu bab Minna | judul wilayah, ringkasan pengantar bab, posisi pin di peta |
+| `kanji` | satu kanji | arti, JLPT, jumlah guratan, bushu, bacaan |
+| `kotoba` | satu kotoba | tulisan, furigana per kanji, cara baca, bab, pengecoh cara baca |
+| `quest` | satu quest | kotoba yang diajarkan, kanji sasaran, percakapan pengantar dan uji |
+| `percakapan` | satu baris ucapan | pembicara, kalimat, terjemahan, sorotan atau bagian kosong |
+
+1. Buat spreadsheet dengan lima tab di atas. Nama tab bebas; yang menentukan adalah **baris judul (baris 1)**,
+   yang harus persis seperti [Kolom spreadsheet](#kolom-spreadsheet). Contoh yang benar ada di
+   `tools/templates/` (satu file CSV per tab; bisa di-*import* ke Google Sheets, satu file ke satu tab).
+2. Unduh **kelima tab satu per satu**, dengan urutan **wilayah → kanji → kotoba → quest → percakapan**: buka
+   tabnya, lalu **File → Download → Comma Separated Values (.csv)**. Google Sheets hanya mengunduh tab yang
+   sedang dibuka, jadi tab yang terlewat tidak ikut. Urutan tetap memudahkan mengecek bahwa kelimanya
+   sudah terunduh.
 3. Buka **pemeriksa materi** di browser:
    - dari situs Netlify: `https://nama-situs.netlify.app/tools/convert.html`, atau
    - dari server lokal: `http://localhost:8000/tools/convert.html`.
@@ -182,10 +199,11 @@ Materi ditulis di Google Sheets, bukan langsung di JSON. **Tidak perlu memasang 
    Halaman ini **tidak bisa** dibuka dengan klik ganda pada file `tools/convert.html`, karena alasan yang
    sama dengan aplikasinya (lihat [Menjalankan](#menjalankan)). File CSV tidak diunggah ke mana pun;
    pemeriksaan berjalan di browser.
-4. Pilih file CSV, isi **Nama revisi**, tekan **Periksa**.
+4. Pilih **kelima file CSV sekaligus** (tahan Ctrl, di Mac Cmd, sambil mengklik), isi **Nama revisi**, tekan
+   **Periksa**. Halaman menampilkan file mana dikenali sebagai tab apa.
    - Nama revisi dicatat di setiap baris log, supaya data sebelum dan sesudah tiap putaran revisi bisa
      dibandingkan. Tetap `draft-0` sampai semua nomor bab terverifikasi, lalu `rev-1`, `rev-2`, dan seterusnya.
-   - Setiap error dan peringatan menyebut **nomor baris CSV**.
+   - Setiap error dan peringatan menyebut **tab dan nomor barisnya**, misalnya `Tab percakapan, baris 5`.
 5. Perbaiki semua **error** di spreadsheet, unduh ulang CSV-nya, periksa lagi. Baca setiap **peringatan**.
 6. Jika lolos, tekan **Unduh content.json** dan serahkan file itu ke pengelola aplikasi, yang meletakkannya di
    folder `data/` lalu mengunggah ulang aplikasi ke Netlify (lihat [Menaruh aplikasi di Netlify](#menaruh-aplikasi-di-netlify)).
@@ -193,56 +211,112 @@ Materi ditulis di Google Sheets, bukan langsung di JSON. **Tidak perlu memasang 
 Anggota tim konten sebaiknya memeriksa bagiannya sendiri dengan halaman ini sebelum menyerahkan pekerjaan.
 
 **Alternatif untuk pengelola aplikasi (terminal, butuh Node.js 22+).** Logikanya sama persis dengan halaman
-pemeriksa; keduanya memakai `js/csv-content.js` dan `js/validate.js`.
+pemeriksa; keduanya memakai `js/csv-content.js` dan `js/validate.js`. Taruh kelima CSV dalam satu folder:
 ```bash
-node tools/csv-to-json.mjs ~/Downloads/materi.csv --revision rev-1   # menulis data/content.json jika lolos
-node tools/validate-content.mjs                                     # memeriksa data/content.json
+node tools/csv-to-json.mjs ~/Downloads/materi --revision rev-1   # menulis data/content.json jika lolos
+node tools/validate-content.mjs                                 # memeriksa data/content.json
 ```
 
 Pemeriksaan yang sama juga berjalan otomatis saat aplikasi dibuka. Jika ada error, aplikasi berhenti dan
-menampilkan daftar error. Peringatan tidak menghentikan aplikasi; daftarnya bisa dibuka dari tautan
-"peringatan konten" di daftar level.
+menampilkan daftar error. Peringatan tidak menghentikan aplikasi; daftarnya ada di **Pemeriksaan konten**.
 
 ---
 
 ## Kolom spreadsheet
 
-**Satu baris = satu contoh kalimat.** Kolom level dan kolom kotoba diulang di setiap baris.
-Sel yang dikosongkan pada baris berikutnya dari level/kotoba yang sama ikut nilai baris sebelumnya.
-Jika dua baris berisi nilai berbeda untuk kolom yang sama, konverter menolak.
+Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`. Sel yang boleh kosong ditandai *boleh kosong*.
 
-Kolom berisi **daftar** dipisah titik koma: `食;人;米;皿`.
+### Tab `wilayah`
+
+Satu baris = satu bab = satu wilayah di peta. Wilayah selalu diurutkan menurut nomor bab, apa pun urutan barisnya.
 
 | Kolom | Isi | Contoh |
 |---|---|---|
-| `level_id` | ID level, permanen (lihat [Aturan ID](#aturan-id)) | `L01` |
-| `kanji` | Tepat satu kanji | `食` |
-| `level_meaning` | Arti kanji | `makan` |
+| `chapter` | Nomor bab Minna, **1–12**. Satu bab hanya boleh satu baris. | `6` |
+| `title` | Nama wilayah yang tampil di peta | `Wilayah Bab 6` |
+| `intro_summary` | Ringkasan bab untuk jendela pengantar: apa yang dipelajari di bab ini (bahasa Indonesia) | |
+| `intro_points` | *Daftar, boleh kosong.* Poin-poin tambahan jendela pengantar | |
+| `pin_x`, `pin_y` | *Boleh kosong.* Posisi pin wilayah di gambar peta, dalam **persen** lebar dan tinggi gambar (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah gambar peta jadi; selama kosong, pin ditaruh di posisi sementara. | `42,5` · `30` |
+
+### Tab `kanji`
+
+Satu baris = satu kanji. Wajib ada untuk setiap **kanji sasaran** quest. Kanji lain di dalam kotoba boleh tidak
+punya baris; di index kanji itu tampil dengan bacaannya saja.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `kanji` | Tepat satu kanji, tidak boleh ganda | `食` |
+| `meaning` | Arti kanji | `makan` |
 | `jlpt_level` | `N5` atau `N4` | `N5` |
-| `bushu_char` | Bushu (jawaban benar tahap Bentuk) | `食` |
+| `stroke_count` | *Boleh kosong.* Jumlah guratan (画数), diperiksa di kamus. Kosong memunculkan peringatan. | `9` |
+| `bushu_char` | Bushu (jawaban benar soal Bentuk) | `食` |
 | `bushu_name` | Nama bushu | `shoku` |
 | `bushu_meaning` | Arti bushu | `makan / makanan` |
 | `bushu_variants` | *Daftar, boleh kosong.* Bentuk lain bushu yang sama | `飠` |
-| `bushu_options` | *Daftar.* Pilihan tahap Bentuk, termasuk jawaban benar | `食;人;米;皿` |
+| `bushu_options` | *Daftar.* Pilihan soal Bentuk, termasuk jawaban benar | `食;人;米;皿` |
 | `kunyomi` | *Daftar, boleh kosong.* Hiragana, okurigana dalam kurung | `た(べる);く(う)` |
 | `onyomi` | *Daftar, boleh kosong.* Katakana | `ショク` |
-| `production_prompt` | Instruksi tahap Produksi | `Buat satu kalimat …` |
+
+Data urutan guratan (書き方) **belum** punya kolom: menunggu keputusan lisensi (DECISIONS D-66).
+
+### Tab `kotoba`
+
+Satu baris = satu kotoba. Kotoba masuk ke wilayah bab yang sama dengan kolom `chapter`-nya.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `kotoba_id` | ID permanen: huruf latin, angka, `-`, `_`, tanpa spasi. Dirujuk dari tab quest dan dicatat di log. | `tabemasu` |
 | `word` | Kotoba (bentuk ます untuk kata kerja) | `食べます` |
-| `word_reading` | Cara baca kotoba, hiragana | `たべます` |
-| `reading_type` | `kunyomi`, `onyomi`, atau `special` | `kunyomi` |
+| `word_ruby` | Kotoba dengan furigana **per kanji** (lihat [Sintaks furigana](#sintaks-furigana)). Setiap kanji wajib diberi furigana. | `[食\|た]べます` · `[食\|しょく][堂\|どう]` |
+| `reading` | Cara baca, hiragana. Harus sama dengan gabungan furigana di `word_ruby` (dicek otomatis). | `たべます` |
+| `reading_type` | `kunyomi`, `onyomi`, atau `special` (jukujikun seperti 今日, atau bacaan yang tidak bisa dipisah per kanji) | `kunyomi` |
 | `pos` | `verb`, `noun`, `i-adj`, `na-adj`, `adverb`, `other` | `verb` |
-| `word_meaning` | Arti kotoba | `makan` |
-| `word_chapter` | Bab Minna tempat kotoba ini diajarkan. `-` jika di luar buku. Bab level dihitung otomatis dari kolom ini (tidak ada kolom bab level) | `6` |
-| `word_note` | *Boleh kosong.* Catatan, misalnya perubahan bunyi | |
+| `meaning` | Arti kotoba | `makan` |
+| `chapter` | Bab Minna tempat kotoba ini diajarkan, **1–12**. Di luar itu adalah error. | `6` |
+| `note` | *Boleh kosong.* Catatan untuk umpan balik, misalnya perubahan bunyi | |
 | `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca **sejenis** buatan tim | `くべます;のべます;しらべます` |
 | `reading_distractors_cross` | *Daftar, boleh kosong.* Pengecoh cara baca **lintas jenis** (lihat [Menulis pengecoh](#menulis-pengecoh)) | `しょくべます` |
-| `example_ja` | Kalimat dengan sintaks furigana | `[毎朝\|まいあさ]パンを[食\|た]べます。` |
-| `example_blank` | Bagian kalimat yang dikosongkan di tahap 4 | `食べます` |
-| `example_translation` | Terjemahan | `Setiap pagi saya makan roti.` |
-| `example_sentence_chapter` | **Wajib.** Bab Minna tertinggi yang dibutuhkan kalimat ini, dari kosakata maupun pola kalimatnya. `-` jika memakai kata atau pola di luar buku. Lihat [Kalimat tidak boleh mendahului pelajaran](#kalimat-tidak-boleh-mendahului-pelajaran) | `6` |
-| `example_distractors` | ***Wajib, minimal 3.*** Pengecoh buatan tim untuk tahap 4 | `飲みます;読みます;聞きます` |
 
-Kotoba tanpa contoh kalimat: tulis satu baris dengan keempat kolom `example_*` kosong.
+Kotoba yang bukan quest tetap boleh ditulis: kotoba itu tampil di index sebagai kotoba terkait kanjinya.
+
+### Tab `quest`
+
+Satu baris = satu quest = satu kotoba yang diajarkan. **Urutan baris = urutan quest di dalam wilayahnya.**
+Quest di dalam satu wilayah boleh dikerjakan dalam urutan bebas.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `quest_id` | ID permanen, unik. Tidak boleh diawali `REV-` (dicadangkan untuk ulangan wilayah). | `Q-tabemasu` |
+| `chapter` | Bab wilayah quest ini. Harus sama dengan bab kotobanya. | `6` |
+| `kotoba_id` | Kotoba yang diajarkan (dari tab kotoba). Satu kotoba hanya boleh menjadi satu quest. | `tabemasu` |
+| `target_kanji` | **1–2 kanji** yang dilatih (soal Bentuk dan bacaan). Untuk 会社員, misalnya, tim memilih kanji mana yang menjadi sasaran. | `食` · `会;社` |
+| `intro_conversation` | ID percakapan pengantar (tepat satu) | `C-tabemasu-pengantar` |
+| `test_conversations` | *Daftar.* ID percakapan uji, minimal satu | `C-tabemasu-uji-1` |
+| `production_prompt` | Instruksi menulis kalimat sendiri di akhir quest | `Buat satu kalimat memakai kotoba ini.` |
+
+### Tab `percakapan`
+
+Satu baris = **satu ucapan**. Semua baris dengan `conversation_id` yang sama membentuk satu percakapan.
+Kolom `sentence_chapter`, `scene`, dan `placeholder` cukup diisi di baris pertama percakapan; jika diisi di
+beberapa baris, isinya harus sama.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `conversation_id` | ID percakapan, unik di seluruh materi | `C-tabemasu-uji-1` |
+| `line_no` | Nomor urut ucapan di dalam percakapan (1, 2, 3, …). Urutan tampil mengikuti nomor ini, bukan urutan baris. | `1` |
+| `speaker` | `pemain` untuk karakter pemain, atau ID tokoh (huruf kecil latin, misalnya `hana`) | `pemain` |
+| `ja` | Kalimat dengan sintaks furigana | `パンを[食\|た]べます。` |
+| `translation` | Terjemahan bahasa Indonesia | `Saya makan roti.` |
+| `highlight` | *Hanya percakapan pengantar, boleh kosong.* Bagian kalimat yang disorot (kotoba quest, dalam bentuk yang muncul di kalimat) | `食べます` |
+| `blank` | *Hanya percakapan uji.* Bagian yang dikosongkan; tepat satu baris per percakapan uji | `食べます` |
+| `distractors` | *Hanya baris ber-`blank`, wajib minimal 3.* Pengecoh buatan tim | `飲みます;読みます;書きます` |
+| `sentence_chapter` | **Wajib.** Bab Minna tertinggi yang dibutuhkan **seluruh** percakapan. `-` jika memakai kata atau pola di luar buku. | `6` |
+| `scene` | Keterangan situasi dalam bahasa Indonesia, tampil di atas percakapan | `Di kantin kampus` |
+| `placeholder` | *Boleh kosong.* `ya` hanya untuk percakapan sementara buatan pengembang | |
+
+> Template `tools/templates/percakapan.csv` masih berisi **empat percakapan sementara** satu baris, disusun dari
+> contoh kalimat lama supaya aplikasi bisa diuji. Template itu contoh **bentuk kolom**, bukan contoh percakapan
+> yang baik. Bentuk percakapan yang dimaksud dijelaskan di [Menulis percakapan](#menulis-percakapan).
 
 ---
 
@@ -257,107 +331,116 @@ Tulis kanji dan furigananya di dalam kurung siku, dipisah garis tegak:
 - Gunakan `[`, `|`, `]` **setengah lebar**. Matikan IME Jepang saat mengetik tanda ini;
   versi lebar penuh `［ ｜ ］` ditolak dengan pesan error.
 - Okurigana (べます) ditulis **di luar** kurung.
-- Kanji yang tidak diberi kurung memunculkan peringatan "kanji tanpa furigana".
+- Di kalimat percakapan, kanji yang tidak diberi kurung memunculkan peringatan "kanji tanpa furigana".
 - Kesalahan sintaks ditunjukkan dengan tanda ⟪ ⟫ pada karakter yang bermasalah, misalnya:
   `Ada "[" yang tidak ditutup dengan "]". Lokasi: パン⟪[⟫毎朝|まいあさ`.
 
-## Aturan `blank`
+**Di kolom `word_ruby` (tab kotoba), furigana ditulis per kanji**: `[食|しょく][堂|どう]`, bukan
+`[食堂|しょくどう]`. Index dan kartu kontras kun'yomi–on'yomi mengambil bacaan setiap kanji dari sini. Setiap
+kanji di `word_ruby` wajib diberi furigana. Pengecualian: jukujikun seperti `[今日|きょう]`, yang memang tidak
+bisa dipisah; isi `reading_type` kotoba itu dengan `special`.
 
-`example_blank` adalah teks **persis** seperti di kalimat (tanpa tanda furigana), termasuk bentuk
-kata kerjanya: untuk `…を[食|た]べます。` isinya `食べます`, bukan `食べる`.
+Pemeriksa konten mencocokkan bacaan kanji sasaran dengan daftar kun'yomi/on'yomi di tab kanji, lalu
+memberi **peringatan** jika tidak ada di daftar, atau jika jenisnya berbeda dari `reading_type`. Perubahan
+bunyi di dalam kata (sokuon, rendaku) memang wajar memunculkan peringatan ini; baca, lalu putuskan.
+
+## Aturan `highlight` dan `blank`
+
+`highlight` dan `blank` adalah teks **persis** seperti di kalimat (tanpa tanda furigana), termasuk bentuk
+kata kerjanya: untuk `…を[食|た]べました。` isinya `食べました`, bukan `食べます`.
 
 - Harus muncul tepat satu kali di kalimat.
-- Harus mengandung kanji level tersebut.
-- Tidak boleh memotong isi kurung furigana: untuk `[食事|しょくじ]`, `blank` boleh `食事`
+- Harus mengandung minimal satu kanji sasaran quest.
+- Tidak boleh memotong isi kurung furigana: untuk `[食事|しょくじ]`, isinya boleh `食事`
   tetapi tidak boleh `食` saja.
+- `highlight` hanya di percakapan pengantar; `blank` hanya di percakapan uji. Sorotan di percakapan uji akan
+  menunjuk jawabannya, jadi ditolak.
 
 ---
 
 ## Field `content.json`
 
+Hasil konverter. Tim konten tidak perlu menulis JSON, tetapi tabel ini menjelaskan isinya.
+
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "contentRevision": "draft-0",
-  "levels": [ ... ]
+  "regions": [ { "chapter": 6, "title": "…", "intro": {…}, "pin": null, "quests": [ … ] } ],
+  "kanji":   [ { "char": "食", … } ],
+  "kotoba":  [ { "id": "tabemasu", "word": "食べます", "ruby": "[食|た]べます", … } ]
 }
 ```
 
-| Field | Wajib | Keterangan |
+| Bagian | Asal tab | Keterangan |
 |---|---|---|
-| `schemaVersion` | ya | Versi struktur data. Saat ini `1`. |
-| `contentRevision` | ya | Nama revisi materi; dicatat di setiap baris log. |
-| `levels` | ya | Daftar level. **Urutan array = urutan buka kunci.** |
+| `regions[]` | wilayah | `chapter`, `title`, `intro.summary`, `intro.points`, `pin` (`{x, y}` atau `null`), `quests`. ID wilayah di log dan layar diturunkan dari bab: bab 6 → `B06`. |
+| `regions[].quests[]` | quest | `id`, `kotoba` (ID kotoba), `targetKanji`, `productionPrompt`, `intro` (satu percakapan), `tests` (daftar percakapan). |
+| percakapan | percakapan | `id`, `scene`, `sentenceChapter`, `isPlaceholder` (hanya jika `true`), `lines[]`: `speaker` (`player` atau ID tokoh), `ja`, `translation`, dan `highlight` atau `blank` + `distractors`. |
+| `kanji[]` | kanji | `char`, `meaning`, `jlptLevel`, `strokeCount` (atau `null`), `bushu`, `bushuOptions`, `readings`, `strokes` (selalu `null` sampai lisensi diputuskan). |
+| `kotoba[]` | kotoba | `id`, `word`, `ruby`, `reading`, `readingType`, `pos`, `meaning`, `chapter`, `note`, `readingDistractors`, `readingDistractorsCross`. |
 
-**Level**
+**Yang tidak ditulis, tetapi dihitung dari data** (`js/model.js`): kanji penyusun setiap kotoba beserta
+bacaannya (dari `ruby`), daftar kotoba untuk setiap kanji di index, dan contoh kalimat di index (baris
+percakapan yang memuat kotoba itu). Dengan begitu satu data melayani quest (berpusat pada kotoba) dan index
+(berpusat pada kanji) sekaligus.
 
-| Field | Wajib | Keterangan |
-|---|---|---|
-| `id` | ya | Huruf latin/angka/`-`/`_`. Unik. Format `R` + angka dicadangkan untuk level ulangan, dan `all` untuk halaman pratinjau semua level. |
-| `kanji` | ya | Tepat satu kanji, unik di seluruh materi. |
-| `meaning` | ya | Arti kanji (bahasa Indonesia). |
-| `jlptLevel` | ya | `N5`, `N4` (juga `N3`–`N1` untuk masa depan). Menentukan kelompok di daftar level. |
-| `bushu.char` | ya | Bushu; jawaban benar tahap Bentuk. |
-| `bushu.name`, `bushu.meaning` | ya | Nama dan arti bushu. |
-| `bushu.variants` | tidak | Bentuk lain dari bushu yang sama (misalnya 飠 untuk 食). **Belum dipakai logika mana pun**; disiapkan untuk varian soal tahap Bentuk yang masih dibahas dengan dosen. Boleh dikosongkan. Tidak boleh muncul sebagai pengecoh di `bushuOptions`. |
-| `bushuOptions` | ya | Pilihan tahap Bentuk, minimal 2, harus memuat `bushu.char`. |
-| `readings.kunyomi`, `readings.onyomi` | ya | Daftar bacaan (boleh `[]`, tetapi tidak keduanya). Ditampilkan sebagai tabel kontras. |
-| `kotoba` | ya | Minimal satu kotoba. |
-| `productionPrompt` | ya | Instruksi tahap Produksi. |
+## Menulis percakapan
 
-**Kotoba**
+Satu quest = satu **percakapan pengantar** yang memperkenalkan kotoba, lalu minimal satu **percakapan uji**
+di konteks lain, dengan kotoba itu dikosongkan.
 
-| Field | Wajib | Keterangan |
-|---|---|---|
-| `word` | ya | Harus mengandung kanji level. Kata kerja ditulis dalam bentuk ます. |
-| `reading` | ya | Hiragana/katakana. Harus cocok dengan okurigana di `word` (dicek otomatis). |
-| `readingType` | ya | `kunyomi` → tahap 2, `onyomi` → tahap 3, `special` (jukujikun, bacaan campuran seperti 今日) → hanya tahap 4. Tahap tanpa item dilewati. |
-| `pos` | ya | Kelas kata. Pengecoh tahap 4 harus sekelas kata dengan kotoba ini. |
-| `meaning` | ya | Arti kotoba. |
-| `chapter` | ya | Bab みんなの日本語 tempat kotoba ini diajarkan (1–50), atau `null` jika di luar buku. Hanya informasi: ditampilkan di kartu level dan dipakai penanda "sampai bab berapa". Tidak menentukan urutan level. |
-| `note` | tidak | Catatan untuk umpan balik, misalnya perubahan bunyi. |
-| `readingDistractors` | tidak | Pengecoh cara baca **sejenis** buatan tim; dipakai sebelum pengecoh otomatis. |
-| `readingDistractorsCross` | tidak | Pengecoh cara baca **lintas jenis** buatan tim, misalnya bacaan on'yomi untuk kotoba kun'yomi. Selalu ditampilkan dan ditandai `manual-cross` di log. |
-| `examples` | ya | Daftar contoh kalimat (boleh `[]`). |
+**Aturan yang diperiksa otomatis**
+- Setiap percakapan antara **dua pembicara**, dan salah satunya **karakter pemain** (`pemain`).
+- Percakapan pengantar menyorot kotoba quest (`highlight`) minimal di satu baris, dan tidak punya bagian kosong.
+- Percakapan uji punya **tepat satu** baris ber-`blank` dengan minimal 3 pengecoh.
+- Jawaban tidak boleh tertulis di baris lain percakapan uji yang sama (error), dan kanji sasaran di baris lain
+  memunculkan peringatan.
+- Kalimat ber-`blank` tidak boleh sama persis dengan kalimat di percakapan pengantar: uji harus di konteks lain.
+- `sentence_chapter` diperiksa terhadap **bab wilayah** (lihat [Kalimat tidak boleh mendahului pelajaran](#kalimat-tidak-boleh-mendahului-pelajaran)).
 
-**Contoh kalimat**
-
-| Field | Wajib | Keterangan |
-|---|---|---|
-| `ja` | ya | Kalimat dengan sintaks furigana. |
-| `blank` | ya | Lihat [Aturan `blank`](#aturan-blank). |
-| `translation` | ya | Terjemahan bahasa Indonesia. |
-| `sentenceChapter` | ya | Bab Minna tertinggi yang dibutuhkan kalimat (kosakata dan pola kalimat), atau `null` jika memakai kata/pola di luar buku. Peringatan jika lebih tinggi dari `chapter` kotobanya. Ditampilkan di pratinjau. |
-| `distractors` | **ya** | Minimal 3 pengecoh buatan tim untuk tahap 4. Kurang dari itu adalah error. |
+**Aturan yang tidak bisa diperiksa kode — wajib dijaga penulis**
+- **Semua percakapan dan kalimat ditulis tim sendiri. Percakapan tidak boleh disalin dari 会話 buku Minna.**
+- **Baris karakter pemain** tidak boleh memuat nama pemain, dan tidak boleh memakai ragam bahasa yang terikat
+  jenis kelamin (misalnya kata ganti orang pertama atau partikel akhir yang khas laki-laki atau perempuan).
+  Pemain bisa memilih karakter mana pun, jadi ucapannya harus cocok untuk semua karakter.
+- **Tokoh lain tidak memanggil pemain dengan nama.**
+- **Nama tokoh adalah buatan tim**, bukan tokoh buku (ミラー, 山田, dan sebagainya). ID tokoh di kolom `speaker`
+  (misalnya `hana`) nanti dicocokkan dengan daftar tokoh di data karakter.
+- Konteks percakapan uji harus **berbeda** dari percakapan pengantar, bukan hanya kalimatnya yang diubah sedikit.
+- Semua aturan kalimat tidak ambigu di bawah berlaku untuk baris ber-`blank`, dan konteksnya adalah **seluruh
+  percakapan**, bukan hanya baris itu.
 
 ## Menulis pengecoh
 
 Pengecoh yang tidak masuk akal membuat soal bisa dijawab tanpa menguasai materi.
 
-### Tahap 2–3: cara baca
+### Soal cara baca
+
+Setiap quest punya satu soal cara baca untuk kotobanya, dengan label jenis bacaannya (kun'yomi atau on'yomi).
+Kotoba ber-`reading_type` `special` tidak punya soal cara baca.
 
 Pilihan jawaban disusun dengan urutan prioritas berikut sampai berjumlah 4 (jawaban + 3 pengecoh):
 
-1. `readingDistractorsCross` — manual, lintas jenis bacaan. **Selalu ditampilkan.**
-2. `readingDistractors` — manual, sejenis.
-3. Otomatis — cara baca kotoba di **level lain** dengan **jenis bacaan yang sama**, diutamakan yang
-   panjangnya mirip.
+1. `reading_distractors_cross` — manual, lintas jenis bacaan. **Selalu ditampilkan.**
+2. `reading_distractors` — manual, sejenis.
+3. Otomatis — cara baca **kotoba lain** dengan **jenis bacaan yang sama**, yang **tidak memakai kanji yang sama**,
+   diutamakan yang panjangnya mirip.
 
-**Pengecoh sejenis** (`reading_distractors`): ganti bagian yang dibaca oleh kanji level dengan
-bacaan sejenis (kun'yomi untuk soal kun'yomi, on'yomi untuk soal on'yomi), dari kanji ini atau kanji
-lain. Okurigana dan bagian kata yang lain tetap.
+**Pengecoh sejenis** (`reading_distractors`): ganti bagian yang dibaca oleh kanji sasaran dengan bacaan sejenis
+(kun'yomi untuk soal kun'yomi, on'yomi untuk soal on'yomi), dari kanji ini atau kanji lain. Okurigana dan
+bagian kata yang lain tetap.
 
 | Kotoba | Jawaban | Pengecoh | Asal |
 |---|---|---|---|
 | 食べます | たべます | くべます · のべます · しらべます | く(う) dari 食 · の(む) dari 飲 · 調べます |
 | 食事 | しょくじ | じきじ · いんじ · きじ | ジキ dari 食 · イン dari 飲 · キ dari 気 |
 
-**Pengecoh lintas jenis** (`reading_distractors_cross`): meniru kesalahan nyata mahasiswa, yaitu
-membaca kanji dengan jenis bacaan yang salah. Contoh: しょくべます untuk 食べます (食 dibaca dengan
-on'yomi ショク). Pengecoh ini **hanya boleh diisi manual**; aplikasi tidak pernah membuatnya sendiri,
-karena bentuk seperti ini gampang menjadi ngawur jika disusun otomatis. Jika pemain memilihnya,
-umpan balik menjelaskan bahwa kanji itu dibaca dengan jenis bacaan yang salah, dan log mencatat
-`answerType` = `manual-cross`.
+**Pengecoh lintas jenis** (`reading_distractors_cross`): meniru kesalahan nyata mahasiswa, yaitu membaca kanji
+dengan jenis bacaan yang salah. Contoh: しょくべます untuk 食べます (食 dibaca dengan on'yomi ショク). Pengecoh ini
+**hanya boleh diisi manual**; aplikasi tidak pernah membuatnya sendiri, karena bentuk seperti ini gampang menjadi
+ngawur jika disusun otomatis. Jika pemain memilihnya, umpan balik menjelaskan bahwa kanji itu dibaca dengan
+jenis bacaan yang salah, dan log mencatat `answerType` = `manual-cross`.
 
 > Status: masih dibahas dengan dosen, karena sebagian pengajar keberatan menampilkan bentuk salah
 > kepada pemula. Jika ditolak, cukup kosongkan kolom ini; kode tidak perlu diubah.
@@ -365,26 +448,25 @@ umpan balik menjelaskan bahwa kanji itu dibaca dengan jenis bacaan yang salah, d
 Jika jumlah pengecoh (manual + otomatis) kurang dari 3, pemeriksa konten memberi **peringatan** dan
 soal ditampilkan dengan pilihan lebih sedikit.
 
-### Tahap 4: kotoba dalam kalimat
+### Uji konteks (bagian kosong di percakapan)
 
-`example_distractors` **wajib diisi manual, minimal 3**. Kurang dari itu adalah **error**, dan
-materi tidak bisa dimuat. Tidak ada pengecoh otomatis di tahap ini: kode tidak bisa memastikan
-sebuah pengecoh benar-benar salah di dalam kalimat.
+Kolom `distractors` **wajib diisi manual, minimal 3**. Kurang dari itu adalah **error**, dan materi tidak bisa
+dimuat. Tidak ada pengecoh otomatis di sini: kode tidak bisa memastikan sebuah pengecoh benar-benar salah di
+dalam percakapan.
 
 Setiap pengecoh harus:
 - sekelas kata dan sebentuk dengan `blank` (kata kerja bentuk ます dengan kata kerja bentuk ます);
-- **salah dalam konteks kalimat**. Baca kalimatnya utuh dengan pengecoh terpasang: jika kalimat itu
-  tetap benar, pengecoh tersebut adalah jawaban benar kedua dan harus diganti.
+- **salah dalam konteks percakapan**. Baca percakapannya utuh dengan pengecoh terpasang: jika tetap benar,
+  pengecoh tersebut adalah jawaban benar kedua dan harus diganti.
 
-## Menulis kalimat contoh yang tidak ambigu
+## Menulis kalimat uji yang tidak ambigu
 
-Kalimat contoh dipakai sebagai soal di tahap 4, jadi konteksnya harus cukup untuk menentukan **satu**
-jawaban.
+Baris ber-`blank` dipakai sebagai soal, jadi percakapannya harus cukup untuk menentukan **satu** jawaban.
 
 > ⚠ **Pengecoh yang ternyata juga benar adalah jenis cacat yang paling sering ditemukan di proyek ini.**
 > Selama pengembangan, cacat ini muncul tiga kali (T-01 dan T-11 di `DECISIONS.md`), termasuk pada
 > kalimat yang ditulis dengan hati-hati. Kode tidak bisa mendeteksinya. Satu-satunya pengaman adalah
-> memeriksa setiap pengecoh di dalam kalimatnya, satu per satu, dan meminta orang lain mengerjakan soalnya.
+> memeriksa setiap pengecoh di dalam percakapannya, satu per satu, dan meminta orang lain mengerjakan soalnya.
 
 Tiga kasus berikut pernah ada di materi contoh dan diganti karena cacat ini.
 
@@ -418,34 +500,35 @@ yang hanya cocok dengan kotoba sasaran** (雨 hanya cocok dengan 天気).
 Pelajarannya: jika kalimat memakai kata kerja yang maknanya banyak, periksa pengecoh terhadap **semua**
 makna kata kerja itu, bukan hanya makna yang dimaksud.
 
+Di percakapan, baris sebelumnya bisa **membantu** (menyempitkan konteks) atau **merusak** (misalnya lawan bicara
+menyebut makanan dan minuman sekaligus, sehingga 食べます dan 飲みます sama-sama cocok). Periksa seluruh percakapan.
+
 ### Kalimat tidak boleh mendahului pelajaran
 
-Kalimat contoh juga tidak boleh memakai kosakata atau pola kalimat yang **belum dipelajari** mahasiswa
-ketika kotoba itu diajarkan. Jika dilanggar, produk ini justru menambah beban, padahal beban itulah yang
-ingin dikurangi.
+Percakapan juga tidak boleh memakai kosakata atau pola kalimat yang **belum dipelajari** mahasiswa pada bab
+wilayahnya. Jika dilanggar, produk ini justru menambah beban, padahal beban itulah yang ingin dikurangi.
 
-Karena itu setiap kalimat wajib diberi `example_sentence_chapter`: **bab Minna tertinggi yang dibutuhkan
-kalimat itu**, dilihat dari semua kosakata dan pola kalimatnya, bukan hanya kotoba yang dikosongkan.
-Pemeriksa konten memberi **peringatan** jika nilainya lebih tinggi daripada bab kotoba yang diujikan.
-Peringatan, bukan error, karena kadang memang tidak terhindarkan; tetapi setiap peringatan harus dibaca dan
-diputuskan.
+Karena itu setiap percakapan wajib diberi `sentence_chapter`: **bab Minna tertinggi yang dibutuhkan seluruh
+barisnya**, dilihat dari semua kosakata dan pola kalimatnya, bukan hanya kotoba quest. Pemeriksa konten memberi
+**peringatan** jika nilainya lebih tinggi daripada **bab wilayah**. Peringatan, bukan error, karena kadang memang
+tidak terhindarkan; tetapi setiap peringatan harus dibaca dan diputuskan.
 
 **Contoh pelanggaran**
 
-| | Kalimat | Kotoba diujikan | Bab kalimat | Masalah |
+| | Kalimat | Wilayah | Bab kalimat | Masalah |
 |---|---|---|---|---|
-| ⚠ | 電気をつけます。 | 電気 (bab 1) | 14 (つけます) | Mahasiswa sudah mengenal 電気 sejak bab 1, tetapi kata kerja つけます baru diajarkan jauh sesudahnya. Soal untuk kata bab 1 menuntut kata bab 14. |
+| ⚠ | 電気をつけます。 | bab 1 (電気) | 14 (つけます) | Mahasiswa sudah mengenal 電気 sejak bab 1, tetapi kata kerja つけます baru diajarkan jauh sesudahnya. Soal di wilayah bab 1 menuntut kata bab 14. |
 
-Cara menentukan nilainya: tulis bab setiap kata dan setiap pola kalimat di kalimat itu (termasuk partikel
-dan bentuk kata kerja seperti ～ています atau ～たいです), lalu ambil **yang tertinggi**.
+Cara menentukan nilainya: tulis bab setiap kata dan setiap pola kalimat di **semua baris** percakapan (termasuk
+partikel dan bentuk kata kerja seperti ～ています atau ～たいです), lalu ambil **yang tertinggi**.
 
-**Daftar periksa sebelum menulis satu kalimat**
-1. Tutup bagian `blank`, lalu pasang setiap pengecoh satu per satu. Apakah ada yang tetap
-   menghasilkan kalimat wajar? Jika ya, ganti pengecohnya atau ganti kalimatnya.
-2. Apakah konteks kalimat memuat kata yang **hanya** cocok dengan kotoba sasaran?
-3. Apakah semua kata dan pola kalimat sudah dipelajari pada bab kotoba sasaran? Isi
-   `example_sentence_chapter` dengan bab tertinggi.
-4. Minta anggota tim lain mengerjakan soalnya tanpa melihat jawaban.
+**Daftar periksa sebelum menulis satu percakapan uji**
+1. Tutup bagian `blank`, lalu pasang setiap pengecoh satu per satu. Apakah ada yang tetap menghasilkan
+   percakapan wajar? Jika ya, ganti pengecohnya atau ganti percakapannya.
+2. Apakah percakapan memuat kata yang **hanya** cocok dengan kotoba sasaran?
+3. Apakah jawabannya tidak tertulis, dan tidak tersirat jelas, di baris lain?
+4. Apakah semua kata dan pola kalimat sudah dipelajari sampai bab wilayah? Isi `sentence_chapter` dengan bab tertinggi.
+5. Minta anggota tim lain mengerjakan soalnya tanpa melihat jawaban.
 
 ## Tampilan cara baca
 
@@ -457,86 +540,62 @@ ubah `readingNotation()` di `js/screens/common.js`; data tidak perlu diubah.
 
 ## Yang harus diverifikasi terhadap buku
 
-Tim konten mencentang setiap baris setelah memeriksa nomor babnya langsung di みんなの日本語初級I.
-`contentRevision` tetap `draft-0` sampai semua baris dicentang.
+Tim konten mencentang setiap baris setelah memeriksa langsung di みんなの日本語初級I (nomor bab) atau di kamus
+(jumlah guratan). `contentRevision` tetap `draft-0` sampai semua baris dicentang.
 
-- **L01 食**
+- **Wilayah B06**
   - [x] 食べます — bab 6
-  - [x] 食堂 — bab 3
-  - [ ] 食事 — bab 13 *(tidak muncul di bab 1–6; belum terverifikasi)*
-- **L02 飲**
   - [x] 飲みます — bab 6
-- **L03 気**
-  - [x] 電気 — bab 1
-  - [ ] 元気 — bab 8 *(belum terverifikasi)*
-  - [ ] 天気 — bab 12 *(belum terverifikasi)*
+- **Jumlah guratan** — diisi pengembang, belum diperiksa:
+  - [ ] 食 — 9
+  - [ ] 飲 — 12
+- **Bab yang dibutuhkan percakapan (`sentence_chapter`)** — keempat percakapan di data contoh masih
+  **sementara** dan akan diganti; nilainya perkiraan pengembang dan tidak perlu diverifikasi.
 
-**Bab yang dibutuhkan kalimat (`sentenceChapter`)** — semua nilai di data contoh adalah **perkiraan
-pengembang** dan belum diperiksa:
+Bab yang sudah terverifikasi untuk konten mendatang (belum ada di data): 食堂 — bab 3, 電気 — bab 1,
+銀行員 — bab 1, 自転車 — bab 5, 行きます — bab 5. Kotoba yang dikeluarkan dari data contoh tercatat di
+`data/archive/README.md`.
 
-- [ ] 毎朝パンを食べます。 — bab 6
-- [ ] レストランで晩ごはんを食べます。 — bab 8
-- [ ] 食堂で昼ごはんを食べます。 — bab 6
-- [ ] 家族と食事をします。 — bab 13
-- [ ] 毎晩お茶を飲みます。 — bab 6
-- [ ] 朝、牛乳を飲みます。 — bab 6
-- [ ] 電気をつけます。 — bab 14
-- [ ] お元気ですか。 — bab 8
-- [ ] あしたの天気は雨です。 — bab 12
+Daftar ini disalin manual dari `data/content.json`. Perbarui setiap kali wilayah, kanji, atau kotoba ditambahkan.
 
-Bab yang sudah terverifikasi untuk konten mendatang (belum ada di data): 銀行員 — bab 1,
-自転車 — bab 5, 行きます — bab 5.
+## Cakupan bab dan urutan wilayah
 
-Daftar ini disalin manual dari `data/content.json`. Perbarui setiap kali level atau kotoba ditambahkan.
-
-## Urutan level dan `chapter`
-
-みんなの日本語初級I tidak mengajarkan kanji secara bertahap: sejak 第1課 banyak kanji sudah muncul di
-daftar kosakata (先生, 学生, 会社員, 銀行員, 医者, 大学, 病院, 電気, …) tanpa dituntut dikuasai. Kanji
-diajarkan berurutan di mata kuliah Hyouki. Karena itu:
-
-- **Urutan level = urutan array di `content.json`**, mengikuti urutan pengajaran mata kuliah Hyouki.
-  Urutan ini juga urutan buka kunci level.
-- **Semua level N5 harus berada sebelum level N4.** Pelanggaran adalah **error**, karena daftar level
-  dikelompokkan per JLPT dan level N5 akan terkunci di belakang level dari kelompok N4.
-- **`chapter` kotoba hanya informasi**: bab Minna tempat kata itu diajarkan. Kartu level menampilkan
-  semua bab kotobanya ("Minna bab 3, 6, 13").
-- **Bab level dihitung otomatis** (bab terkecil dari kotobanya) dan tidak diisi manual. Field `chapter`
-  pada level diabaikan dan memunculkan peringatan; kolom `level_chapter` di CSV ditolak.
-- **Urutan bab yang tidak naik itu wajar.** Pemeriksa konten hanya menampilkannya sebagai **catatan**,
-  bukan peringatan, dan tidak pernah menghalangi pemuatan materi.
-
-**Penanda "Kelas sudah sampai bab Minna".** Di atas daftar level, pemain atau pengajar dapat memilih
-bab terakhir yang sudah dipelajari kelas. Level yang memuat kata dari bab sesudahnya diberi tanda
-"⚠ Memuat kata dari bab yang belum dipelajari". Tanda ini **tidak mengunci** level. Kotoba di luar buku
-(`chapter` = `null`) tidak diberi tanda karena babnya tidak diketahui. Pilihan disimpan di perangkat
-dan tidak ikut terhapus saat reset progres.
+- **Materi dibatasi bab 1–12** みんなの日本語初級I. Wilayah atau kotoba dengan bab di luar itu adalah **error**.
+  Materi yang terpaksa keluar dicatat di `data/archive/`, tidak dihapus tanpa jejak.
+- **Satu wilayah = satu bab.** Urutan wilayah = urutan bab. Wilayah berikutnya terbuka setelah wilayah sebelumnya
+  tuntas.
+- **Isi wilayah = kotoba bab itu yang dipilih tim**, bukan semua kanji di kosakata bab tersebut. Urutan tidak lagi
+  mengikuti mata kuliah Hyouki (keputusan lama D-39 dibalik oleh D-55; lihat alasannya di `DECISIONS.md`).
+- **Kotoba harus berada di wilayah babnya sendiri** (error jika berbeda). Kotoba yang babnya belum punya wilayah
+  memunculkan peringatan, karena belum tampil di mana pun.
+- Percakapan boleh membutuhkan bab lebih tinggi dari wilayahnya, tetapi memunculkan peringatan (lihat di atas).
+- Kun'yomi dan on'yomi satu kanji kini tersebar di wilayah berbeda (食べます bab 6, 食堂 bab 3). Kompromi ini
+  disengaja (D-56): kartu kontras mengambil kotoba lain dengan kanji yang sama dari wilayah yang sudah terbuka,
+  dan index menampilkan semua bacaan kanji beserta kotobanya.
 
 ## Aturan ID
 
-ID level dan ID item dipakai di progres dan log. **Jangan pernah mengganti atau memakai ulang ID
-level setelah data mulai dikumpulkan.** ID item diturunkan dari isi, bukan dari urutan:
+ID dipakai di progres dan log. **Jangan pernah mengganti atau memakai ulang `kotoba_id`, `quest_id`, atau
+`conversation_id` setelah data mulai dikumpulkan.** ID item soal diturunkan dari ID tersebut:
 
-| Item | Format ID |
-|---|---|
-| Tahap Bentuk | `L01:shape` |
-| Tahap Kun'yomi / On'yomi | `L01:reading:食べます` |
-| Tahap Kotoba dalam kalimat | `L01:sentence:毎朝パンを食べます。` |
+| Item | Format ID | Keterangan |
+|---|---|---|
+| Soal Bentuk | `K:食:shape` | Satu per kanji di seluruh materi: dikuasai sekali, berlaku di semua quest |
+| Soal cara baca | `W:tabemasu:reading` | Satu per kotoba |
+| Uji konteks | `C:C-tabemasu-uji-1:test` | Satu per percakapan uji |
+| Produksi | `Q:Q-tabemasu:production` | Satu per quest |
 
-Menukar urutan baris tidak mengubah ID. Mengubah teks kotoba atau kalimat menghasilkan item baru;
-itu disengaja, karena soalnya memang berbeda.
+Menukar urutan baris tidak mengubah ID. Mengubah **isi** percakapan tanpa mengganti `conversation_id` membuat
+jawaban lama dan baru tercatat dengan ID yang sama; bedanya terlihat dari `contentRevision` di log.
 
 ---
 
-## Menambah level
+## Menambah wilayah dan quest
 
-1. Tambahkan baris di spreadsheet (atau satu objek di `levels` pada `content.json`) di **posisi yang
-   sesuai urutan pengajaran mata kuliah Hyouki**.
-2. Jalankan konverter atau pemeriksa konten.
+1. Tambahkan satu baris di tab `wilayah` (jika babnya belum ada), baris kanji sasaran di tab `kanji`, baris
+   kotoba di tab `kotoba`, satu baris di tab `quest`, dan baris-baris percakapannya di tab `percakapan`.
+2. Unduh kelima tab dan jalankan pemeriksa materi.
 3. Muat ulang aplikasi. Tidak ada file JS yang perlu diubah.
-
-Level ber-`jlptLevel: "N4"` otomatis muncul di kelompok N4 beserta tombol saringnya. Letakkan level
-N4 setelah semua level N5.
 
 ## Aturan permainan
 
@@ -1022,7 +1081,7 @@ Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeri
   level pertama yang terbuka. Berguna ketika daftar sudah berisi puluhan level.
 - Setiap kartu menampilkan ID level, bab Minna dari kotobanya, dan status (terkunci, belum dimulai,
   sedang dikerjakan beserta jumlah item yang dikuasai, atau lulus).
-- Penanda **Kelas sudah sampai bab Minna** dijelaskan di [Urutan level dan `chapter`](#urutan-level-dan-chapter).
+- Penanda **Kelas sudah sampai bab Minna** (versi lama; tidak dipakai lagi di versi peta, lihat D-41 dan D-55).
 
 ## Uji otomatis
 
@@ -1103,7 +1162,7 @@ Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dik
 - [ ] **Seluruh nomor bab** di [Yang harus diverifikasi terhadap buku](#yang-harus-diverifikasi-terhadap-buku)
       sudah dicentang setelah dicek langsung di buku.
 - [ ] **Pengecoh manual lengkap di semua level**: setiap contoh kalimat punya minimal 3 pengecoh, dan setiap
-      pengecoh sudah diperiksa dengan cara di [Menulis kalimat contoh yang tidak ambigu](#menulis-kalimat-contoh-yang-tidak-ambigu).
+      pengecoh sudah diperiksa dengan cara di [Menulis kalimat uji yang tidak ambigu](#menulis-kalimat-uji-yang-tidak-ambigu).
 - [ ] Minimal satu anggota tim lain sudah mengerjakan seluruh soal tanpa melihat jawaban, dan tidak menemukan
       soal dengan dua jawaban benar.
 - [ ] Keputusan yang menunggu dosen (daftar di awal `DECISIONS.md`) sudah dibahas, atau diputuskan untuk
