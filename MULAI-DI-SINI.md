@@ -1,8 +1,9 @@
 # Mulai di sini — Kanji Bertahap
 
 > **Anda sedang melihat cabang `desain-peta`**: versi peta (wilayah per bab, quest percakapan, index kanji) yang
-> sedang dibangun. Baru struktur datanya yang selesai; permainannya belum bisa dimainkan di cabang ini. Bagian
-> "penulis materi" di bawah sudah mengikuti struktur baru; bagian lain masih menjelaskan versi di cabang `main`.
+> sedang dibangun. Struktur data dan quest sudah selesai (quest bisa dimainkan dari beranda sementara); peta,
+> index, dan karakter belum. Bagian "penulis materi" di bawah sudah mengikuti struktur baru; bagian lain masih
+> menjelaskan versi di cabang `main`.
 
 **Kanji Bertahap** adalah web game untuk belajar kanji dan kotoba tingkat N5 (kemudian N4), bagi mahasiswa
 semester 1 Pendidikan Bahasa Jepang yang memakai みんなの日本語初級I. Produk ini dikembangkan untuk mata kuliah

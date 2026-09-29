@@ -3,7 +3,8 @@
 import { CONSENT_URL, CONTENT_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
-import { loadPrefs, loadProgress } from "./state.js";
+import { buildModel } from "./model.js";
+import { loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
 import { startTabGuard } from "./tab-guard.js";
@@ -12,6 +13,7 @@ import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
 import { buildStatusScreen } from "./screens/build-status.js";
 import { contentCheckScreen } from "./screens/content-check.js";
+import { questScreen } from "./screens/quest.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -22,20 +24,20 @@ const root = document.getElementById("app");
 /** Shared state passed to every screen. */
 const app = {
   content: null,
+  model: null, // lookup tables built from content (js/model.js)
   warnings: [],
   notes: [], // content notes (information only)
   progress: null,
-  prefs: null,
   consentText: null, // data/consent.json, or null if it could not be loaded
   consentError: null,
-  notices: [], // { kind, text } shown on the level list
-  jlptFilter: "all",
+  notices: [], // { kind, text } shown on the home screen
   render,
 };
 
-// desain-peta branch, step 1: the game and preview routes return in steps 2–5.
+// desain-peta branch: the map (step 3) and the preview (step 5) are not rebuilt yet.
 const ROUTES = [
   { pattern: /^#?\/?$/, screen: () => buildStatusScreen(app) },
+  { pattern: /^#\/quest\/([^/]+)$/, screen: (id) => questScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
   {
@@ -98,9 +100,9 @@ async function boot() {
     return;
   }
   app.content = result.content;
+  app.model = buildModel(result.content);
   app.warnings = result.warnings;
   app.notes = result.notes;
-  app.prefs = loadPrefs();
 
   const { progress, recovered } = loadProgress();
   app.progress = progress;

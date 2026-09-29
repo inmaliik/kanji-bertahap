@@ -4,7 +4,7 @@
 import { h } from "../dom.js";
 import { clearLog, getLogStatus, logToCsv, markExported } from "../logger.js";
 import { flushLog, getSenderStatus, subscribeSenderStatus } from "../log-sender.js";
-import { resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
+import { FURIGANA_MODE, resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
 import { isStorageAvailable } from "../storage.js";
 import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
@@ -115,8 +115,8 @@ export function settingsScreen(app) {
         openLabel: "Reset progres",
         title: "Reset progres di perangkat ini?",
         details: [
-          "Semua progres level dihapus, termasuk level yang sudah lulus.",
-          "Pemain berikutnya mendapat ID pemain baru; kode peserta dan pilihan persetujuan dikosongkan.",
+          "Semua progres quest dihapus, termasuk quest yang sudah tuntas.",
+          "Pemain berikutnya mendapat ID pemain baru; kode peserta dan pilihan persetujuan dikosongkan, dan setelan furigana kembali ke bawaan.",
           "Riwayat jawaban (log) tidak dihapus.",
         ],
         confirmLabel: "Ya, reset progres",
@@ -125,6 +125,53 @@ export function settingsScreen(app) {
           setMessage("reset", "success", "✓ Progres direset. Perangkat siap untuk pemain berikutnya.");
         },
       })
+    );
+  }
+
+  // --- Furigana (D-65) ----------------------------------------------------------
+
+  const FURIGANA_OPTIONS = [
+    { value: FURIGANA_MODE.ALWAYS, label: "Selalu tampil", help: "Bawaan. Furigana tampil di kalimat dan percakapan." },
+    { value: FURIGANA_MODE.AFTER, label: "Tampil setelah menjawab", help: "Furigana disembunyikan sampai soal dijawab." },
+    { value: FURIGANA_MODE.NEVER, label: "Tidak pernah", help: "Kalimat dan percakapan tampil tanpa furigana." },
+  ];
+
+  function furiganaCard() {
+    const current = app.progress.settings.furiganaMode;
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "furigana-title" },
+      h("h2", { id: "furigana-title" }, "Furigana"),
+      messageFor("furigana"),
+      h(
+        "fieldset",
+        { class: "radio-list" },
+        h("legend", { class: "sr-only" }, "Kapan furigana ditampilkan"),
+        FURIGANA_OPTIONS.map((option) =>
+          h(
+            "label",
+            {},
+            h("input", {
+              type: "radio",
+              name: "furigana-mode",
+              value: option.value,
+              checked: option.value === current,
+              onChange: () => {
+                app.progress.settings.furiganaMode = option.value;
+                saveProgress(app.progress);
+                setMessage("furigana", "success", `✓ Furigana: ${option.label.toLowerCase()}.`);
+              },
+            }),
+            h("span", {}, option.label, h("small", {}, option.help))
+          )
+        )
+      ),
+      h(
+        "p",
+        { class: "muted" },
+        "Setelan ini disimpan untuk pemain saat ini dan tidak bisa diubah di tengah quest. Apa pun setelannya, ",
+        "cara baca yang masih akan ditanyakan tetap disembunyikan supaya jawabannya tidak bocor."
+      )
     );
   }
 
@@ -412,6 +459,7 @@ export function settingsScreen(app) {
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),
       resetCard(),
+      furiganaCard(),
       consentCard(),
       participantCard(),
       logCard(),

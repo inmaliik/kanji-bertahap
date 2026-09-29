@@ -9,11 +9,12 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 1 dari 5 selesai: struktur data).**
-> Struktur materi sudah berpindah ke wilayah, quest, dan percakapan (schemaVersion 2), lengkap dengan
-> pemeriksa dan konverter lima tab. Permainannya **belum bisa dimainkan** di cabang ini: mesin quest dibangun di
-> langkah 2, peta di langkah 3. Bagian README tentang tim konten sudah mengikuti struktur baru; bagian tentang
-> aturan permainan, daftar level, dan pratinjau masih menjelaskan versi lama dan diperbarui di langkah berikutnya.
+> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 2 dari 5 selesai: struktur data dan quest).**
+> Materi tersusun sebagai wilayah, quest, dan percakapan (schemaVersion 2). Quest sudah bisa dimainkan dari
+> beranda sementara: percakapan pengantar, latihan, uji konteks, Produksi, dan pemantapan. Peta, penguncian
+> wilayah, dan 復習 dibangun di langkah 3. Bagian README tentang tim konten, aturan permainan, dan log sudah
+> mengikuti versi peta; bagian tentang daftar level, pratinjau, dan prosedur pameran masih menjelaskan versi
+> lama dan diperbarui di langkah berikutnya.
 > Versi yang bisa dimainkan, dan menjadi cadangan untuk validasi ahli, ada di cabang `main`.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
@@ -124,8 +125,9 @@ data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
-js/state.js                 progres di localStorage + SEMUA aturan permainan (ambang, kunci, ulangan)
-js/session.js               antrean soal satu level: putaran belajar, produksi, pemantapan
+js/state.js                 progres di localStorage + SEMUA aturan permainan (ambang, kunci, ulangan, setelan furigana)
+js/session.js               antrean soal satu quest: putaran belajar, produksi, pemantapan, lanjut setelah keluar
+js/furigana.js              furigana mana yang tampil: setelan pemain + aturan anti-bocor
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
@@ -133,7 +135,6 @@ js/tab-guard.js             peringatan jika aplikasi terbuka di tab lain
 js/consent.js               memuat dan memeriksa teks persetujuan (data/consent.json)
 js/content.js               memuat dan memeriksa content.json
 js/model.js                 relasi wilayah ⇄ quest ⇄ percakapan dan kanji ⇄ kotoba, ID item soal
-js/chapters.js              (versi lama) bab Minna sebuah level; dihapus bersama daftar level di langkah 3
 js/validate.js              aturan validasi konten (dipakai browser DAN terminal)
 js/csv-content.js           konversi lima CSV spreadsheet → struktur content.json (dipakai browser DAN terminal)
 js/ruby.js                  parser sintaks furigana [漢字|かんじ] dan render <ruby>
@@ -143,16 +144,16 @@ js/dom.js                   pembuat elemen HTML
 js/distractors.js           penyusunan pilihan jawaban dan pengecoh
 js/random.js                pengacak
 
-js/stages/choice.js         komponen soal pilihan ganda (dipakai tahap 1–4)
-js/stages/shape.js          tahap 1 — Bentuk
-js/stages/reading.js        tahap 2 dan 3 — Kun'yomi / On'yomi
-js/stages/sentence.js       tahap 4 — Kotoba dalam kalimat
-js/stages/production.js     tahap 5 — Produksi
+js/stages/choice.js         komponen soal pilihan ganda (Bentuk, Cara baca, Uji konteks)
+js/stages/conversation.js   gelembung subtitle percakapan
+js/stages/intro.js          percakapan pengantar quest
+js/stages/shape.js          Bentuk
+js/stages/reading.js        Cara baca, dengan kartu kontras lintas wilayah
+js/stages/test.js           Uji konteks (percakapan dengan bagian kosong)
+js/stages/production.js     Produksi
 
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
-js/screens/level-list.js    daftar level, status terkunci, kartu level ulangan
-js/screens/play.js          layar bermain: menjalankan sesi, mencatat log
-js/screens/preview.js       (versi lama) pratinjau materi per level; dibangun ulang di langkah 5
+js/screens/quest.js         layar quest: menjalankan sesi, mencatat log
 js/screens/content-check.js daftar peringatan konten
 js/screens/build-status.js  SEMENTARA: beranda cabang desain-peta sampai peta selesai (langkah 3)
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
@@ -317,6 +318,12 @@ beberapa baris, isinya harus sama.
 > Template `tools/templates/percakapan.csv` masih berisi **empat percakapan sementara** satu baris, disusun dari
 > contoh kalimat lama supaya aplikasi bisa diuji. Template itu contoh **bentuk kolom**, bukan contoh percakapan
 > yang baik. Bentuk percakapan yang dimaksud dijelaskan di [Menulis percakapan](#menulis-percakapan).
+>
+> **Mengganti contoh ini.** Tim menulis satu percakapan sungguhan, pengantar dan uji untuk 食べます, lalu
+> menyerahkan kelima CSV kepada pengelola aplikasi. Pengelola menjalankan pemeriksa materi terhadapnya dan
+> melaporkan hasilnya ke tim **tanpa memperbaiki isinya sendiri**; perbaikan dikerjakan penulis. Setelah lolos,
+> percakapan itu menggantikan percakapan sementara 食べます di `tools/templates/`, di `data/content.json`, dan
+> sebagai contoh di bagian [Menulis percakapan](#menulis-percakapan).
 
 ---
 
@@ -410,6 +417,17 @@ di konteks lain, dengan kotoba itu dikosongkan.
 - Konteks percakapan uji harus **berbeda** dari percakapan pengantar, bukan hanya kalimatnya yang diubah sedikit.
 - Semua aturan kalimat tidak ambigu di bawah berlaku untuk baris ber-`blank`, dan konteksnya adalah **seluruh
   percakapan**, bukan hanya baris itu.
+
+**Kapan `conversation_id` harus diganti**
+
+| Perubahan | `conversation_id` | Alasan |
+|---|---|---|
+| Perbaikan kecil: salah ketik, furigana, terjemahan, satu pengecoh | **tetap** | Soalnya sama; progres pemain tidak perlu diulang. |
+| Percakapan ditulis ulang secara substansial, misalnya karena dinilai ambigu oleh validator | **wajib ID baru** (misalnya `C-tabemasu-uji-1` → `C-tabemasu-uji-1b`) | Maknanya berubah, jadi soalnya soal baru. Jawaban untuk versi lama dan versi baru tidak boleh tercampur di log dengan ID yang sama. |
+
+Ragu termasuk yang mana? Pilih ID baru. `contentRevision` dan kolom `prompt` di log tetap menjadi pengaman
+kedua, tetapi keduanya tidak menggantikan aturan ini. Setelah ID diganti, jangan lupa memperbarui kolom
+`intro_conversation` atau `test_conversations` di tab quest.
 
 ## Menulis pengecoh
 
@@ -586,7 +604,8 @@ ID dipakai di progres dan log. **Jangan pernah mengganti atau memakai ulang `kot
 | Produksi | `Q:Q-tabemasu:production` | Satu per quest |
 
 Menukar urutan baris tidak mengubah ID. Mengubah **isi** percakapan tanpa mengganti `conversation_id` membuat
-jawaban lama dan baru tercatat dengan ID yang sama; bedanya terlihat dari `contentRevision` di log.
+jawaban lama dan baru tercatat dengan ID yang sama, jadi percakapan yang ditulis ulang secara substansial wajib
+diberi ID baru (lihat [Menulis percakapan](#menulis-percakapan)).
 
 ---
 
@@ -605,66 +624,76 @@ Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
 |---|---|---|
 | `STREAK_TO_MASTER` | 2 | Item dikuasai setelah benar sekian kali berturut-turut. |
 | `REQUEUE_GAP_MIN`, `REQUEUE_GAP_MAX` | 2, 3 | Soal yang salah muncul lagi setelah 2–3 soal lain. |
-| `REVIEW_EVERY_N_LEVELS` | 3 | Level ulangan disisipkan setiap 3 level. |
-| `REVIEW_ITEM_COUNT` | 10 | Jumlah item dalam satu level ulangan. |
-| `OPTION_COUNT` | 4 | Jumlah pilihan di tahap 2–4 (jawaban + pengecoh). |
+| `REVIEW_ITEM_COUNT` | 10 | Jumlah item dalam satu ulangan wilayah (dipakai di langkah 3). |
+| `OPTION_COUNT` | 4 | Jumlah pilihan di soal cara baca dan uji konteks (jawaban + pengecoh). |
 | `STORAGE_BUDGET_CHARS` | 2.500.000 | Perkiraan batas penyimpanan browser, sengaja rendah. |
 | `STORAGE_WARNING_RATIO` | 0,8 | Peringatan kapasitas muncul sejak 80% dari perkiraan batas. |
 
-**Alur satu level**
+**Alur satu quest**
 
-1. **Putaran belajar**: tahap 1–4 berurutan. Setiap item sampai dijawab benar sekali. Soal yang
-   salah muncul lagi di tahap yang sama.
-2. **Produksi** (tahap 5).
-3. **Putaran pemantapan**: semua item yang belum dikuasai, diacak lintas tahap. Jawaban salah
-   mengembalikan streak ke 0. Soal yang sama tidak pernah muncul dua kali berturut-turut; jika
-   hanya satu soal tersisa, satu item yang sudah dikuasai diselipkan sebagai jeda (dicatat di log
-   dengan `phase` = `spacer`).
+1. **Percakapan pengantar** (tidak dinilai). Baris percakapan muncul satu per satu; kotoba quest disorot,
+   terjemahan selalu tampil. Di akhir, kotoba diperkenalkan beserta cara baca dan artinya. Pemain boleh
+   mengulang percakapan sebelum menekan **Mulai latihan**.
+2. **Putaran belajar**, berurutan: **Bentuk** (bushu setiap kanji sasaran), **Cara baca** (kotoba quest,
+   dengan label kun'yomi atau on'yomi), lalu **Uji konteks** (percakapan lain, kotoba dikosongkan). Setiap
+   item sampai dijawab benar sekali. Soal yang salah muncul lagi di tahap yang sama.
+3. **Produksi**: menulis satu kalimat sendiri.
+4. **Putaran pemantapan**: semua item yang belum dikuasai, diacak lintas tahap. Jawaban salah
+   mengembalikan streak ke 0. Soal yang sama tidak pernah muncul dua kali berturut-turut; jika hanya satu
+   soal tersisa, satu item yang sudah dikuasai diselipkan sebagai jeda (dicatat di log dengan `phase` =
+   `spacer`).
 
-Level lulus bila semua item tahap 1–4 dikuasai dan tahap 5 sudah dikirim.
+Quest tuntas bila semua item dikuasai dan Produksi sudah dikirim. Kotoba ber-`reading_type` `special` tidak
+punya soal cara baca.
 
-**Tahap 3 dan kontras dengan tahap 2.** Di putaran belajar, soal on'yomi didahului kartu yang
-menampilkan kotoba kun'yomi dari tahap 2 beserta furigananya. Setelah menjawab soal cara baca apa pun,
-umpan balik menampilkan kotoba kun'yomi dan on'yomi berdampingan, ditambah tabel bacaan.
+**Soal Bentuk berlaku di seluruh permainan.** Satu kanji punya satu item Bentuk (`K:食:shape`). Jika sudah
+dikuasai di satu quest, quest lain dengan kanji sasaran yang sama tidak menanyakannya lagi, tetapi item itu
+tetap dihitung sebagai item yang dikuasai di quest tersebut.
 
-**Tahap 4.** Terjemahan kalimat tidak ditampilkan sebelum menjawab; jika ditampilkan lebih dulu, soal
-berubah menjadi mencocokkan arti. Pemain yang benar-benar buntu boleh menekan **Tampilkan arti**.
-Jawaban benar setelah bantuan tetap dihitung benar untuk kelulusan, tetapi log mencatat `hintUsed` = 1
-sehingga bisa dipisahkan saat analisis.
+**Kontras kun'yomi–on'yomi.** Setelah soal cara baca dijawab, umpan balik menampilkan kotoba lain yang memakai
+kanji sasaran yang sama dari wilayah yang sudah terbuka (bab yang sama atau sebelumnya), beserta tabel bacaan
+kanji itu (D-56).
 
-**Tahap 5.** Tidak ada penilaian benar-salah dan tidak ada skor. Setelah pemain mengirim kalimat,
-contoh dari materi ditampilkan sebagai pembanding, lalu pemain memilih "Sudah mirip" atau "Masih
-ragu". Kalimat dan penilaian diri disimpan bersama sebagai satu baris log saat penilaian dipilih.
-Ada petunjuk bahwa pemain boleh menulis dengan hiragana, beserta cara menambah papan ketik Jepang.
+**Uji konteks.** Terjemahan percakapan uji tidak ditampilkan sebelum menjawab; jika ditampilkan lebih dulu,
+soal berubah menjadi mencocokkan arti. Pemain yang buntu boleh menekan **Tampilkan arti**. Jawaban benar
+setelah bantuan tetap dihitung benar, tetapi log mencatat `hintUsed` = 1 sehingga bisa dipisahkan saat analisis.
 
-**Cara baca yang belum boleh terlihat.** Cara baca sebuah kotoba (furigana, baris tabel bacaan) hanya
-ditampilkan jika soal cara bacanya tidak akan segera muncul: sudah dijawab benar sekali (putaran
-belajar), atau sudah dikuasai (tahap Produksi dan putaran pemantapan). Tanpa aturan ini, umpan balik
-soal 食べます akan memperlihatkan しょくじ tepat sebelum soal cara baca 食事.
+**Produksi.** Tidak ada penilaian benar-salah dan tidak ada skor. Setelah pemain mengirim kalimat, baris
+percakapan yang memuat kotoba quest ditampilkan sebagai pembanding, lalu pemain memilih "Sudah mirip" atau
+"Masih ragu". Kalimat dan penilaian diri disimpan bersama sebagai satu baris log saat penilaian dipilih.
 
-**Level ulangan.** Setelah setiap 3 level, satu level ulangan (R01, R02, …) wajib diselesaikan
-sebelum level berikutnya terbuka.
-- Isinya 10 item tahap 1–4 yang diambil acak dari semua level yang sudah lulus, **berimbang per level**
-  (setiap level terwakili sebelum level yang sama diambil lagi).
-- Tanpa putaran belajar dan tanpa Produksi: semua item langsung diacak, dengan aturan penguasaan yang
-  sama (benar 2 kali berturut-turut, tidak berdampingan).
-- Sampel disimpan saat level ulangan pertama kali dibuka, sehingga keluar lalu masuk lagi
-  melanjutkan item yang sama.
-- Di log: `levelId` = `R01`, `isReview` = 1, `phase` = `review` (atau `spacer`), dan `itemId` tetap
-  menunjukkan level asal item.
+**Keluar di tengah quest.** Tombol **‹ Keluar** selalu ada di kepala layar quest. Setiap jawaban langsung
+disimpan, jadi quest yang dibuka lagi melanjutkan dari titik terakhir: putaran belajar meneruskan soal yang
+belum dijawab benar, dan putaran pemantapan meneruskan item yang belum dikuasai. Soal yang sedang terbuka
+tetapi belum dijawab ditanyakan lagi. Percakapan pengantar yang ditinggalkan sebelum selesai diulang dari awal.
+Menu (index, panduan kana, Pengaturan) tidak tersedia di dalam quest (D-69).
 
-**Status terkunci tidak disimpan.** Yang disimpan hanya fakta: streak tiap item, level sudah
-dimulai, level sudah lulus. Sebuah level terbuka jika level tepat sebelumnya (termasuk level
-ulangan) sudah lulus. Level yang sudah pernah dimulai tidak pernah terkunci lagi, sehingga level
-yang disisipkan saat revisi materi tidak menghalangi peserta yang sudah lebih jauh.
+**Furigana.** Pengaturan → Furigana: **Selalu tampil** (bawaan), **Tampil setelah menjawab**, atau **Tidak
+pernah**. Setelan disimpan per pemain, ikut kembali ke bawaan saat reset, tidak bisa diubah di tengah quest,
+dan dicatat di setiap baris log (`furiganaMode`). Di percakapan pengantar, "tampil setelah menjawab" berlaku
+seperti "selalu tampil", karena di sana tidak ada yang ditanyakan.
+
+**Cara baca yang belum boleh terlihat (selalu menang atas setelan furigana).** Furigana kanji sasaran dan
+cara baca kotoba hanya ditampilkan jika soal cara bacanya tidak akan segera muncul: sudah dijawab benar sekali
+(putaran belajar) atau sudah dikuasai (Produksi dan putaran pemantapan). Di percakapan uji, furigana kanji
+sasaran selalu disembunyikan sebelum menjawab. Pengecualian: percakapan pengantar, karena memang bertugas
+memperkenalkan cara baca (D-65).
+
+**Ulangan wilayah (復習) dan penguncian wilayah** dibangun di langkah 3 (D-63). Saat ini semua quest di
+beranda sementara bisa langsung dimainkan.
+
+**Status terkunci tidak disimpan.** Yang disimpan hanya fakta: streak tiap item, quest sudah dimulai, quest
+sudah tuntas. Status terkunci selalu dihitung dari urutan materi, sehingga quest yang disisipkan saat revisi
+tidak menghalangi peserta yang sudah lebih jauh.
 
 ## Kemajuan pemain dan reset
 
-Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v1`. **Reset progres** (Pengaturan)
-menghapus progres level, membuat `playerId` baru, dan mengosongkan kode peserta. **Riwayat jawaban
-tidak ikut terhapus**, karena itu data penelitian.
+Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v2`. Key ini berbeda dari versi level di
+cabang `main` (`kanjiGame.progress.v1`), sehingga progres kedua versi tidak pernah tercampur. **Reset progres**
+(Pengaturan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, dan mengembalikan
+setelan furigana ke bawaan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
 
-Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v1.corrupt.<waktu>`
+Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v2.corrupt.<waktu>`
 dan memulai progres baru.
 
 > Buka aplikasi di **satu tab saja** per perangkat. Dua tab yang terbuka bersamaan saling menimpa
@@ -789,17 +818,26 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
 | `participantCode` | Kode peserta anonim, jika diisi. |
 | `consentStatus`, `consentVersion`, `consentAt` | `agreed` untuk jawaban (baris hanya ditulis setelah persetujuan), atau `withdrawn` untuk baris penarikan; versi teks persetujuan yang disetujui dan waktu persetujuan diberikan. Pada baris penarikan, `timestamp` adalah waktu penarikan dan `answer` jumlah baris yang dihapus dari perangkat. |
-| `levelId`, `isReview` | Level tempat soal dijawab (`L01`, `R01`, …) dan 1 jika level ulangan. |
-| `phase` | `learning`, `consolidation`, `spacer`, `production`, atau `review`. |
-| `stage` | `shape`, `kunyomi`, `onyomi`, `sentence`, atau `production`. |
-| `itemId` | ID item; diawali ID level asal item. |
+| `levelId`, `isReview` | Quest (`Q-…`) atau ulangan wilayah (`REV-B06`) tempat baris ditulis, dan 1 jika ulangan. |
+| `regionId`, `questId` | Wilayah (`B06`) dan quest asal item. |
+| `questStep` | Langkah quest: `intro`, `practice` (Bentuk dan Cara baca di putaran belajar), `test` (uji konteks di putaran belajar), `production`, `consolidation`, `review`, atau `spacer`. |
+| `phase` | `intro`, `learning`, `consolidation`, `spacer`, `production`, atau `review`. |
+| `stage` | `intro`, `shape`, `reading`, `test`, atau `production`. |
+| `itemId` | `K:<kanji>:shape`, `W:<kotoba_id>:reading`, `C:<conversation_id>:test`, atau `Q:<quest_id>:production`. |
+| `conversationId`, `blankLine` | Baris pengantar dan uji: percakapan yang ditampilkan; baris uji: nomor baris yang dikosongkan. |
+| `targetKanji` | Kanji sasaran quest, dipisah ` \| `. |
 | `options` | Pilihan sesuai urutan tampil, dipisah ` \| `. |
 | `optionTypes` | Jenis tiap pilihan dengan urutan yang sama: `answer`, `manual`, `manual-cross`, `auto`. |
 | `answer`, `answerType` | Pilihan pemain dan jenisnya. `answerType` = `manual-cross` berarti pemain membaca kanji dengan jenis bacaan yang salah. |
-| `hintUsed` | Tahap 4 saja: 1 jika **Tampilkan arti** ditekan sebelum menjawab. |
-| `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. |
-| `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. |
-| `selfAssessment`, `containsKanji` | Tahap 5 saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji level. |
+| `hintUsed` | Uji konteks saja: 1 jika **Tampilkan arti** ditekan sebelum menjawab. |
+| `furiganaMode` | Setelan furigana pemain saat baris ditulis: `always`, `after`, atau `never`. |
+| `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. Kosong untuk baris pengantar dan Produksi. |
+| `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. Baris pengantar: lama membaca percakapan. |
+| `introReplays` | Baris pengantar saja: berapa kali percakapan diulang. |
+| `selfAssessment`, `containsKanji` | Produksi saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji sasaran quest. |
+
+**Baris pengantar.** Satu baris ditulis saat pemain menekan **Mulai latihan** di akhir percakapan pengantar
+(`questStep` = `intro`). Baris ini bukan jawaban: `isCorrect` kosong.
 
 Jika daftar kolom berubah di versi berikutnya, log lama di perangkat otomatis disusun ulang ke urutan
 kolom baru saat aplikasi dibuka. Skrip Apps Script juga menambahkan kolom baru ke spreadsheet secara

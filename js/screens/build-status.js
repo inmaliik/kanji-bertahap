@@ -1,14 +1,14 @@
-// TEMPORARY home screen of the desain-peta branch, step 1 (DECISIONS D-54).
-// The v2 content loads and validates, but the quest engine (step 2) and the
-// map (step 3) do not exist yet, so this screen only lists what was loaded.
-// It is replaced by the map screen in step 3.
+// TEMPORARY home screen of the desain-peta branch (DECISIONS D-54): lists the
+// regions and quests and opens a quest. Replaced by the map screen in step 3,
+// which also brings region locking and reviews.
 
 import { h, ja } from "../dom.js";
 import { APP_TITLE } from "../config.js";
-import { buildModel, questConversations } from "../model.js";
+import { questConversations } from "../model.js";
+import { STATUS } from "../state.js";
 
 export function buildStatusScreen(app) {
-  const model = buildModel(app.content);
+  const model = app.model;
   const placeholders = [...model.conversations.values()].filter(({ conversation }) => conversation.isPlaceholder).length;
 
   return h(
@@ -18,8 +18,8 @@ export function buildStatusScreen(app) {
     h(
       "p",
       { class: "notice notice--warning", role: "note" },
-      "⚠ Versi peta sedang dibangun (langkah 1 dari 5: struktur data). Permainan belum bisa dimainkan di versi ini. ",
-      "Versi yang bisa dimainkan ada di cabang main."
+      "⚠ Versi peta sedang dibangun (langkah 2 dari 5: quest). Peta, penguncian wilayah, dan ulangan wilayah belum ada; ",
+      "semua quest di bawah bisa langsung dimainkan."
     ),
     app.notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, n.text)),
     h("p", {}, `Materi dimuat: revisi ${app.content.contentRevision}, ${model.regions.length} wilayah, ${model.quests.size} quest, ${model.conversations.size} percakapan.`),
@@ -33,18 +33,28 @@ export function buildStatusScreen(app) {
         h("h2", {}, `${region.id} · Bab ${region.chapter} — ${region.title}`),
         h(
           "ul",
-          {},
-          region.quests.map((quest) => {
+          { class: "quest-links" },
+          region.quests.map((quest, i) => {
             const kotoba = model.kotoba.get(quest.kotoba);
-            const conversations = questConversations(quest);
+            const entry = app.progress.quests[quest.id];
+            const status = entry?.status === STATUS.PASSED ? "✓ tuntas" : entry ? "sedang dikerjakan" : "belum dimulai";
             return h(
               "li",
-              {},
-              `${quest.id}: `,
-              ja("span", {}, kotoba?.word ?? quest.kotoba),
-              ` · kanji sasaran `,
-              ja("span", {}, quest.targetKanji.join("、")),
-              ` · ${conversations.length} percakapan`
+              { class: "quest-link" },
+              h(
+                "a",
+                { class: "button button--block", href: `#/quest/${encodeURIComponent(quest.id)}` },
+                `Quest ${i + 1} · ${status}`
+              ),
+              h(
+                "p",
+                { class: "muted" },
+                `${quest.id}: `,
+                ja("span", {}, kotoba?.word ?? quest.kotoba),
+                ` · kanji sasaran `,
+                ja("span", {}, quest.targetKanji.join(", ")),
+                ` · ${questConversations(quest).length} percakapan`
+              )
             );
           })
         )

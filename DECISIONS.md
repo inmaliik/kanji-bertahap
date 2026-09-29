@@ -750,6 +750,72 @@ Aturan ini ditulis di README bagian "Menulis percakapan". **Alasan:** Pemain bis
 ucapan karakter pemain harus cocok untuk semua karakter; nama buatan tim selaras dengan larangan menyalin percakapan
 buku (D-62).
 
+### D-73 · Alur quest, keluar di tengah jalan, dan penerapan furigana
+**Tanggal:** 2026-09-29. **Keputusan:** Satu quest = percakapan pengantar (tidak dinilai; baris muncul satu per satu,
+bisa diulang) → putaran belajar berurutan Bentuk → Cara baca → Uji konteks → Produksi → putaran pemantapan (D-06).
+Tombol **Keluar** selalu ada di kepala layar quest. Setiap jawaban langsung disimpan; quest yang dibuka lagi
+meneruskan soal yang belum dijawab benar (putaran belajar) atau item yang belum dikuasai (pemantapan), dengan
+pemberitahuan "Melanjutkan quest dari titik terakhir". Soal yang terbuka tetapi belum dijawab ditanyakan lagi, dan
+percakapan pengantar yang ditinggalkan sebelum selesai diulang dari awal. Tiga keputusan penerapan furigana:
+(1) mode "tidak pernah" juga berlaku di percakapan pengantar; (2) di umpan balik soal cara baca dan kartu kontras,
+mode "tidak pernah" menampilkan cara baca sebagai kana di belakang kata, karena cara baca adalah isi umpan balik
+itu; (3) di percakapan uji, furigana kanji sasaran selalu disembunyikan sebelum menjawab, di semua baris.
+**Alasan:** Urutan antrean tidak disimpan, hanya fakta (streak, status), sesuai D-23, sehingga melanjutkan tidak
+bisa rusak oleh perubahan materi. Mengulang pengantar yang terputus lebih aman daripada meneruskan di tengah
+percakapan yang konteksnya sudah terlupa. **Alternatif ditolak:** Menyimpan posisi persis di antrean (rapuh
+terhadap revisi materi); melarang keluar sebelum quest tuntas.
+
+### D-74 · Streak global dan key progres baru
+**Tanggal:** 2026-09-29. **Keputusan:** Streak setiap item disimpan sekali untuk seluruh permainan
+(`progress.items`), bukan per level; status quest disimpan terpisah (`progress.quests`). Progres versi peta memakai
+key `kanjiGame.progress.v2`; tidak ada migrasi dari `kanjiGame.progress.v1` milik cabang `main`, jadi pemain di
+perangkat yang sama dianggap pemain baru (ID pemain baru, persetujuan ditanyakan lagi). Setelan furigana disimpan di
+progres pemain. Log tetap memakai key yang sama dengan migrasi kolom otomatis. **Alasan:** Item Bentuk dipakai
+bersama beberapa quest (D-61). ID item versi peta berbeda seluruhnya dari versi level, sehingga progres lama tidak
+bisa dipetakan; mencampurnya justru merusak kedua versi. **Alternatif ditolak:** Streak per quest (soal Bentuk
+diulang di setiap quest); memigrasikan persetujuan dari progres lama (persetujuan melekat pada pemain dan versi
+aplikasi yang ia setujui).
+
+### D-75 · Kapan `conversation_id` wajib diganti
+**Tanggal:** 2026-09-29. **Keputusan:** Melengkapi D-57. Perbaikan kecil (salah ketik, furigana, terjemahan, satu
+pengecoh) mempertahankan `conversation_id`. Percakapan yang ditulis ulang secara substansial, misalnya karena
+validator menilainya ambigu, **wajib** diberi `conversation_id` baru. Aturan ini ditulis di README bagian
+"Menulis percakapan". **Alasan:** Progres pemain tidak perlu direset untuk perbaikan kecil, tetapi soal yang maknanya
+berubah memang soal baru, dan data log-nya tidak boleh dicampur dengan versi sebelumnya. `contentRevision` dan kolom
+`prompt` tetap menjadi pengaman kedua. **Alternatif ditolak:** ID dari teks kalimat (D-05 lama; setiap salah ketik
+yang dibetulkan mereset progres).
+
+### D-76 · Label antarmuka berbahasa Jepang di `data/ui.json`
+**Tanggal:** 2026-09-29. **Keputusan:** Aturan "tidak ada teks Jepang di kode" dipertahankan secara harfiah. Label
+antarmuka seperti 復習, 熟語, 画数, dan 書き方 ditulis di `data/ui.json` dengan sintaks furigana materi
+(`[復|ふく][習|しゅう]`), selalu ditampilkan dengan ruby (setelan furigana pemain tidak berlaku untuk label), dan
+boleh punya padanan bahasa Indonesia opsional yang ditampilkan kecil di dekatnya (misalnya 画数, "jumlah guratan").
+**Alasan:** Aturan itu ada supaya tim, termasuk dosen, bisa mengubah semua teks Jepang tanpa menyentuh kode.
+Sasarannya mahasiswa semester 1, yang belum tentu mengenal istilah seperti 画数 dan 熟語. **Alternatif ditolak:**
+Mengecualikan label antarmuka dari aturan. **Diterapkan:** langkah 3, saat label pertama (復習 di peta) dibutuhkan.
+
+### D-77 · Kolom log versi peta dan baris pengantar
+**Tanggal:** 2026-09-29. **Keputusan:** Kolom baru: `regionId`, `questId`, `questStep` (`intro`, `practice`, `test`,
+`production`, `consolidation`, `review`, `spacer`), `conversationId`, `blankLine`, `targetKanji`, `furiganaMode`,
+`introReplays`. `levelId` tetap ada dan berisi quest atau ulangan wilayah. Nilai `stage` kini `intro`, `shape`,
+`reading`, `test`, `production`. Selesainya percakapan pengantar ditulis sebagai satu baris yang bukan jawaban
+(`isCorrect` kosong, `responseMs` = lama membaca, `introReplays`). Semua pengaman tetap berlaku: tidak ada baris
+tanpa persetujuan (D-50), tidak ada pengiriman selama teks persetujuan masih placeholder (D-52), penarikan menghapus
+baris lokal (D-53). **Alasan:** `questStep` memisahkan latihan dan uji konteks di putaran belajar, yang di kolom
+`phase` sama-sama `learning`. Lama membaca dan jumlah pengulangan pengantar mengukur keterlibatan pemain.
+`appVersion` versi peta selama pengerjaan adalah `0.9.0` (cabang `main` tetap `0.5.0`), sehingga baris log kedua
+versi selalu bisa dipisahkan.
+
+### D-78 · Contoh percakapan di template ditulis tim; pengembang hanya memeriksa
+**Tanggal:** 2026-09-29. **Keputusan:** Tim menulis satu percakapan sungguhan (pengantar dan uji untuk 食べます). Saat
+diserahkan, pengembang menjalankan pemeriksa materi terhadapnya dan melaporkan hasilnya **tanpa memperbaiki isinya
+sendiri**; perbaikan dikerjakan penulis. Setelah lolos, percakapan itu menggantikan percakapan sementara di
+`tools/templates/`, `data/content.json`, dan README. Prosedurnya ditulis di README bagian "Kolom spreadsheet".
+Sejalan dengan itu, jumlah guratan yang diisi pengembang (食 9, 飲 12) tetap berada di daftar verifikasi: yang penting
+adalah prosesnya, yaitu setiap angka di data diperiksa manusia terhadap sumber, bukan diisi dari ingatan.
+**Alasan:** Template adalah teladan yang akan ditiru; teladan itu harus tulisan tim (D-62) dan sudah lolos
+pemeriksaan.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

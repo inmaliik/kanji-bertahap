@@ -1,7 +1,7 @@
 // Components shared by several screens.
 
 import { h, ja } from "../dom.js";
-import { renderRuby, alignReading } from "../ruby.js";
+import { renderRuby, parseRuby } from "../ruby.js";
 import { splitReadingNotation } from "../jp-text.js";
 
 export const LABELS = {
@@ -15,14 +15,14 @@ export const LABELS = {
     other: "lainnya",
   },
   stage: {
+    intro: "Percakapan",
     shape: "Bentuk",
-    kunyomi: "Kun'yomi",
-    onyomi: "On'yomi",
-    sentence: "Kotoba dalam kalimat",
+    reading: "Cara baca",
+    test: "Uji konteks",
     production: "Produksi",
   },
-  stageNumber: { shape: 1, kunyomi: 2, onyomi: 3, sentence: 4, production: 5 },
   phase: {
+    intro: "Pengantar",
     learning: "Putaran belajar",
     production: "Produksi",
     consolidation: "Putaran pemantapan",
@@ -71,8 +71,28 @@ export function issueList(issues, locate = () => null) {
   );
 }
 
-export function wordWithRuby(kotoba) {
-  const segments = alignReading(kotoba.word, kotoba.reading) ?? [{ text: kotoba.word, ruby: kotoba.reading }];
+/** Segments of a kotoba's per-kanji furigana (schema v2 `ruby`). */
+export const kotobaSegments = (kotoba) => parseRuby(kotoba.ruby).segments;
+
+/**
+ * A kotoba with its furigana, the ruby part containing one of `focus`
+ * highlighted. With `showReading` false (furigana setting "never"), the word
+ * is shown plain with its reading in kana after it, because the reading is
+ * the point of the feedback where this is used.
+ */
+export function kotobaWithReading(kotoba, { focus = [], showReading = true } = {}) {
+  if (!showReading) return [kotoba.word, h("span", { class: "reading-inline" }, ` (${kotoba.reading})`)];
+  const segments = kotobaSegments(kotoba);
+  let start = 0;
+  for (const seg of segments) {
+    if (seg.ruby !== null && focus.some((ch) => seg.text.includes(ch))) {
+      return renderRuby(segments, {
+        range: { start, end: start + seg.text.length },
+        wrap: (inner) => h("mark", { class: "kanji-focus" }, inner),
+      });
+    }
+    start += seg.text.length;
+  }
   return renderRuby(segments);
 }
 
@@ -135,55 +155,7 @@ export function readingsTable(readings, hiddenTypes = []) {
   );
 }
 
-/** Text with every occurrence of `kanji` wrapped in a focus highlight. */
+/** Text with every character in `kanji` wrapped in a focus highlight. */
 export function highlightKanji(text, kanji) {
-  return text.split(kanji).flatMap((part, i) => (i === 0 ? [part] : [h("mark", { class: "kanji-focus" }, kanji), part]));
-}
-
-/** Word with furigana, highlighting the ruby segment that contains `kanji`. */
-export function wordWithRubyFocus(kotoba, kanji) {
-  const segments = alignReading(kotoba.word, kotoba.reading) ?? [{ text: kotoba.word, ruby: kotoba.reading }];
-  let start = 0;
-  for (const seg of segments) {
-    if (seg.ruby !== null && seg.text.includes(kanji)) {
-      return renderRuby(segments, {
-        range: { start, end: start + seg.text.length },
-        wrap: (inner) => h("mark", { class: "kanji-focus" }, inner),
-      });
-    }
-    start += seg.text.length;
-  }
-  return renderRuby(segments);
-}
-
-/**
- * Reading-stage kotoba of a level side by side, plus the readings table.
- * Only kotoba accepted by `isRevealed` are shown, so feedback never gives away
- * the answer of a question that is still ahead.
- */
-export function readingContrast(level, isRevealed) {
-  const readingKotoba = level.kotoba.filter((k) => k.readingType === "kunyomi" || k.readingType === "onyomi");
-  const rows = readingKotoba.filter(isRevealed);
-  const hiddenTypes = ["kunyomi", "onyomi"].filter((type) =>
-    readingKotoba.some((k) => k.readingType === type && !isRevealed(k))
-  );
-  return h(
-    "div",
-    { class: "contrast" },
-    h("p", { class: "contrast__title" }, "Kanji yang sama, cara baca berbeda"),
-    h(
-      "ul",
-      { class: "contrast__list" },
-      rows.map((k) =>
-        h(
-          "li",
-          { class: "contrast__row" },
-          h("span", { class: `badge badge--${k.readingType}` }, LABELS.readingType[k.readingType]),
-          ja("span", { class: "contrast__word" }, wordWithRubyFocus(k, level.kanji)),
-          h("span", { class: "contrast__meaning" }, k.meaning)
-        )
-      )
-    ),
-    readingsTable(level.readings, hiddenTypes)
-  );
+  return Array.from(text).map((ch) => (kanji.includes(ch) ? h("mark", { class: "kanji-focus" }, ch) : ch));
 }

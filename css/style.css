@@ -1776,3 +1776,161 @@ rt {
 .consent__version {
   font-size: 0.8125rem;
 }
+
+/* Quest: conversations, intro, notices ---------------------------------------------- */
+
+.notice--info {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid currentColor;
+}
+
+.dialog__scene {
+  margin: 0.5rem 0 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.dialog__placeholder {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--error);
+}
+
+.dialog {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dialog__line {
+  max-width: 88%;
+  padding: 0.5rem 0.75rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.dialog__line--other {
+  align-self: flex-start;
+  border-top-left-radius: 2px;
+}
+
+.dialog__line--player {
+  align-self: flex-end;
+  border-top-right-radius: 2px;
+  background: var(--primary-soft);
+  border-color: #b9c6f2;
+}
+
+.dialog__speaker {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.dialog__ja {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 2.2; /* room for furigana */
+}
+
+.dialog__translation {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.dialog__translation[hidden] {
+  display: none;
+}
+
+mark.highlight {
+  background: var(--highlight);
+  color: var(--text);
+  border-bottom: 3px solid var(--text);
+  padding: 0 0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.intro__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.kotoba-card__title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.kotoba-card__word {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 2;
+}
+
+.kotoba-card__meaning {
+  margin: 0;
+}
+
+.reading-inline {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
+/* Settings: furigana setting -------------------------------------------------------- */
+
+.radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.radio-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: var(--tap);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.radio-list input {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+.radio-list small {
+  display: block;
+  color: var(--muted);
+}
+
+/* Temporary home screen (desain-peta, until the map) --------------------------------- */
+
+.quest-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quest-link p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}

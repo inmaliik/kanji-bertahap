@@ -1,19 +1,25 @@
-// Question queue for one level. Pure logic: no DOM, no storage. The caller
-// persists `entry` whenever onChange() fires.
+// Question queue for one quest or one region review. Pure logic: no DOM, no
+// storage. The caller persists `streaks` and `entry` whenever onChange() fires.
 //
-// Flow (decision A6):
-//   1. Learning pass: stages 1–4 in order. Each item until answered correctly
-//      once. A missed item returns later within the same stage.
-//   2. Production (stage 5), if not submitted yet.
+// Flow (A6, D-60):
+//   1. Learning pass: items in stage order (shape → reading → test). Each item
+//      until answered correctly once. A missed item returns later within the
+//      same stage.
+//   2. Production, if not submitted yet.
 //   3. Consolidation: every item not yet mastered, shuffled across stages.
 //      A missed item resets to streak 0 and returns REQUEUE_GAP items later.
-// Streaks are consecutive correct answers across the whole level, so the
-// second correct answer always comes from a later, non-adjacent exposure.
+// Streaks are consecutive correct answers per item across the whole game, so
+// the second correct answer always comes from a later, non-adjacent exposure,
+// and a kanji shape mastered in one quest counts as mastered in the next (D-61).
+//
+// Resuming: nothing about the queue is stored. On reopening, the learning pass
+// continues with the items not yet answered correctly, and consolidation with
+// the items not yet mastered, so the player continues where they left off.
 
 import { STREAK_TO_MASTER, REQUEUE_GAP_MIN, REQUEUE_GAP_MAX, isMastered, evaluateEntry, markPassed } from "./state.js";
 import { shuffle } from "./random.js";
 
-export const STAGE_ORDER = ["shape", "kunyomi", "onyomi", "sentence"];
+export const STAGE_ORDER = ["shape", "reading", "test"];
 
 export const PHASE = Object.freeze({
   LEARNING: "learning",
@@ -23,24 +29,27 @@ export const PHASE = Object.freeze({
 
 /**
  * @param {object} opts
- * @param {{shape: object[], kunyomi: object[], onyomi: object[], sentence: object[]}} opts.items
- * @param {object} opts.entry level progress entry from state.js (mutated)
- * @param {boolean} [opts.hasProduction] false for levels without stage 5 (review levels)
- * @param {boolean} [opts.skipLearning] start directly with the shuffled consolidation queue (review levels)
+ * @param {Array<{id: string, stage: string}>} opts.items scored items
+ * @param {Object<string, number>} opts.streaks item id → streak, shared by all quests (mutated)
+ * @param {object} opts.entry quest or review progress entry from state.js (mutated)
+ * @param {boolean} [opts.hasProduction] false for reviews
+ * @param {boolean} [opts.skipLearning] start directly with the shuffled consolidation queue (reviews)
  * @param {() => number} [opts.random]
- * @param {() => void} [opts.onChange] called after every change to `entry`
+ * @param {() => void} [opts.onChange] called after every change to `streaks` or `entry`
  */
-export function createLevelSession({
+export function createSession({
   items,
+  streaks,
   entry,
   hasProduction = true,
   skipLearning = false,
   random = Math.random,
   onChange = () => {},
 }) {
-  const scored = STAGE_ORDER.flatMap((stage) => items[stage]);
+  const scored = STAGE_ORDER.flatMap((stage) => items.filter((item) => item.stage === stage));
+  const scoredIds = scored.map((i) => i.id);
 
-  const streakOf = (item) => entry.itemStreaks[item.id] ?? 0;
+  const streakOf = (item) => streaks[item.id] ?? 0;
   const randomGap = () => REQUEUE_GAP_MIN + Math.floor(random() * (REQUEUE_GAP_MAX - REQUEUE_GAP_MIN + 1));
 
   let phase;
@@ -66,8 +75,10 @@ export function createLevelSession({
   if (!skipLearning && !entry.learningDone) enterLearning();
   else afterLearning();
 
+  const evaluate = () => evaluateEntry(scoredIds, streaks, entry, { requiresProduction: hasProduction });
+
   function progress() {
-    const { mastered, total } = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: hasProduction });
+    const { mastered, total } = evaluate();
     return { mastered, total };
   }
 
@@ -84,7 +95,7 @@ export function createLevelSession({
   }
 
   function finish() {
-    const result = evaluateEntry(scored.map((i) => i.id), entry, { requiresProduction: hasProduction });
+    const result = evaluate();
     if (result.passed) {
       markPassed(entry);
       onChange();
@@ -113,7 +124,7 @@ export function createLevelSession({
       } else {
         const spacer = pickSpacer();
         if (spacer) return itemStep(spacer, true);
-        // The level has a single playable item: a repeat cannot be avoided.
+        // Only one playable item: a repeat cannot be avoided.
       }
     }
     return itemStep(queue[0], false);
@@ -124,7 +135,7 @@ export function createLevelSession({
     if (!current) throw new Error("answer() called without a current item");
     const { item, spacer } = current;
     const streak = correct ? streakOf(item) + 1 : 0;
-    entry.itemStreaks[item.id] = streak;
+    streaks[item.id] = streak;
     lastShownId = item.id;
     if (!spacer) queue.shift();
 

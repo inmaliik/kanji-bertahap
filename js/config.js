@@ -1,7 +1,7 @@
 // App-wide configuration. Pass/fail thresholds live in state.js instead.
 
 export const APP_TITLE = "Kanji Bertahap";
-export const APP_VERSION = "0.5.0";
+export const APP_VERSION = "0.9.0"; // map version in development (desain-peta); main stays 0.5.0
 export const CONTENT_URL = "data/content.json";
 export const CONSENT_URL = "data/consent.json";
 

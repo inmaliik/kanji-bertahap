@@ -115,3 +115,45 @@ export function buildModel(content) {
 
   return { regions, quests, kotoba, kanji, conversations, kotobaByKanji };
 }
+
+/**
+ * Scored items of one quest, in stage order: the shape of each target kanji,
+ * the reading of the kotoba (not for readingType "special"), and one context
+ * test per test conversation (D-60, D-61).
+ * @param {ReturnType<typeof buildModel>} model
+ * @param {object} quest quest from model.quests
+ */
+export function buildQuestItems(model, quest) {
+  const base = { questId: quest.id };
+  const kotoba = model.kotoba.get(quest.kotoba);
+  const shape = quest.targetKanji.map((ch) => ({ ...base, id: itemId.shape(ch), stage: "shape", kanji: model.kanji.get(ch) }));
+  const reading =
+    kotoba.readingType === "special" ? [] : [{ ...base, id: itemId.reading(kotoba.id), stage: "reading", kotoba }];
+  const test = quest.tests.map((conversation) => {
+    const lineIndex = conversation.lines.findIndex((line) => line.blank);
+    const line = conversation.lines[lineIndex];
+    const { segments, plain } = parseRuby(line.ja);
+    const start = plain.indexOf(line.blank);
+    return {
+      ...base,
+      id: itemId.test(conversation.id),
+      stage: "test",
+      conversation,
+      lineIndex,
+      line,
+      segments,
+      plain,
+      blankRange: { start, end: start + line.blank.length },
+    };
+  });
+  return [...shape, ...reading, ...test];
+}
+
+/**
+ * Other kotoba sharing a kanji with `kanji`, from regions up to `chapter`.
+ * Regions open one after another, so every earlier region is already open;
+ * this is the kun'yomi–on'yomi contrast across regions (D-56).
+ */
+export function kotobaWithKanji(model, kanji, chapter, except = null) {
+  return (model.kotobaByKanji.get(kanji) ?? []).filter((k) => k !== except && k.chapter <= chapter);
+}

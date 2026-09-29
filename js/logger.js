@@ -25,25 +25,33 @@ export const LOG_COLUMNS = [
   "consentStatus", // "agreed" for answers; "withdrawn" for the one row written when consent is withdrawn
   "consentVersion", // version of data/consent.json the player agreed to
   "consentAt", // when the player agreed (also on the withdrawal row)
-  "sessionId", // one per opening of a level
-  "levelId", // level or review level (R01…) where the answer was given
-  "isReview", // 1 for review levels
-  "phase", // learning | consolidation | spacer (mastered item shown between repeats) | production | review
-  "stage", // shape | kunyomi | onyomi | sentence | production
-  "itemId", // starts with the level the item comes from
-  "prompt", // what was shown (kanji, word, or sentence)
+  "sessionId", // one per opening of a quest or review
+  "levelId", // quest (Q-…) or region review (REV-B06) where the row was written
+  "isReview", // 1 for region reviews (復習)
+  "regionId", // region of the quest or review, e.g. B06
+  "questId", // quest the item comes from (for review rows: the quest the sampled item belongs to)
+  "questStep", // intro | practice | test | production | consolidation | review | spacer
+  "phase", // learning | consolidation | spacer (mastered item shown between repeats) | production | review | intro
+  "stage", // intro | shape | reading | test | production
+  "itemId", // K:<kanji>:shape, W:<kotoba>:reading, C:<conversation>:test, Q:<quest>:production
+  "conversationId", // intro and test rows: the conversation shown
+  "blankLine", // test rows: 1-based number of the line with the blank
+  "targetKanji", // target kanji of the quest, separated by " | "
+  "prompt", // what was shown (kanji, word, or line with ___ for the blank)
   "options", // choices in the order shown, separated by " | "
   "optionTypes", // per option, same order: answer | manual | manual-cross | auto
   "correctAnswer",
   "answer",
   "answerType", // type of the chosen option (see optionTypes)
-  "hintUsed", // sentence stage only: 1 if "Tampilkan arti" was pressed before answering
-  "isCorrect", // 1 / 0; empty for production
+  "hintUsed", // test rows: 1 if "Tampilkan arti" was pressed before answering
+  "furiganaMode", // player's furigana setting when the row was written: always | after | never
+  "isCorrect", // 1 / 0; empty for production and intro rows
   "streakAfter",
-  "responseMs", // from question shown to answer
+  "responseMs", // from question shown to answer; intro rows: time spent in the intro conversation
   "wasHidden", // 1 if the tab was hidden while the question was open
+  "introReplays", // intro rows: how many times the conversation was replayed
   "selfAssessment", // production only: similar | unsure
-  "containsKanji", // production only: 1 if the sentence contains the level kanji
+  "containsKanji", // production only: 1 if the sentence contains a target kanji of the quest
 ];
 
 const chunkKey = (index) => `${LOG_KEY}.chunk.${index}`;

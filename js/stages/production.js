@@ -1,34 +1,46 @@
-// Stage 5 — Produksi: the player writes one free sentence. Never scored:
+// Production: the player writes one free sentence. Never scored:
 // after sending, example sentences are shown for comparison and the player
 // rates their own sentence. Sentence and self-assessment are logged together
 // as one row when the self-assessment is chosen.
 
 import { h, ja } from "../dom.js";
-import { hideRuby, parseRuby, renderRuby } from "../ruby.js";
-import { wordWithRuby } from "../screens/common.js";
+import { parseRuby, renderRuby } from "../ruby.js";
+import { containsAny, visibleSegments } from "../furigana.js";
+import { kotobaWithReading } from "../screens/common.js";
+import { FURIGANA_MODE } from "../state.js";
 
 const MAX_LENGTH = 200;
 
 export const SELF_ASSESSMENT = Object.freeze({ SIMILAR: "similar", UNSURE: "unsure" });
 
+/** The lines of a quest that are about its kotoba: highlighted intro lines and blank test lines. */
+export function questExampleLines(quest) {
+  return [...quest.intro.lines.filter((l) => l.highlight), ...quest.tests.map((c) => c.lines.find((l) => l.blank))];
+}
+
 /**
  * @param {object} ctx
- * @param {object} ctx.level
- * @param {(kotoba: object) => boolean} ctx.isRevealed whether a kotoba's reading may be shown
+ * @param {object} ctx.quest quest from the model
+ * @param {object} ctx.kotoba kotoba of the quest
+ * @param {string} ctx.mode furigana setting
+ * @param {boolean} ctx.readingRevealed D-29: the kotoba's reading is no longer pending
  * @param {(result: {sentence: string, selfAssessment: string, writingMs: number}) => void} ctx.onSubmit
  * @param {() => void} ctx.onContinue
  */
-export function renderProduction({ level, isRevealed, onSubmit, onContinue }) {
+export function renderProduction({ quest, kotoba, mode, readingRevealed, onSubmit, onContinue }) {
   const shownAt = performance.now();
   let writingMs = 0;
   let sentence = "";
 
-  const examples = level.kotoba.flatMap((k) => k.examples);
-  // Consolidation follows this stage, so readings of the level kanji stay hidden.
-  const exampleSegments = (ex) => hideRuby(parseRuby(ex.ja).segments, (seg) => seg.text.includes(level.kanji));
-  // Hiragana sample that keeps the level kotoba in kanji, e.g. "まいあさパンを" + 食べます.
+  const examples = questExampleLines(quest).map((line) => ({ ...line, segments: parseRuby(line.ja).segments }));
+  // Consolidation follows this stage, so target readings stay hidden while still pending.
+  const leaks = readingRevealed ? () => false : containsAny(quest.targetKanji);
+  const exampleSegments = (ex) => visibleSegments(ex.segments, { mode, answered: true, leaks });
+  // Hiragana sample that keeps the target kanji, e.g. "まいあさパンを" + 食べます.
   const mixedSample = examples.length
-    ? exampleSegments(examples[0]).map((seg) => seg.ruby ?? seg.text).join("")
+    ? visibleSegments(examples[0].segments, { mode: FURIGANA_MODE.ALWAYS, leaks: containsAny(quest.targetKanji) })
+        .map((seg) => seg.ruby ?? seg.text)
+        .join("")
     : null;
 
   const root = h("div", { class: "question production" });
@@ -61,13 +73,16 @@ export function renderProduction({ level, isRevealed, onSubmit, onContinue }) {
 
     root.replaceChildren(
       h("h2", { class: "question__title", tabindex: "-1" }, "Tulis kalimatmu sendiri"),
-      h("p", { class: "production__prompt" }, level.productionPrompt),
-      h("p", { class: "production__label" }, "Kotoba di level ini:"),
+      h("p", { class: "production__prompt" }, quest.productionPrompt),
+      h("p", { class: "production__label" }, "Kotoba quest ini:"),
       h(
         "ul",
         { class: "production__kotoba" },
-        level.kotoba.map((k) =>
-          h("li", {}, ja("span", { class: "feedback__word" }, isRevealed(k) ? wordWithRuby(k) : k.word), ` ${k.meaning}`)
+        h(
+          "li",
+          {},
+          ja("span", { class: "feedback__word" }, readingRevealed && mode !== FURIGANA_MODE.NEVER ? kotobaWithReading(kotoba) : kotoba.word),
+          ` ${kotoba.meaning}`
         )
       ),
       h("label", { for: "production-input", class: "production__label" }, "Kalimatmu"),
@@ -152,7 +167,7 @@ export function renderProduction({ level, isRevealed, onSubmit, onContinue }) {
               )
             )
           )
-        : h("p", { class: "muted" }, "Level ini tidak punya contoh kalimat."),
+        : h("p", { class: "muted" }, "Quest ini tidak punya contoh kalimat."),
       h(
         "fieldset",
         { class: "self-assessment" },

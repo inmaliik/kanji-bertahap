@@ -2,7 +2,6 @@
 // network.
 
 import { validateContent } from "./validate.js";
-import { parseRuby } from "./ruby.js";
 
 /**
  * Translate a JSON.parse error into an Indonesian message with line/column.
@@ -63,48 +62,4 @@ export async function loadContent(url) {
 
   const { errors, warnings, notes } = validateContent(data);
   return { content: errors.length ? null : data, errors, warnings, notes };
-}
-
-// ---------------------------------------------------------------------------
-// Schema v1 (levels). Kept only while the v1 session engine and its tests
-// still exist on this branch; step 2 replaces both with quest items built
-// from schema v2 (see js/model.js).
-
-const legacyItemId = {
-  shape: (levelId) => `${levelId}:shape`,
-  reading: (levelId, word) => `${levelId}:reading:${word}`,
-  sentence: (levelId, plainSentence) => `${levelId}:sentence:${plainSentence}`,
-};
-
-/**
- * Derive the items of stages 1–4 for one v1 level. Stage 5 (production) has
- * no scored items.
- */
-export function buildLevelItems(level) {
-  const itemId = legacyItemId;
-  const shape = [{ id: itemId.shape(level.id), stage: "shape", levelId: level.id }];
-
-  const readingItems = (type) =>
-    level.kotoba
-      .filter((k) => k.readingType === type)
-      .map((k) => ({ id: itemId.reading(level.id, k.word), stage: type, levelId: level.id, kotoba: k }));
-
-  const sentence = level.kotoba.flatMap((k) =>
-    k.examples.map((example) => {
-      const parsed = parseRuby(example.ja);
-      const start = parsed.plain.indexOf(example.blank);
-      return {
-        id: itemId.sentence(level.id, parsed.plain),
-        stage: "sentence",
-        levelId: level.id,
-        kotoba: k,
-        example,
-        segments: parsed.segments,
-        plain: parsed.plain,
-        blankRange: { start, end: start + example.blank.length },
-      };
-    })
-  );
-
-  return { shape, kunyomi: readingItems("kunyomi"), onyomi: readingItems("onyomi"), sentence };
 }
