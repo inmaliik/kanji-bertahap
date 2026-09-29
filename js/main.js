@@ -1,9 +1,11 @@
 // App bootstrap and hash routing.
 
-import { CONSENT_URL, CONTENT_URL } from "./config.js";
+import { ASSETS_URL, CONSENT_URL, CONTENT_URL, UI_LABELS_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
+import { loadUiLabels } from "./ui-labels.js";
+import { loadAssetManifest } from "./assets.js";
 import { loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
@@ -11,9 +13,12 @@ import { startTabGuard } from "./tab-guard.js";
 import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
-import { buildStatusScreen } from "./screens/build-status.js";
 import { contentCheckScreen } from "./screens/content-check.js";
-import { questScreen } from "./screens/quest.js";
+import { questScreen, reviewScreen } from "./screens/quest.js";
+import { mapScreen } from "./screens/map.js";
+import { regionScreen } from "./screens/region.js";
+import { indexScreen } from "./screens/index.js";
+import { kanaScreen } from "./screens/kana.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -30,14 +35,22 @@ const app = {
   progress: null,
   consentText: null, // data/consent.json, or null if it could not be loaded
   consentError: null,
+  uiLabels: {}, // data/ui.json labels by key (D-76)
+  uiProblems: [],
+  assets: new Map(), // data/assets.json slots by id (D-70)
+  assetProblems: [],
   notices: [], // { kind, text } shown on the home screen
   render,
 };
 
-// desain-peta branch: the map (step 3) and the preview (step 5) are not rebuilt yet.
+// desain-peta branch: the printable preview returns in step 5.
 const ROUTES = [
-  { pattern: /^#?\/?$/, screen: () => buildStatusScreen(app) },
-  { pattern: /^#\/quest\/([^/]+)$/, screen: (id) => questScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#?\/?$/, screen: () => mapScreen(app) },
+  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => regionScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
+  { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#\/index$/, screen: () => indexScreen(app) },
+  { pattern: /^#\/kana$/, screen: () => kanaScreen(app) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
   {
@@ -50,7 +63,7 @@ function notFoundScreen() {
   return h(
     "div",
     { class: "screen" },
-    h("a", { class: "back-link", href: "#/" }, "‹ Beranda"),
+    h("a", { class: "back-link", href: "#/" }, "‹ Peta"),
     h("h1", { tabindex: "-1" }, "Halaman tidak ditemukan"),
     h("p", {}, "Halaman yang dicari tidak ada, atau belum dibangun ulang di versi peta.")
   );
@@ -92,9 +105,18 @@ function navigate() {
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent] = await Promise.all([loadContent(CONTENT_URL), loadConsentText(CONSENT_URL)]);
+  const [result, consent, ui, assets] = await Promise.all([
+    loadContent(CONTENT_URL),
+    loadConsentText(CONSENT_URL),
+    loadUiLabels(UI_LABELS_URL),
+    loadAssetManifest(ASSETS_URL),
+  ]);
   app.consentText = consent.text;
   app.consentError = consent.error;
+  app.uiLabels = ui.labels;
+  app.uiProblems = ui.problems;
+  app.assets = assets.slots;
+  app.assetProblems = assets.problems;
   if (!result.content) {
     root.replaceChildren(contentErrorScreen(result));
     return;

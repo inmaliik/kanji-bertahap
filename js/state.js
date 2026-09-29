@@ -21,6 +21,9 @@ export const REQUEUE_GAP_MAX = 3;
 /** Number of items sampled into one region review (復習). */
 export const REVIEW_ITEM_COUNT = 10;
 
+/** Share of a region review taken from the region itself; the rest comes from earlier regions (D-63). */
+export const REVIEW_CURRENT_SHARE = 0.7;
+
 /** Choices shown in the reading and context-test questions (answer + distractors). */
 export const OPTION_COUNT = 4;
 
@@ -92,6 +95,7 @@ function createEntry() {
     learningDone: false, // first pass through the practice and test items finished
     productionSubmitted: false,
     reviewItemIds: null, // reviews only: the sampled items, kept across visits
+    streaks: null, // reviews only: streaks of the sampled items within this review
     startedAt: null,
     passedAt: null,
   };

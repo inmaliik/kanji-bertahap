@@ -30,9 +30,9 @@ export const LOG_COLUMNS = [
   "isReview", // 1 for region reviews (復習)
   "regionId", // region of the quest or review, e.g. B06
   "questId", // quest the item comes from (for review rows: the quest the sampled item belongs to)
-  "questStep", // intro | practice | test | production | consolidation | review | spacer
-  "phase", // learning | consolidation | spacer (mastered item shown between repeats) | production | review | intro
-  "stage", // intro | shape | reading | test | production
+  "questStep", // intro | practice | test | production | consolidation | review | spacer | index
+  "phase", // learning | consolidation | spacer (mastered item shown between repeats) | production | review | intro | event
+  "stage", // intro | shape | reading | test | production | index
   "itemId", // K:<kanji>:shape, W:<kotoba>:reading, C:<conversation>:test, Q:<quest>:production
   "conversationId", // intro and test rows: the conversation shown
   "blankLine", // test rows: 1-based number of the line with the blank
@@ -50,6 +50,7 @@ export const LOG_COLUMNS = [
   "responseMs", // from question shown to answer; intro rows: time spent in the intro conversation
   "wasHidden", // 1 if the tab was hidden while the question was open
   "introReplays", // intro rows: how many times the conversation was replayed
+  "openQuests", // event rows (index): quests started but not passed, separated by " | "
   "selfAssessment", // production only: similar | unsure
   "containsKanji", // production only: 1 if the sentence contains a target kanji of the quest
 ];

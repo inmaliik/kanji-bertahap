@@ -588,6 +588,50 @@ function validateRegion(region, index, tables, usage, root, report) {
     return;
   }
   region.quests.forEach((quest, j) => validateQuest(quest, j, { chapter }, tables, usage, ctx, report));
+  checkRegionText(region, tables, ctx, report);
+}
+
+// The region window is shown before any quest is played, so its texts must
+// not give away the material of its quests (D-79).
+function checkRegionText(region, tables, ctx, report) {
+  const texts = [
+    { value: region.title, ctx: ctx.field("title") },
+    { value: region.intro?.summary, ctx: ctx.child("intro.summary", "intro.summary") },
+    ...(Array.isArray(region.intro?.points) ? region.intro.points : []).map((value, i) => ({
+      value,
+      ctx: ctx.child(`intro.points[${i}]`, `intro.points #${i + 1}`),
+    })),
+  ].filter((t) => typeof t.value === "string");
+
+  for (const quest of region.quests) {
+    if (!isPlainObject(quest)) continue;
+    const kotoba = tables.kotoba.get(quest.kotoba)?.entry;
+    if (!kotoba) continue;
+    const giveaways = [kotoba.word, kotoba.reading].filter((v) => typeof v === "string" && v);
+    const kanji = Array.isArray(quest.targetKanji) ? quest.targetKanji.filter((ch) => typeof ch === "string") : [];
+    for (const text of texts) {
+      const found = giveaways.find((g) => text.value.includes(g));
+      if (found) {
+        report.error(
+          text.ctx,
+          "REGION_TEXT_LEAKS_KOTOBA",
+          `Teks wilayah memuat "${found}", kotoba (atau cara baca kotoba) quest ${quest.id}. Jendela pengantar bab tampil ` +
+            "sebelum quest dimainkan, jadi materi quest tidak boleh muncul di sini sebelum percakapan pengantarnya. " +
+            "Tulis ringkasan tanpa menyebut kotoba itu."
+        );
+        continue;
+      }
+      const shown = kanji.filter((ch) => text.value.includes(ch));
+      if (shown.length) {
+        report.warn(
+          text.ctx,
+          "REGION_TEXT_SHOWS_KANJI",
+          `Teks wilayah memuat kanji sasaran ${shown.join(", ")} (quest ${quest.id}), yang tampil sebelum quest dimainkan. ` +
+            "Pastikan teksnya tidak memberi petunjuk jawaban."
+        );
+      }
+    }
+  }
 }
 
 function validatePin(region, ctx, report) {
@@ -1028,7 +1072,49 @@ function checkSpan(parsed, span, field, targets, ctx, report) {
 // ---------------------------------------------------------------------------
 // Whole-content checks
 
+// A line that contains another quest's kotoba shows it before that quest may
+// have been played. The app hides its furigana until then (D-79); the team
+// should know that the line will show the kanji without reading.
+function checkOtherQuestKotoba(data, kotoba, root, report) {
+  const quests = [];
+  data.regions.forEach((region, i) => {
+    if (!isPlainObject(region) || !Array.isArray(region.quests)) return;
+    region.quests.forEach((quest, j) => {
+      const entry = isPlainObject(quest) ? kotoba.get(quest.kotoba)?.entry : undefined;
+      if (entry && typeof entry.word === "string") quests.push({ quest, word: entry.word, chapter: region.chapter, path: `regions[${i}].quests[${j}]` });
+    });
+  });
+  for (const own of quests) {
+    const conversations = [
+      ["intro", own.quest.intro],
+      ...(Array.isArray(own.quest.tests) ? own.quest.tests.map((t, k) => [`tests[${k}]`, t]) : []),
+    ];
+    for (const [key, conversation] of conversations) {
+      if (!isPlainObject(conversation) || !Array.isArray(conversation.lines)) continue;
+      conversation.lines.forEach((line, n) => {
+        if (!isPlainObject(line) || typeof line.ja !== "string") return;
+        let plain;
+        try {
+          plain = parseRuby(line.ja).plain;
+        } catch {
+          return;
+        }
+        for (const other of quests) {
+          if (other === own || !(other.chapter >= own.chapter) || !plain.includes(other.word)) continue;
+          report.warn(
+            root.child(`${own.path}.${key}.lines[${n}].ja`, `quest ${own.quest.id} › percakapan "${conversation.id}" › baris ${n + 1}`),
+            "OTHER_QUEST_KOTOBA_IN_LINE",
+            `Baris ini memuat "${other.word}", kotoba quest ${other.quest.id}, yang mungkin belum dimainkan. Furigananya ` +
+              "disembunyikan sampai cara bacanya dikuasai di quest itu, jadi pemain melihat kanjinya tanpa bacaan."
+          );
+        }
+      });
+    }
+  }
+}
+
 function checkUsage(data, { kanji, kotoba, usage }, root, report) {
+  checkOtherQuestKotoba(data, kotoba, root, report);
   for (const [char, { ctx }] of kanji) {
     const inKotoba = [...kotoba.values()].some((k) => typeof k.entry.word === "string" && k.entry.word.includes(char));
     if (!usage.targetKanji.has(char) && !inKotoba) {

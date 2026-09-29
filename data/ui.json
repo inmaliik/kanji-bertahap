@@ -1,0 +1,12 @@
+{
+  "labels": {
+    "review": { "ja": "[復|ふく][習|しゅう]", "id": "ulangan wilayah" },
+    "onyomi": { "ja": "[音|おん][読|よ]み", "id": "on'yomi" },
+    "kunyomi": { "ja": "[訓|くん][読|よ]み", "id": "kun'yomi" },
+    "bushu": { "ja": "[部|ぶ][首|しゅ]", "id": "bushu" },
+    "strokeCount": { "ja": "[画|かく][数|すう]", "id": "jumlah guratan" },
+    "strokeOrder": { "ja": "[書|か]き[方|かた]", "id": "cara menulis" },
+    "jukugo": { "ja": "[熟|じゅく][語|ご]", "id": "kata majemuk" },
+    "example": { "ja": "[例|れい][文|ぶん]", "id": "contoh kalimat" }
+  }
+}

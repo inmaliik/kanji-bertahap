@@ -1,9 +1,9 @@
 # Mulai di sini — Kanji Bertahap
 
 > **Anda sedang melihat cabang `desain-peta`**: versi peta (wilayah per bab, quest percakapan, index kanji) yang
-> sedang dibangun. Struktur data dan quest sudah selesai (quest bisa dimainkan dari beranda sementara); peta,
-> index, dan karakter belum. Bagian "penulis materi" di bawah sudah mengikuti struktur baru; bagian lain masih
-> menjelaskan versi di cabang `main`.
+> sedang dibangun. Struktur data, quest, dan peta sudah bisa dimainkan dengan gambar placeholder; detail index,
+> panduan kana, dan karakter belum. Bagian "penulis materi" dan "pembuat aset" di bawah sudah mengikuti versi
+> peta; bagian lain masih menjelaskan versi di cabang `main`.
 
 **Kanji Bertahap** adalah web game untuk belajar kanji dan kotoba tingkat N5 (kemudian N4), bagi mahasiswa
 semester 1 Pendidikan Bahasa Jepang yang memakai みんなの日本語初級I. Produk ini dikembangkan untuk mata kuliah
@@ -37,6 +37,15 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
    pengelola aplikasi.
 5. Setiap nomor bab dan jumlah guratan yang Anda periksa dicentang di
    [Yang harus diverifikasi terhadap buku](README.md#yang-harus-diverifikasi-terhadap-buku).
+
+## Saya pembuat aset (menggambar peta, ikon, karakter)
+
+1. Baca [`ASSETS.md`](ASSETS.md): daftar setiap gambar yang dibutuhkan, dengan nama berkas persis, ukuran,
+   format, dan batas ukuran berkas.
+2. Mengganti gambar = **menimpa berkas dengan nama yang sama**. Tidak perlu menyentuh kode atau JSON.
+3. Di aplikasi, gambar yang belum diganti tampil sebagai kotak abu-abu bertuliskan nama slot dan ukurannya.
+   Periksa hasilnya di **Pengaturan → Pemeriksaan konten dan aset**.
+4. Jangan menaruh kanji atau kotoba yang diajarkan di dalam gambar: peta dan menu tampil sebelum quest dimainkan.
 
 ## Saya yang menjalankan aplikasi (pengelola, koordinator data, penjaga stan)
 

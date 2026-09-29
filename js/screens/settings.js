@@ -8,6 +8,7 @@ import { FURIGANA_MODE, resetProgress, saveProgress, storageUsage, STORAGE_WARNI
 import { isStorageAvailable } from "../storage.js";
 import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
+import { menuBar } from "./menu.js";
 
 const DELETE_CONFIRM_WORD = "HAPUS";
 const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
@@ -443,7 +444,7 @@ export function settingsScreen(app) {
         : null,
       // desain-peta branch: the printable preview is rebuilt for regions and conversations in step 5.
       h("p", { class: "muted" }, "Pratinjau materi untuk validator sedang dibangun ulang untuk versi peta."),
-      h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten"))
+      h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten dan aset (untuk tim)"))
     );
   }
 
@@ -453,7 +454,8 @@ export function settingsScreen(app) {
     const screen = h(
       "div",
       {},
-      backLink("#/", "Beranda"),
+      backLink("#/", "Peta"),
+      menuBar(app, "settings"),
       h("h1", { tabindex: "-1" }, "Pengaturan"),
       isStorageAvailable()
         ? null

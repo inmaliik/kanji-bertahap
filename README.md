@@ -9,12 +9,11 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 2 dari 5 selesai: struktur data dan quest).**
-> Materi tersusun sebagai wilayah, quest, dan percakapan (schemaVersion 2). Quest sudah bisa dimainkan dari
-> beranda sementara: percakapan pengantar, latihan, uji konteks, Produksi, dan pemantapan. Peta, penguncian
-> wilayah, dan 復習 dibangun di langkah 3. Bagian README tentang tim konten, aturan permainan, dan log sudah
-> mengikuti versi peta; bagian tentang daftar level, pratinjau, dan prosedur pameran masih menjelaskan versi
-> lama dan diperbarui di langkah berikutnya.
+> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 3 dari 5 selesai: struktur data, quest, peta).**
+> Materi tersusun sebagai wilayah, quest, dan percakapan (schemaVersion 2). Peta, jendela bab, 復習, penguncian
+> wilayah, menu tiga pintu, dan daftar index sudah jalan, dengan aset placeholder (lihat [`ASSETS.md`](ASSETS.md)).
+> Detail index, panduan kana, karakter, dan pratinjau cetak menyusul di langkah 4–5. Bagian README tentang
+> pratinjau dan prosedur pameran masih menjelaskan versi lama.
 > Versi yang bisa dimainkan, dan menjadi cadangan untuk validasi ahli, ada di cabang `main`.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
@@ -122,12 +121,20 @@ css/style.css               tampilan (mobile-first)
 data/content.json           SELURUH materi pembelajaran (schemaVersion 2: wilayah, quest, percakapan, kanji, kotoba)
 data/archive/               materi yang keluar dari data aktif (tidak dibaca aplikasi); lihat README di dalamnya
 data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
+data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復習, 画数, …)
+data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
+assets/                     gambar: peta dan ikon menu (saat ini PLACEHOLDER, lihat ASSETS.md)
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
 js/state.js                 progres di localStorage + SEMUA aturan permainan (ambang, kunci, ulangan, setelan furigana)
 js/session.js               antrean soal satu quest: putaran belajar, produksi, pemantapan, lanjut setelah keluar
 js/furigana.js              furigana mana yang tampil: setelan pemain + aturan anti-bocor
+js/reveal.js                materi apa yang boleh tampil di luar quest-nya (D-79)
+js/progression.js           urutan dan kunci wilayah, persentase, sampel 復習
+js/ui-labels.js             label antarmuka berbahasa Jepang dari data/ui.json
+js/assets.js                slot aset: gambar yang dipaskan ke wadahnya, pemeriksa aset
+js/event-log.js             baris log peristiwa (pembukaan index)
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
@@ -153,9 +160,13 @@ js/stages/test.js           Uji konteks (percakapan dengan bagian kosong)
 js/stages/production.js     Produksi
 
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
-js/screens/quest.js         layar quest: menjalankan sesi, mencatat log
+js/screens/quest.js         layar quest dan 復習: menjalankan sesi, mencatat log
+js/screens/map.js           peta: gambar, pin wilayah, daftar wilayah
+js/screens/region.js        jendela bab: ringkasan, daftar quest, 復習
+js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
+js/screens/kana.js          panduan kana (langkah 4)
+js/screens/menu.js          menu tiga pintu di luar quest
 js/screens/content-check.js daftar peringatan konten
-js/screens/build-status.js  SEMENTARA: beranda cabang desain-peta sampai peta selesai (langkah 3)
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
 
@@ -168,6 +179,7 @@ tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
 tests/                      uji otomatis logika inti (lihat "Uji otomatis")
 MULAI-DI-SINI.md            titik masuk: arahan per peran
+ASSETS.md                   spesifikasi setiap slot aset gambar, untuk pembuat aset
 DECISIONS.md                catatan keputusan desain beserta alasannya
 BLOCKERS.md                 hal yang masih menghalangi uji coba sungguhan
 ```
@@ -624,7 +636,8 @@ Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
 |---|---|---|
 | `STREAK_TO_MASTER` | 2 | Item dikuasai setelah benar sekian kali berturut-turut. |
 | `REQUEUE_GAP_MIN`, `REQUEUE_GAP_MAX` | 2, 3 | Soal yang salah muncul lagi setelah 2–3 soal lain. |
-| `REVIEW_ITEM_COUNT` | 10 | Jumlah item dalam satu ulangan wilayah (dipakai di langkah 3). |
+| `REVIEW_ITEM_COUNT` | 10 | Jumlah item dalam satu ulangan wilayah (復習). |
+| `REVIEW_CURRENT_SHARE` | 0,7 | Bagian 復習 yang diambil dari wilayahnya sendiri; sisanya dari wilayah sebelumnya. |
 | `OPTION_COUNT` | 4 | Jumlah pilihan di soal cara baca dan uji konteks (jawaban + pengecoh). |
 | `STORAGE_BUDGET_CHARS` | 2.500.000 | Perkiraan batas penyimpanan browser, sengaja rendah. |
 | `STORAGE_WARNING_RATIO` | 0,8 | Peringatan kapasitas muncul sejak 80% dari perkiraan batas. |
@@ -666,7 +679,7 @@ percakapan yang memuat kotoba quest ditampilkan sebagai pembanding, lalu pemain 
 disimpan, jadi quest yang dibuka lagi melanjutkan dari titik terakhir: putaran belajar meneruskan soal yang
 belum dijawab benar, dan putaran pemantapan meneruskan item yang belum dikuasai. Soal yang sedang terbuka
 tetapi belum dijawab ditanyakan lagi. Percakapan pengantar yang ditinggalkan sebelum selesai diulang dari awal.
-Menu (index, panduan kana, Pengaturan) tidak tersedia di dalam quest (D-69).
+Menu (index, panduan kana, Pengaturan) tidak tersedia di dalam quest (D-69). **‹ Keluar** kembali ke jendela bab.
 
 **Furigana.** Pengaturan → Furigana: **Selalu tampil** (bawaan), **Tampil setelah menjawab**, atau **Tidak
 pernah**. Setelan disimpan per pemain, ikut kembali ke bawaan saat reset, tidak bisa diubah di tengah quest,
@@ -679,8 +692,7 @@ cara baca kotoba hanya ditampilkan jika soal cara bacanya tidak akan segera munc
 sasaran selalu disembunyikan sebelum menjawab. Pengecualian: percakapan pengantar, karena memang bertugas
 memperkenalkan cara baca (D-65).
 
-**Ulangan wilayah (復習) dan penguncian wilayah** dibangun di langkah 3 (D-63). Saat ini semua quest di
-beranda sementara bisa langsung dimainkan.
+**Ulangan wilayah (復習) dan penguncian wilayah**: lihat [Peta, jendela bab, dan index](#peta-jendela-bab-dan-index).
 
 **Status terkunci tidak disimpan.** Yang disimpan hanya fakta: streak tiap item, quest sudah dimulai, quest
 sudah tuntas. Status terkunci selalu dihitung dari urutan materi, sehingga quest yang disisipkan saat revisi
@@ -794,18 +806,23 @@ setelah baris penarikan muncul.
 
 ## Pengaturan
 
-Dibuka dari tombol **⚙ Pengaturan** di daftar level.
+Dibuka dari menu **Pengaturan** di peta dan layar lain di luar quest.
 
 | Bagian | Isi |
 |---|---|
 | Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). |
+| Furigana | **Selalu tampil**, **Tampil setelah menjawab**, atau **Tidak pernah** (lihat [Aturan permainan](#aturan-permainan)). |
 | Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. |
 | Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
-| Materi | Revisi materi, tanda DRAF, tautan pratinjau semua level dan per level, pemeriksaan konten. |
+| Materi | Revisi materi, tanda DRAF, dan tautan **Pemeriksaan konten dan aset**. |
 
-Peringatan kapasitas juga muncul di daftar level, supaya penjaga stan melihatnya tanpa membuka
-Pengaturan. Persentasenya adalah **perkiraan**: browser tidak memberi tahu batas pastinya.
+**Pemeriksaan konten dan aset** (untuk tim, jangan dibuka di depan peserta karena memuat isi materi): daftar
+peringatan konten, masalah di `data/ui.json`, dan **pemeriksa aset** yang menandai setiap slot gambar: ✓ sudah
+diganti, ⚠ masih placeholder, ✗ berkas hilang, terlalu besar, atau rasionya salah.
+
+Peringatan kapasitas juga muncul di peta, supaya penjaga stan melihatnya tanpa membuka Pengaturan.
+Persentasenya adalah **perkiraan**: browser tidak memberi tahu batas pastinya.
 
 ## Log jawaban
 
@@ -1112,14 +1129,59 @@ Tekan **Cetak / simpan PDF**. Pada hasil cetak, setiap level dimulai di halaman 
 
 Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeriksaan teknis.
 
-## Daftar level
+## Peta, jendela bab, dan index
 
-- Level dikelompokkan per JLPT (N5, lalu N4) dengan urutan sesuai `content.json`.
-- Tombol biru **Mulai / Lanjutkan** di bagian atas langsung membuka level yang sedang dikerjakan, atau
-  level pertama yang terbuka. Berguna ketika daftar sudah berisi puluhan level.
-- Setiap kartu menampilkan ID level, bab Minna dari kotobanya, dan status (terkunci, belum dimulai,
-  sedang dikerjakan beserta jumlah item yang dikuasai, atau lulus).
-- Penanda **Kelas sudah sampai bab Minna** (versi lama; tidak dipakai lagi di versi peta, lihat D-41 dan D-55).
+**Peta (layar utama).** Satu gambar peta dari tim (`assets/map/peta.png`) dengan satu pin per wilayah. Batas
+wilayah ada di dalam gambar, bukan digambar kode. Pin berupa tombol setinggi minimal 48 piksel yang hanya
+menampilkan **bab, status, dan persentase**, tidak pernah materi. Status ditunjukkan dengan ikon dan teks
+(🔒 terkunci, ▶ terbuka, ★ menunggu ulangan, ✓ tuntas), bukan warna saja. Di bawah peta ada daftar wilayah
+yang sama, untuk pembaca layar dan layar kecil. Posisi pin diisi di kolom `pin_x`/`pin_y` tab wilayah; selama
+kosong, pin diletakkan berurutan dari atas ke bawah.
+
+**Urutan dan kunci.** Wilayah, lalu 復習 wilayah itu, lalu wilayah berikutnya. Wilayah pertama selalu terbuka.
+復習 terbuka setelah semua quest di wilayahnya tuntas; wilayah berikutnya terbuka setelah 復習 itu tuntas.
+Persentase wilayah = quest tuntas ÷ jumlah quest; 復習 ditandai terpisah. Wilayah tuntas = semua quest dan
+復習 tuntas.
+
+**Jendela bab** (ketuk pin atau baris wilayah). Berisi ringkasan bab dari tim, daftar quest, dan 復習.
+Sebelum percakapan pengantar sebuah quest disimak, daftar hanya menampilkan **nomor quest dan artinya**
+("Quest 2 · minum"). Setelah itu kotobanya muncul, dengan cara baca setelah soal cara bacanya dikuasai. Jika
+kanji sasaran quest itu juga ada di kotoba lain yang sudah ditemui dengan jenis bacaan berbeda, ada catatan
+"cara bacanya berbeda" (D-56).
+
+**復習 (ulangan wilayah).** 10 item: 70% dari quest wilayah itu, 30% dari wilayah sebelumnya, masing-masing
+berimbang per quest; jika satu sisi kurang, sisi lain menutupinya. Tanpa putaran belajar dan tanpa Produksi:
+semua item langsung diacak, dengan aturan penguasaan yang sama (benar 2 kali berturut-turut, tidak
+berdampingan). Sampel dan streak-nya disimpan di entri 復習 sendiri, sehingga keluar lalu masuk lagi melanjutkan
+item yang sama, dan salah menjawab di 復習 tidak mengubah penguasaan di quest asalnya. Di log: `levelId` =
+`REV-B06`, `isReview` = 1, `questStep` = `review`, dan `questId` = quest asal item.
+
+**Menu tiga pintu**: **Index**, **Panduan kana**, **Pengaturan**. Ada di peta, jendela bab, index, panduan kana,
+dan Pengaturan; **tidak ada** di dalam quest dan 復習 (D-69). Ikonnya slot aset (lihat [`ASSETS.md`](ASSETS.md)).
+
+**Index.** Rujukan atas apa yang sudah diajarkan, bukan progres. Isinya hanya kanji dan kotoba yang
+percakapan pengantarnya **sudah disimak**; kotoba yang bukan quest muncul setelah semua quest di babnya tuntas.
+Cara baca muncul setelah soal cara bacanya dikuasai. Setiap pembukaan index ditulis ke log sebagai **baris
+peristiwa**, bukan jawaban (`questStep` = `index`, `phase` = `event`), dengan daftar quest yang sedang dikerjakan
+di kolom `openQuests`. Jendela detail kanji dan kotoba menyusul di langkah 4.
+
+**Label antarmuka berbahasa Jepang** (復習, dan kelak 画数, 熟語, dan lainnya) ada di `data/ui.json`, ditulis
+dengan sintaks furigana yang sama, selalu tampil berfurigana apa pun setelan pemain, dan boleh punya padanan
+bahasa Indonesia yang tampil kecil di sebelahnya. Dosen atau tim boleh mengubahnya tanpa menyentuh kode.
+
+### Materi tidak tampil sebelum diperkenalkan
+
+**Materi sebuah quest tidak ditampilkan di luar quest itu sebelum pemain menyimak percakapan pengantarnya**
+(D-79, perluasan D-29). Penerapannya:
+
+| Tempat | Aturan |
+|---|---|
+| Pin dan daftar wilayah di peta | Hanya bab, status, persentase. |
+| Jendela bab | Sebelum pengantar: nomor quest dan arti. Sesudahnya: kotoba; cara baca setelah dikuasai. |
+| Teks wilayah (`title`, `intro_summary`, `intro_points`) | **Error** jika memuat kotoba atau cara baca kotoba quest di wilayah itu; peringatan jika memuat kanji sasarannya. |
+| Index | Hanya yang pengantarnya sudah disimak; cara baca setelah dikuasai. |
+| Baris percakapan yang memuat kotoba quest lain | Furigana kotoba itu disembunyikan sampai cara bacanya dikuasai di quest-nya; pemeriksa konten memberi peringatan. |
+| Alamat halaman | Quest dibuka lewat posisinya (`#/quest/B06/2`), bukan ID-nya, karena ID quest bisa mengeja kotobanya. |
 
 ## Uji otomatis
 

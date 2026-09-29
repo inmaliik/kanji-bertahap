@@ -1,0 +1,48 @@
+{
+  "slots": [
+    {
+      "id": "peta",
+      "path": "assets/map/peta.png",
+      "format": "PNG",
+      "width": 1200,
+      "height": 1600,
+      "transparent": false,
+      "maxKB": 400,
+      "screen": "Peta (layar utama): gambar latar seluruh wilayah",
+      "placeholderSha256": "64d15f4925d9341f5b7180a8146b31aca8a40cd89842d1fbff62797f5d9a8057"
+    },
+    {
+      "id": "menu-index",
+      "path": "assets/ui/menu-index.png",
+      "format": "PNG",
+      "width": 192,
+      "height": 192,
+      "transparent": true,
+      "maxKB": 30,
+      "screen": "Menu di peta dan layar lain di luar quest: tombol Index",
+      "placeholderSha256": "09d6db470099ec6f6a4084a54c6cdb3b00212d420ce455eb11b9ff87c62affa8"
+    },
+    {
+      "id": "menu-kana",
+      "path": "assets/ui/menu-kana.png",
+      "format": "PNG",
+      "width": 192,
+      "height": 192,
+      "transparent": true,
+      "maxKB": 30,
+      "screen": "Menu di peta dan layar lain di luar quest: tombol Panduan kana",
+      "placeholderSha256": "a256a75529e5896d77555fdfb5c4ea0f01acea5c2e862f90c9822190fddcb858"
+    },
+    {
+      "id": "menu-pengaturan",
+      "path": "assets/ui/menu-pengaturan.png",
+      "format": "PNG",
+      "width": 192,
+      "height": 192,
+      "transparent": true,
+      "maxKB": 30,
+      "screen": "Menu di peta dan layar lain di luar quest: tombol Pengaturan",
+      "placeholderSha256": "71b75424aad515aff45ab9fcf1d1ba0ff4b4b88672a3f0a6dd342c903dffb6ad"
+    }
+  ]
+}

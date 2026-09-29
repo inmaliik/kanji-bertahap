@@ -6,6 +6,7 @@
 import { h, ja } from "../dom.js";
 import { parseRuby, renderRuby } from "../ruby.js";
 import { containsAny, visibleSegments } from "../furigana.js";
+import { anyLeak } from "../reveal.js";
 import { kotobaWithReading } from "../screens/common.js";
 import { FURIGANA_MODE } from "../state.js";
 
@@ -24,21 +25,22 @@ export function questExampleLines(quest) {
  * @param {object} ctx.kotoba kotoba of the quest
  * @param {string} ctx.mode furigana setting
  * @param {boolean} ctx.readingRevealed D-29: the kotoba's reading is no longer pending
+ * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  * @param {(result: {sentence: string, selfAssessment: string, writingMs: number}) => void} ctx.onSubmit
  * @param {() => void} ctx.onContinue
  */
-export function renderProduction({ quest, kotoba, mode, readingRevealed, onSubmit, onContinue }) {
+export function renderProduction({ quest, kotoba, mode, readingRevealed, otherLeaks = () => false, onSubmit, onContinue }) {
   const shownAt = performance.now();
   let writingMs = 0;
   let sentence = "";
 
   const examples = questExampleLines(quest).map((line) => ({ ...line, segments: parseRuby(line.ja).segments }));
   // Consolidation follows this stage, so target readings stay hidden while still pending.
-  const leaks = readingRevealed ? () => false : containsAny(quest.targetKanji);
+  const leaks = readingRevealed ? otherLeaks : anyLeak(containsAny(quest.targetKanji), otherLeaks);
   const exampleSegments = (ex) => visibleSegments(ex.segments, { mode, answered: true, leaks });
   // Hiragana sample that keeps the target kanji, e.g. "まいあさパンを" + 食べます.
   const mixedSample = examples.length
-    ? visibleSegments(examples[0].segments, { mode: FURIGANA_MODE.ALWAYS, leaks: containsAny(quest.targetKanji) })
+    ? visibleSegments(examples[0].segments, { mode: FURIGANA_MODE.ALWAYS, leaks: anyLeak(containsAny(quest.targetKanji), otherLeaks) })
         .map((seg) => seg.ruby ?? seg.text)
         .join("")
     : null;

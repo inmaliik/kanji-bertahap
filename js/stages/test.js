@@ -6,6 +6,7 @@ import { h, ja } from "../dom.js";
 import { blankOptions } from "../distractors.js";
 import { parseRuby, renderRuby } from "../ruby.js";
 import { containsAny, visibleSegments } from "../furigana.js";
+import { anyLeak } from "../reveal.js";
 import { choiceQuestion } from "./choice.js";
 import { dialogLine, lineTranslation, sceneCaption } from "./conversation.js";
 
@@ -18,16 +19,17 @@ const BLANK_MARK = "___"; // how the blank appears in the logged prompt
  * @param {string[]} ctx.targetKanji
  * @param {string} ctx.mode furigana setting
  * @param {boolean} ctx.readingRevealed D-29: the kotoba's reading is no longer pending
+ * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  */
-export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, random, onAnswer, onContinue }) {
+export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, otherLeaks = () => false, random, onAnswer, onContinue }) {
   const { conversation, lineIndex, line, blankRange, plain } = item;
   const options = blankOptions(line, random);
-  const targetLeaks = containsAny(targetKanji);
+  const targetLeaks = anyLeak(containsAny(targetKanji), otherLeaks);
 
   // Before answering, target readings are hidden in every line of a test
   // conversation; afterwards only while the reading is still pending (D-29).
   const before = (segments) => visibleSegments(segments, { mode, answered: false, leaks: targetLeaks });
-  const after = (segments) => visibleSegments(segments, { mode, answered: true, leaks: readingRevealed ? () => false : targetLeaks });
+  const after = (segments) => visibleSegments(segments, { mode, answered: true, leaks: readingRevealed ? otherLeaks : targetLeaks });
 
   // Translations are withheld until the player asks (D-27, D-67): showing
   // them first turns the question into meaning matching.

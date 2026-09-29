@@ -8,7 +8,7 @@ import { parseRuby } from "../ruby.js";
 import { visibleSegments } from "../furigana.js";
 import { FURIGANA_MODE } from "../state.js";
 import { dialogLine, lineTranslation, sceneCaption } from "./conversation.js";
-import { kotobaWithReading } from "../screens/common.js";
+import { kotobaWithReading, READING_DISPLAY } from "../screens/common.js";
 
 /**
  * @param {object} ctx
@@ -16,15 +16,16 @@ import { kotobaWithReading } from "../screens/common.js";
  * @param {object} ctx.kotoba
  * @param {string[]} ctx.targetKanji
  * @param {string} ctx.mode furigana setting
+ * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  * @param {(result: {replays: number}) => void} ctx.onDone
  */
-export function renderIntro({ conversation, kotoba, targetKanji, mode, onDone }) {
+export function renderIntro({ conversation, kotoba, targetKanji, mode, otherLeaks = () => false, onDone }) {
   const lines = conversation.lines.map((line) => {
     const { segments, plain } = parseRuby(line.ja);
     const start = line.highlight ? plain.indexOf(line.highlight) : -1;
     return {
       line,
-      segments: visibleSegments(segments, { mode, intro: true }),
+      segments: visibleSegments(segments, { mode, intro: true, leaks: otherLeaks }),
       range: start === -1 ? null : { start, end: start + line.highlight.length },
     };
   });
@@ -67,7 +68,7 @@ export function renderIntro({ conversation, kotoba, targetKanji, mode, onDone })
         "section",
         { class: "card kotoba-card", "aria-labelledby": "kotoba-card-title" },
         h("h3", { id: "kotoba-card-title", class: "kotoba-card__title" }, "Kotoba di percakapan ini"),
-        ja("p", { class: "kotoba-card__word" }, kotobaWithReading(kotoba, { focus: targetKanji, showReading: mode !== FURIGANA_MODE.NEVER })),
+        ja("p", { class: "kotoba-card__word" }, kotobaWithReading(kotoba, { focus: targetKanji, display: mode === FURIGANA_MODE.NEVER ? READING_DISPLAY.NONE : READING_DISPLAY.RUBY })),
         h("p", { class: "kotoba-card__meaning" }, kotoba.meaning)
       ),
       h(

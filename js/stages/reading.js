@@ -5,7 +5,11 @@ import { h, ja } from "../dom.js";
 import { readingOptions, OPTION_TYPE } from "../distractors.js";
 import { kotobaWithKanji } from "../model.js";
 import { choiceQuestion } from "./choice.js";
-import { highlightKanji, kotobaWithReading, LABELS, readingsTable } from "../screens/common.js";
+import { highlightKanji, kotobaWithReading, LABELS, READING_DISPLAY, readingsTable } from "../screens/common.js";
+
+// In answer feedback the reading is the point, so with furigana set to
+// "never" it is written in kana after the word instead (D-73).
+const feedbackDisplay = (showReading) => (showReading ? READING_DISPLAY.RUBY : READING_DISPLAY.KANA);
 
 // Options longer than this switch the grid to a single column.
 const GRID_MAX_CHARS = 6;
@@ -34,7 +38,7 @@ function readingContrast({ model, quest, kotoba, isRevealed, showReading }) {
             "li",
             { class: "contrast__row" },
             h("span", { class: `badge badge--${k.readingType}` }, LABELS.readingType[k.readingType]),
-            ja("span", { class: "contrast__word" }, kotobaWithReading(k, { focus: [ch], showReading })),
+            ja("span", { class: "contrast__word" }, kotobaWithReading(k, { focus: [ch], display: feedbackDisplay(showReading) })),
             h("span", { class: "contrast__meaning" }, k.meaning)
           )
         )
@@ -71,7 +75,7 @@ export function renderReading({ item, model, quest, isRevealed, showReading, ran
       h(
         "p",
         { class: "feedback__answer" },
-        ja("span", { class: "feedback__word" }, kotobaWithReading(kotoba, { focus: quest.targetKanji, showReading })),
+        ja("span", { class: "feedback__word" }, kotobaWithReading(kotoba, { focus: quest.targetKanji, display: feedbackDisplay(showReading) })),
         ` — ${kotoba.meaning}`
       ),
       !correct && chosen.type === OPTION_TYPE.MANUAL_CROSS

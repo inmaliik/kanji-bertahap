@@ -280,6 +280,7 @@ Pengunjung pameran sering tidak memiliki papan ketik Jepang. **Alternatif ditola
 saat dikirim dan penilaian diri sebagai baris terpisah; mengizinkan penyuntingan setelah melihat contoh.
 
 ### D-29 · Cara baca kotoba disembunyikan selama soal cara bacanya masih akan muncul
+*Diperluas oleh D-79 di cabang `desain-peta`: materi quest tidak tampil di luar quest sebelum percakapan pengantarnya.*
 **Tanggal:** 2026-09-13. **Keputusan:** Furigana dan baris tabel bacaan untuk sebuah kotoba hanya
 ditampilkan jika soal cara bacanya tidak akan segera diujikan: sudah dijawab benar sekali pada putaran
 belajar, atau sudah dikuasai pada tahap Produksi dan Putaran Pemantapan. Ketentuan ini berlaku di umpan
@@ -706,6 +707,7 @@ terjemahan disembunyikan dan bisa dibuka dengan "Tampilkan arti", yang dicatat s
 **Diterapkan:** langkah 2.
 
 ### D-68 · Index: hanya di luar quest, isi terbatas wilayah terbuka, pembukaan dicatat sebagai peristiwa
+*Batas isi index diganti D-79: hanya yang percakapan pengantarnya sudah dilewati.*
 **Tanggal:** 2026-09-29. **Keputusan:** Index bisa dibuka kapan pun kecuali saat pemain berada di dalam quest atau
 復習, dan hanya menampilkan kanji dan kotoba dari wilayah yang sudah terbuka. Index adalah rujukan, bukan progres:
 membukanya tidak menuntaskan apa pun. Setiap pembukaan dicatat sebagai **satu baris peristiwa** (bukan jawaban),
@@ -816,6 +818,63 @@ adalah prosesnya, yaitu setiap angka di data diperiksa manusia terhadap sumber, 
 **Alasan:** Template adalah teladan yang akan ditiru; teladan itu harus tulisan tim (D-62) dan sudah lolos
 pemeriksaan.
 
+### D-79 · Materi quest tidak tampil di luar quest sebelum percakapan pengantarnya (perluasan D-29)
+**Tanggal:** 2026-09-29. **Keputusan:** Prinsip: **materi sebuah quest tidak ditampilkan di luar quest itu sebelum
+pemain melewati percakapan pengantarnya**; setelah itu kotobanya boleh tampil, dan cara bacanya baru tampil jika
+soal cara bacanya tidak lagi tertunda (quest tuntas atau cara baca dikuasai). Penerapan: (1) jendela bab
+menampilkan "Quest n · arti" sebelum pengantar, dan kotobanya sesudahnya, sehingga daftar terisi seiring pemain
+belajar; (2) index hanya berisi kanji dan kotoba yang pengantarnya sudah dilewati, menggantikan batas "wilayah
+yang sudah terbuka" di D-68 (pencatatan pembukaan index tetap berlaku); kotoba yang bukan quest baru tampil
+setelah semua quest di babnya tuntas, karena bacaannya bisa menjawab soal quest bab itu; (3) validator: `title`,
+`intro.summary`, dan `intro.points` wilayah tidak boleh memuat kotoba **atau cara baca kotoba** quest di wilayah itu
+(error), dan kanji sasarannya memunculkan peringatan; (4) pin peta hanya menampilkan bab, status, dan persentase;
+(5) furigana kotoba quest lain yang cara bacanya masih tertunda disembunyikan di semua baris percakapan, termasuk
+percakapan pengantar, dengan peringatan validator bagi baris yang memuat kotoba quest lain. Yang disembunyikan
+hanya bacaan kanji **sebagaimana dibaca di kotoba itu** ([飲|の] selama quest 飲みます tertunda), bukan semua bacaan
+kanji yang sama ([食|た] tetap tampil walaupun quest 食堂 tertunda). **Alasan:** Percakapan pengantar adalah momen
+mengajar (D-65); tidak ada layar lain yang boleh mendahuluinya. Batas "wilayah terbuka" tidak menolong karena
+wilayah terbuka sebelum quest-questnya dimainkan. **Alternatif ditolak:** Menyembunyikan seluruh daftar quest
+sampai quest dimainkan (tidak memberi gambaran isi bab dan rasa kemajuan).
+
+### D-80 · Urutan wilayah, persentase, dan 復習 dalam penerapan
+**Tanggal:** 2026-09-29. **Keputusan:** Urutan main: wilayah, 復習-nya, wilayah berikutnya (D-55, D-63), diturunkan
+dengan aturan kunci D-23 (`computeStatuses`). 復習 terbuka setelah semua quest wilayahnya tuntas. Sampel 復習
+(10 item, 70/30, berimbang per quest, tanpa duplikat item Bentuk yang dipakai bersama) diambil saat pertama dibuka
+dan disimpan bersama **streak lokal** di entri 復習, sehingga salah menjawab di 復習 tidak menurunkan penguasaan di
+quest asal. Jika satu sisi (wilayah ini atau wilayah sebelumnya) kekurangan item, sisi lain menutupinya.
+Tombol **Keluar** di quest dan 復習 kembali ke jendela bab. **Alasan:** Semua item di 復習 sudah dikuasai di
+quest-nya; dengan streak global, 復習 akan langsung selesai tanpa satu soal pun. **Alternatif ditolak:** Streak
+global di 復習 (tidak ada yang diulang); jawaban salah di 復習 membuka kembali quest asal (menghukum pemain yang
+sudah lulus, dan membingungkan persentase peta).
+
+### D-81 · Alamat halaman tidak memuat ID quest
+**Tanggal:** 2026-09-29. **Keputusan:** Quest dibuka lewat wilayah dan posisinya (`#/quest/B06/2`), 復習 lewat
+wilayahnya (`#/review/B06`), jendela bab lewat ID wilayah (`#/region/B06`). ID quest tetap dipakai di progres dan
+log. **Alasan:** ID quest ditulis tim dan bisa mengeja kotobanya (`Q-tabemasu`), sehingga bacaan kotoba tampil di
+bilah alamat sebelum quest dimainkan, pelanggaran D-79 yang tidak terlihat di layar aplikasi.
+
+### D-82 · Penerapan kontrak aset
+**Tanggal:** 2026-09-29. **Keputusan:** Daftar slot ada di `data/assets.json` (nama berkas, format, ukuran piksel,
+transparansi, batas KB, layar, dan sidik SHA-256 placeholder); `ASSETS.md` menjelaskannya untuk pembuat aset, dan
+uji otomatis memastikan keduanya selaras. Slot langkah 3: peta 1200×1600 PNG (3:4, maks 400 KB) dan tiga ikon menu
+192×192 PNG transparan (maks 30 KB). Batas dipilih supaya layar pertama di bawah ±500 KB untuk Android kelas bawah
+di jaringan pameran. Placeholder dibuat sekali dengan canvas dan menuliskan nama slot serta spesifikasinya. Gambar
+ditampilkan di kotak dengan rasio slot dan `object-fit: contain`; berkas yang hilang diganti kotak bertanda "✗ …
+hilang". Pemeriksa aset membandingkan sidik berkas dengan sidik placeholder, memeriksa ukuran berkas dan ukuran
+piksel, dan memberi ✗ jika rasio meleset lebih dari 2% (pin peta bergeser). Pin tidak memakai aset; ikon status
+berupa teks. **Alasan:** D-70. Placeholder dikenali lewat sidik, jadi tidak perlu penanda terpisah yang bisa lupa
+dihapus. **Alternatif ditolak:** Placeholder SVG (format berbeda dari aset akhir, sehingga menimpa berkas tidak
+lagi cukup).
+
+### D-83 · Cakupan index di langkah 3
+**Tanggal:** 2026-09-29. **Keputusan:** Langkah 3 membangun daftar index (kanji dan kotoba yang sudah diperkenalkan)
+dan pencatatan pembukaannya: satu baris peristiwa per pembukaan (`questStep` = `index`, `phase` = `event`, `answer` =
+kanji yang tampil, kolom baru `openQuests` = quest yang dimulai tetapi belum tuntas). Jendela kanji (bacaan, bushu,
+画数, slot 書き方) dan jendela kotoba (kanji penyusun, 例文) dibangun di langkah 4 seperti rencana awal, dengan aturan
+D-79: bushu dan bacaan kanji yang soalnya masih tertunda ikut disembunyikan. Panduan kana juga langkah 4; pintunya
+sudah ada dan menampilkan pemberitahuan. **Alasan:** Laporan langkah 3 meminta tangkapan index sebelum dan sesudah,
+yang cukup ditunjukkan oleh daftar; jendela detail adalah pekerjaan langkah 4.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -908,3 +967,15 @@ tidak dapat dideteksi kode. **Tindakan:** README menyatakan pola ini secara eksp
 bukan hanya menampilkan contoh, dan daftar periksa sebelum validasi ahli mewajibkan anggota tim lain
 mengerjakan seluruh soal tanpa melihat jawaban. **Dampak:** Pemeriksaan pengecoh oleh manusia menjadi langkah
 kendali mutu yang wajib, bukan opsional.
+
+### T-13 · Tampilan "tanpa furigana" menulis cara baca dalam kana
+**Tanggal:** 2026-09-29. **Temuan:** Pada tangkapan layar index langkah 3, kotoba 飲みます yang soal cara bacanya
+belum dikuasai tampil sebagai "飲みます (のみます)". Fungsi tampilan kotoba hanya mengenal dua pilihan, furigana
+atau tidak; pilihan "tidak" dibuat untuk umpan balik soal cara baca di mode furigana "tidak pernah" (D-73), dan
+menulis bacaannya dalam kana. Ketika index dan jendela bab memakainya untuk arti "jangan tampilkan bacaan", bacaan
+justru bocor dalam bentuk lain. Kartu kotoba di akhir percakapan pengantar pada mode "tidak pernah" terkena
+masalah yang sama. **Tindakan:** Tiga pilihan tampilan yang eksplisit: furigana, kana (hanya untuk umpan balik
+jawaban), dan tanpa bacaan. Index, jendela bab, dan kartu pengantar pada mode "tidak pernah" memakai "tanpa
+bacaan". Uji otomatis memastikan "tanpa bacaan" menghasilkan kata saja. **Dampak:** Sejenis T-02: kebocoran
+lewat jalur tampilan yang dipakai ulang untuk tujuan lain. Hanya terlihat dari tangkapan layar, bukan dari uji
+logika.

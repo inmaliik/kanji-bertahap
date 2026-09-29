@@ -74,14 +74,19 @@ export function issueList(issues, locate = () => null) {
 /** Segments of a kotoba's per-kanji furigana (schema v2 `ruby`). */
 export const kotobaSegments = (kotoba) => parseRuby(kotoba.ruby).segments;
 
+export const READING_DISPLAY = Object.freeze({
+  RUBY: "ruby", // furigana over the kanji
+  KANA: "kana", // plain word, reading in kana after it (answer feedback with furigana set to "never", D-73)
+  NONE: "none", // plain word, no reading at all (reading still pending, D-29/D-79, or "never" outside feedback)
+});
+
 /**
- * A kotoba with its furigana, the ruby part containing one of `focus`
- * highlighted. With `showReading` false (furigana setting "never"), the word
- * is shown plain with its reading in kana after it, because the reading is
- * the point of the feedback where this is used.
+ * A kotoba, with its reading shown as `display` says; with furigana, the ruby
+ * part containing one of `focus` is highlighted.
  */
-export function kotobaWithReading(kotoba, { focus = [], showReading = true } = {}) {
-  if (!showReading) return [kotoba.word, h("span", { class: "reading-inline" }, ` (${kotoba.reading})`)];
+export function kotobaWithReading(kotoba, { focus = [], display = READING_DISPLAY.RUBY } = {}) {
+  if (display === READING_DISPLAY.NONE) return kotoba.word;
+  if (display === READING_DISPLAY.KANA) return [kotoba.word, h("span", { class: "reading-inline" }, ` (${kotoba.reading})`)];
   const segments = kotobaSegments(kotoba);
   let start = 0;
   for (const seg of segments) {
