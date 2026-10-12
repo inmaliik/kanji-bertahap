@@ -54,6 +54,28 @@
       "maxKB": 150,
       "screen": "Percakapan pengantar dan uji: ilustrasi adegan, satu berkas per percakapan (nama berkas = ID percakapan)",
       "placeholderSha256": null
+    },
+    {
+      "id": "karakter-hana",
+      "path": "assets/karakter/hana.png",
+      "format": "PNG",
+      "width": 2160,
+      "height": 2160,
+      "transparent": true,
+      "maxKB": 300,
+      "screen": "Pemilihan karakter dan potret pembicara di percakapan: karakter pemain Hana",
+      "placeholderSha256": null
+    },
+    {
+      "id": "karakter-kazu",
+      "path": "assets/karakter/kazu.png",
+      "format": "PNG",
+      "width": 2160,
+      "height": 2160,
+      "transparent": true,
+      "maxKB": 300,
+      "screen": "Pemilihan karakter dan potret pembicara di percakapan: karakter pemain Kazu",
+      "placeholderSha256": null
     }
   ]
 }

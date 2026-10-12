@@ -21,7 +21,7 @@ const BLANK_MARK = "___"; // how the blank appears in the logged prompt
  * @param {boolean} ctx.readingRevealed D-29: the kotoba's reading is no longer pending
  * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  */
-export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, otherLeaks = () => false, sceneSlot, random, onAnswer, onContinue }) {
+export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, otherLeaks = () => false, sceneSlot, cast, random, onAnswer, onContinue }) {
   const { conversation, lineIndex, line, blankRange, plain } = item;
   const options = blankOptions(line, random);
   const targetLeaks = anyLeak(containsAny(targetKanji), otherLeaks);
@@ -51,13 +51,14 @@ export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, o
 
   const lines = conversation.lines.map((l, i) => {
     const segments = before(i === lineIndex ? item.segments : parseRuby(l.ja).segments);
-    if (i !== lineIndex) return dialogLine({ line: l, segments, translation: translations[i] });
+    if (i !== lineIndex) return dialogLine({ line: l, segments, translation: translations[i], cast });
     return dialogLine({
       line: l,
       segments,
       range: blankRange,
       wrap: () => h("span", { class: "blank-slot" }, h("span", { class: "sr-only", lang: "id" }, "(bagian kosong)")),
       translation: translations[i],
+      cast,
     });
   });
 

@@ -222,3 +222,23 @@ test("data/kana.json covers hiragana and katakana with romaji in every cell", ()
   assert.equal(cells, 46 + 25 + 33);
   assert.equal(S.createProgress().welcomeSeen, false, "every new player sees the welcome screen with the disclaimer");
 });
+
+test("characters: two ready-made players on the standard canvas; the other speaker's name is still a placeholder", async () => {
+  const { validateCharacters, castFor } = await import(jsModule("cast.js"));
+  const data = JSON.parse(readFileSync(join(ROOT, "data/characters.json"), "utf8"));
+  assert.deepEqual(data.players.map((c) => c.id), ["hana", "kazu"]);
+  for (const c of data.players) {
+    const bytes = readFileSync(join(ROOT, c.image));
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20), bytes[25]], [2160, 2160, 6], `${c.image}: 2160×2160 RGBA`);
+  }
+  const problems = validateCharacters(data);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /lawan-bicara: nama masih penanda/);
+  assert.match(validateCharacters({ ...data, others: [{ id: "player", name: "x" }] }).join(), /dicadangkan/);
+
+  const cast = castFor({ characters: data, progress: { character: "kazu" } });
+  assert.equal(cast.nameOf("player"), "Kazu");
+  assert.equal(castFor({ characters: data, progress: { character: null } }).nameOf("player"), "Kamu");
+  assert.equal(cast.nameOf("lawan-bicara"), "«NAMA-TOKOH-LAWAN-BICARA»");
+  assert.equal(S.createProgress().character, null, "a reset clears the chosen character");
+});

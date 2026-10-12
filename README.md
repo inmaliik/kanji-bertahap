@@ -125,8 +125,9 @@ data/archive/               materi yang keluar dari data aktif (tidak dibaca apl
 data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
 data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復習, 画数, …)
 data/kana.json              tabel hiragana dan katakana untuk panduan kana
+data/characters.json        karakter pemain dan lawan bicara, dengan kotak potong potret
 data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
-assets/                     gambar: peta dan ikon menu (saat ini PLACEHOLDER, lihat ASSETS.md)
+assets/                     gambar: peta, ikon menu (PLACEHOLDER), karakter Hana dan Kazu, ilustrasi adegan; lihat ASSETS.md
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
@@ -138,6 +139,7 @@ js/progression.js           urutan dan kunci wilayah, persentase, sampel 復習
 js/ui-labels.js             label antarmuka berbahasa Jepang dari data/ui.json
 js/assets.js                slot aset: gambar yang dipaskan ke wadahnya, pemeriksa aset
 js/event-log.js             baris log peristiwa (pembukaan index)
+js/cast.js                  karakter: nama dan potret pembicara, data karakter
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
@@ -170,6 +172,7 @@ js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
 js/screens/kana.js          panduan kana (data/kana.json)
 js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan disclaimer
 js/screens/menu.js          menu tiga pintu di luar quest
+js/screens/character.js     pemilihan karakter pemain
 js/screens/content-check.js daftar peringatan konten
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
@@ -321,7 +324,7 @@ beberapa baris, isinya harus sama.
 |---|---|---|
 | `conversation_id` | ID percakapan, unik di seluruh materi | `C-tabemasu-uji-1` |
 | `line_no` | Nomor urut ucapan di dalam percakapan (1, 2, 3, …). Urutan tampil mengikuti nomor ini, bukan urutan baris. | `1` |
-| `speaker` | `pemain` untuk karakter pemain, atau ID tokoh (huruf kecil latin, misalnya `hana`) | `pemain` |
+| `speaker` | `pemain` untuk karakter pemain, atau ID tokoh lain dari `data/characters.json` (huruf kecil latin, misalnya `lawan-bicara`) | `pemain` |
 | `ja` | Kalimat dengan sintaks furigana | `パンを[食\|た]べます。` |
 | `translation` | Terjemahan bahasa Indonesia | `Saya makan roti.` |
 | `highlight` | *Hanya percakapan pengantar, boleh kosong.* Bagian kalimat yang disorot (kotoba quest, dalam bentuk yang muncul di kalimat) | `食べます` |
@@ -446,7 +449,8 @@ di konteks lain, dengan kotoba itu dikosongkan.
   harus cocok untuk semua karakter.
 - **Tokoh lain tidak memanggil pemain dengan nama.**
 - **Nama tokoh adalah buatan tim**, bukan tokoh buku (ミラー, 山田, dan sebagainya). ID tokoh di kolom `speaker`
-  (misalnya `hana`) nanti dicocokkan dengan daftar tokoh di data karakter.
+  (misalnya `lawan-bicara`) harus terdaftar di bagian `others` di `data/characters.json`, beserta nama tampilannya;
+  pemeriksa konten mendaftar ID yang belum terdaftar. ID karakter pemain (`hana`, `kazu`) tidak dipakai sebagai lawan bicara.
 - Konteks percakapan uji harus **berbeda** dari percakapan pengantar, bukan hanya kalimatnya yang diubah sedikit.
 - Semua aturan kalimat tidak ambigu di bawah berlaku untuk baris ber-`blank`, dan konteksnya adalah **seluruh
   percakapan**, bukan hanya baris itu.
@@ -1237,6 +1241,31 @@ diambil dari `data/ui.json`.
 **Label antarmuka berbahasa Jepang** (復習, dan kelak 画数, 熟語, dan lainnya) ada di `data/ui.json`, ditulis
 dengan sintaks furigana yang sama, selalu tampil berfurigana apa pun setelan pemain, dan boleh punya padanan
 bahasa Indonesia yang tampil kecil di sebelahnya. Dosen atau tim boleh mengubahnya tanpa menyentuh kode.
+
+### Karakter pemain
+
+Setelah layar sambutan, pemain baru memilih karakter (saat ini Hana atau Kazu, dari `data/characters.json`). Karakter
+itu menjadi pembicara pemain di semua percakapan, dengan nama dan potretnya. Pilihan disimpan per pemain dan
+dikosongkan saat reset. Lawan bicara diambil dari bagian `others` di berkas yang sama. Standar gambar karakter dan
+kotak potong potret ada di [`ASSETS.md`](ASSETS.md).
+
+### Palet warna
+
+Enam warna macaron dari tim untuk **latar dan bidang saja**, ditambah satu **warna tinta `#403C3C`** untuk semua teks,
+garis tepi, ikon, dan penanda fokus (D-101). Semua elemen yang bisa disentuh bergaris tepi tinta 2px.
+
+| Warna | Peran |
+|---|---|
+| Biru `#BAE1FF` | Navigasi dan tindakan utama: tombol utama, menu aktif, gelembung ucapan pemain |
+| Kuning `#FFFFBA` | Sorotan seperti stabilo: kotoba sasaran di percakapan, bagian kosong |
+| Mint `#BFFCC6` | Benar, tuntas, bilah progres |
+| Pink `#FFB3BA` | Salah, tindakan berbahaya (hapus, reset) |
+| Peach `#FFDFBA` | Peringatan dan hal yang belum selesai ("belum lengkap", menunggu ulangan) |
+| Putih `#FDFDFF` | Latar halaman dan kartu |
+
+Benar dan salah selalu juga ditunjukkan dengan ikon dan teks (✓/✗), tidak pernah dengan warna saja. Semua nilai warna
+ada di bagian `:root` di `css/style.css`. `tests/contrast.test.mjs` memeriksa kontras setiap latar yang dipakai terhadap
+teks (WCAG AA, 4,5:1) dan terhadap garis tinta (3:1). Gaya cetak pratinjau tidak memakai palet ini.
 
 ### Materi tidak tampil sebelum diperkenalkan
 

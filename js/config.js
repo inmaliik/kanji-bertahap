@@ -7,6 +7,7 @@ export const CONSENT_URL = "data/consent.json";
 export const UI_LABELS_URL = "data/ui.json";
 export const ASSETS_URL = "data/assets.json";
 export const KANA_URL = "data/kana.json";
+export const CHARACTERS_URL = "data/characters.json";
 
 // Remote answer log: a Google Apps Script Web App (README "Pengiriman log").
 // Keep disabled until the endpoint has been deployed and tested.

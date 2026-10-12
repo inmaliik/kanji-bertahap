@@ -129,12 +129,12 @@ test("conversation rules: two speakers with the player, highlight in intro, one 
   const data = sample();
   const tabe = questOf(data, "Q-tabemasu");
   tabe.intro = conversation("C-a", [
-    { speaker: "hana", ja: "[何|なに]を[食|た]べますか。", translation: "Mau makan apa?", highlight: "食べます" },
+    { speaker: "tokoh-a", ja: "[何|なに]を[食|た]べますか。", translation: "Mau makan apa?", highlight: "食べます" },
     { speaker: "player", ja: "パンを[食|た]べます。", translation: "Saya makan roti.", highlight: "食べます" },
   ]);
   tabe.tests = [
     conversation("C-b", [
-      { speaker: "hana", ja: "[朝|あさ]ごはんは？", translation: "Sarapannya?" },
+      { speaker: "tokoh-a", ja: "[朝|あさ]ごはんは？", translation: "Sarapannya?" },
       { speaker: "player", ja: "りんごを[食|た]べます。", translation: "Saya makan apel.", blank: "食べます", distractors: ["飲みます", "読みます", "書きます"] },
     ]),
   ];
@@ -147,7 +147,7 @@ test("conversation rules: two speakers with the player, highlight in intro, one 
   q.tests[0].lines[0].ja = "りんごを[食|た]べますか。"; // the answer shows in the other line
   q.tests.push(
     conversation("C-c", [
-      { speaker: "hana", ja: "パンを[食|た]べます。", translation: "x", highlight: "食べます" },
+      { speaker: "tokoh-a", ja: "パンを[食|た]べます。", translation: "x", highlight: "食べます" },
       { speaker: "player", ja: "パンを[食|た]べます。", translation: "x", blank: "食べます", distractors: ["飲みます", "読みます", "書きます"] },
     ])
   );

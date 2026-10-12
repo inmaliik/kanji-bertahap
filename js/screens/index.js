@@ -32,7 +32,7 @@ import { uiLabel } from "../ui-labels.js";
 import { assetImage } from "../assets.js";
 import { backLink, kotobaWithReading, LABELS, READING_DISPLAY, readingNotation } from "./common.js";
 import { menuBar } from "./menu.js";
-import { speakerName } from "../stages/conversation.js";
+import { castFor } from "../cast.js";
 
 export const kanjiHref = (ch) => `#/index/kanji/${encodeURIComponent(ch)}`;
 export const kanjiDetailHref = (ch) => `${kanjiHref(ch)}/detail`;
@@ -301,7 +301,7 @@ export function kotobaScreen(app, position) {
             h(
               "li",
               { class: "index-example" },
-              h("p", { class: "dialog__speaker" }, speakerName(line.speaker)),
+              h("p", { class: "dialog__speaker" }, castFor(app).nameOf(line.speaker)),
               ja("p", { class: "dialog__ja" }, renderRuby(visibleSegments(parseRuby(line.ja).segments, { mode, answered: true, leaks }))),
               h("p", { class: "dialog__translation" }, line.translation)
             )

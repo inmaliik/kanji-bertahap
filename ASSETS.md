@@ -25,6 +25,8 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
 | `menu-kana` | `assets/ui/menu-kana.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Panduan kana |
 | `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Pengaturan |
+| `karakter-hana`, `karakter-kazu` | `assets/karakter/hana.png`, `assets/karakter/kazu.png` | PNG | 2160 × 2160 | 1 : 1 | **transparan** | 300 KB | Pemilihan karakter; potret pembicara di percakapan |
+| potret (opsional) | `assets/karakter/<id>-potret.png`, misalnya `assets/karakter/hana-potret.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 60 KB | Menggantikan potongan otomatis di potret percakapan |
 | `adegan` | `assets/adegan/<ID percakapan>.png`, satu per percakapan, misalnya `assets/adegan/C-B01-01-pengantar.png` | PNG | 960 × 640 | 3 : 2 (mendatar) | tidak transparan | 150 KB | Di atas percakapan pengantar dan percakapan uji |
 
 Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan akan didaftarkan di tabel ini.
@@ -71,6 +73,31 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
   jika disimpan dengan jumlah warna dikurangi; batasnya 150 KB per berkas karena ada puluhan percakapan.
 - **Jangan menulis kotoba atau kanji yang diajarkan di dalam gambar**, misalnya di papan nama atau kalender: percakapan
   uji memakai ilustrasi yang sama, dan tulisan di gambar bisa menjadi jawaban soal.
+
+## Karakter (`assets/karakter/`)
+
+**Standar karakter** (sama untuk setiap karakter, sekarang dan nanti):
+
+- Kanvas **persegi 2160 × 2160**, PNG dengan **latar transparan**.
+- Sosok **di tengah kanvas**, dengan **skala yang sama** antar karakter: tinggi kepala, posisi mata, dan posisi kaki
+  sejajar seperti Hana dan Kazu. Karena itu satu kotak potong cocok untuk semua karakter.
+- Garis luar tinta `#403C3C`, warna yang juga dipakai untuk semua teks dan garis di aplikasi.
+
+**Potret di percakapan** diambil dari gambar utuh lewat **kotak potong** di `data/characters.json` (`portrait`: `x`, `y`,
+`size`, dalam persen gambar). Kartu di layar pemilihan memakai kotak kedua (`figure`: `x`, `y`, `width`, `height`)
+supaya sosoknya tampil besar. Selama karakter baru mengikuti standar di atas, kotak yang sama bisa disalin apa
+adanya. Kalau tim membuat **berkas potret khusus** `assets/karakter/<id>-potret.png` (512 × 512, transparan),
+berkas itu otomatis menggantikan potongan otomatis.
+
+**Menambah karakter pemain:** taruh gambarnya di `assets/karakter/<id>.png`, lalu tambahkan satu entri di bagian
+`players` di `data/characters.json` (id, nama, jalur gambar, dan kedua kotak potong). Kode tidak perlu diubah.
+
+**Ukuran berkas.** Hana 281 KB dan Kazu 233 KB, masih di bawah batas 300 KB. Di layar, gambar ini tampil paling besar
+±160 piksel lebar, jadi ekspor 1080 × 1080 dengan skala yang sama akan jauh lebih ringan untuk ponsel kelas bawah,
+tanpa perbedaan yang terlihat. Usul ini menunggu keputusan tim, karena standar kanvasnya 2160.
+
+**Lawan bicara** (bagian `others` di `data/characters.json`) belum punya gambar; potretnya tampil sebagai lingkaran
+dengan huruf awal nama. Namanya masih penanda `«NAMA-…»` sampai tim mengisinya.
 
 ## Ikon menu (`assets/ui/menu-*.png`)
 

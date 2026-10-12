@@ -1,0 +1,44 @@
+{
+  "players": [
+    {
+      "id": "hana",
+      "name": "Hana",
+      "image": "assets/karakter/hana.png",
+      "portrait": {
+        "x": 35,
+        "y": 8,
+        "size": 26
+      },
+      "figure": {
+        "x": 30,
+        "y": 7,
+        "width": 40,
+        "height": 66
+      }
+    },
+    {
+      "id": "kazu",
+      "name": "Kazu",
+      "image": "assets/karakter/kazu.png",
+      "portrait": {
+        "x": 35,
+        "y": 8,
+        "size": 26
+      },
+      "figure": {
+        "x": 30,
+        "y": 7,
+        "width": 40,
+        "height": 66
+      }
+    }
+  ],
+  "others": [
+    {
+      "id": "lawan-bicara",
+      "name": "«NAMA-TOKOH-LAWAN-BICARA»",
+      "image": null,
+      "portrait": null
+    }
+  ]
+}

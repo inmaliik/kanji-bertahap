@@ -4,14 +4,7 @@
 import { h, ja } from "../dom.js";
 import { renderRuby } from "../ruby.js";
 import { PLAYER_SPEAKER } from "../validate.js";
-
-/**
- * Display name of a speaker. Character names come from data/characters.json
- * in step 5; until then the id is shown capitalised.
- */
-export function speakerName(speaker) {
-  return speaker === PLAYER_SPEAKER ? "Kamu" : speaker.charAt(0).toUpperCase() + speaker.slice(1);
-}
+import { avatar } from "../cast.js";
 
 /** File of a conversation's scene illustration, from the asset slot pattern. */
 export const scenePath = (slot, conversation) => slot?.pattern?.replace("{conversationId}", conversation.id) ?? null;
@@ -61,15 +54,21 @@ export function sceneFigure(conversation, slot) {
  * @param {{start: number, end: number}|null} [opts.range] part of the line to wrap
  * @param {(fragment: DocumentFragment) => Node} [opts.wrap]
  * @param {Node|null} [opts.translation]
+ * @param {ReturnType<import("../cast.js").castFor>} opts.cast who speaks (D-102)
  */
-export function dialogLine({ line, segments, range = null, wrap, translation = null }) {
+export function dialogLine({ line, segments, range = null, wrap, translation = null, cast }) {
   const own = line.speaker === PLAYER_SPEAKER;
   return h(
     "li",
     { class: `dialog__line ${own ? "dialog__line--player" : "dialog__line--other"}` },
-    h("p", { class: "dialog__speaker" }, speakerName(line.speaker)),
-    ja("p", { class: "dialog__ja" }, renderRuby(segments, range ? { range, wrap } : {})),
-    translation
+    avatar(cast.characterOf(line.speaker), { className: "dialog__avatar" }),
+    h(
+      "div",
+      { class: "dialog__bubble" },
+      h("p", { class: "dialog__speaker" }, cast.nameOf(line.speaker)),
+      ja("p", { class: "dialog__ja" }, renderRuby(segments, range ? { range, wrap } : {})),
+      translation
+    )
   );
 }
 

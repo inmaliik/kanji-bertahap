@@ -1037,6 +1037,34 @@ di sana adalah paparan belajar, sama seperti buku pelajaran, bukan kebocoran jaw
 putaran pemantapan (D-06), bukan dari jawaban pertama. **Alternatif ditolak:** Menyembunyikan furigana quest lain di
 percakapan pengantar (D-79 versi langkah 3), yang membuat kalimat pengantar tidak terbaca.
 
+### D-101 · Palet macaron dengan satu warna tinta
+**Tanggal:** 2026-10-13. **Keputusan:** Enam warna tim (pink `#FFB3BA`, biru `#BAE1FF`, kuning `#FFFFBA`, mint `#BFFCC6`,
+peach `#FFDFBA`, putih `#FDFDFF`) hanya untuk latar dan bidang, ditambah tinta `#403C3C`, warna garis luar aset karakter
+tim, untuk semua teks, garis, ikon, dan penanda fokus. Teks sekunder memakai `#524D4D` (minimal 4,9:1 di semua pastel).
+Pembagian peran: biru untuk navigasi dan tindakan utama (termasuk gelembung ucapan pemain), kuning untuk sorotan kotoba
+dan bagian kosong seperti stabilo, mint untuk benar dan tuntas, pink untuk salah dan tindakan berbahaya, peach untuk
+peringatan dan hal yang belum selesai, putih untuk halaman dan kartu. Semua elemen yang bisa disentuh bergaris tepi tinta
+2px. Benar dan salah tetap memakai ikon dan teks. Semua warna menjadi variabel di `:root`; token lama
+(`--primary`, `--error`, …) didefinisikan ulang sesuai peran, sehingga komponen tidak ditulis ulang satu per satu. Uji
+otomatis memeriksa setiap latar yang dipakai terhadap teks (AA 4,5:1) dan garis (3:1), dan melarang pastel dipakai
+sebagai warna teks atau garis. Gaya cetak tidak diubah. **Alasan:** Kontras pastel terhadap putih hanya 1,0–1,7, jadi
+tanpa garis tinta tombol pastel nyaris tidak terlihat; satu warna tinta yang sama dengan garis aset membuat situs
+menyatu dengan gaya gambar karakter. **Temuan saat penerapan:** uji kontras langsung menangkap bilah kapasitas yang
+isiannya berubah menjadi tinta pekat; diganti biru, dan pink saat peringatan.
+
+### D-102 · Karakter pemain: pilihan jadi, standar kanvas, potret dari kotak potong
+**Tanggal:** 2026-10-13. **Keputusan:** Dua karakter tim, Hana dan Kazu, ada di `assets/karakter/` (PNG transparan
+2160×2160, sosok di tengah, skala sama), terdaftar di `data/characters.json`. Format ini menjadi **standar karakter** di
+`ASSETS.md`. Potret percakapan dipotong dari gambar utuh dengan kotak `portrait` (persen gambar); kartu pemilihan
+memakai kotak kedua `figure` supaya sosoknya tampil besar. Berkas `assets/karakter/<id>-potret.png`, jika ada,
+menggantikan potongan otomatis. Layar pemilihan muncul setelah layar sambutan dan sebelum peta; pilihan disimpan per
+pemain dan dikosongkan saat reset. Karakter yang dipilih menjadi pembicara pemain di semua percakapan (nama dan
+potret). Lawan bicara didaftarkan di bagian `others`; tokoh sementara yang dulu bernama "hana" di data uji diganti,
+karena Hana kini karakter pemain, dan lawan bicara materi tim bernama penanda `«NAMA-TOKOH-LAWAN-BICARA»` sampai tim
+mengisinya. ID `player` dicadangkan; pemeriksa konten mendaftar pembicara yang belum terdaftar. Kustomisasi berlapis
+direncanakan dalam bentuk lapisan kanvas yang sama (`layers`), tidak dibangun (D-70). **Catatan ukuran:** 281 KB dan
+233 KB, di bawah batas 300 KB; ekspor 1080×1080 diusulkan ke tim karena tampil paling besar ±160 piksel.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

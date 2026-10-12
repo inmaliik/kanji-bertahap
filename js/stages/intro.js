@@ -17,9 +17,10 @@ import { kotobaWithReading, READING_DISPLAY } from "../screens/common.js";
  * @param {string[]} ctx.targetKanji
  * @param {string} ctx.mode furigana setting
  * @param {object} [ctx.sceneSlot] "adegan" slot of data/assets.json
+ * @param {object} ctx.cast speakers (js/cast.js)
  * @param {(result: {replays: number}) => void} ctx.onDone
  */
-export function renderIntro({ conversation, kotoba, targetKanji, mode, sceneSlot, onDone }) {
+export function renderIntro({ conversation, kotoba, targetKanji, mode, sceneSlot, cast, onDone }) {
   const lines = conversation.lines.map((line) => {
     const { segments, plain } = parseRuby(line.ja);
     const start = line.highlight ? plain.indexOf(line.highlight) : -1;
@@ -39,7 +40,7 @@ export function renderIntro({ conversation, kotoba, targetKanji, mode, sceneSlot
   function renderLines() {
     list.replaceChildren(
       ...lines.slice(0, shown).map(({ line, segments, range }) =>
-        dialogLine({ line, segments, range, wrap: (inner) => h("mark", { class: "highlight" }, inner), translation: lineTranslation(line) })
+        dialogLine({ line, segments, range, wrap: (inner) => h("mark", { class: "highlight" }, inner), translation: lineTranslation(line), cast })
       )
     );
   }

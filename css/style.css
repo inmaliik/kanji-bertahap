@@ -1,5 +1,18 @@
 /* Mobile-first styles. Target: 360–430px phones; wider screens get a centered column.
-   All color pairs below meet WCAG AA (4.5:1) for normal text. */
+
+   Palette (D-101): six macaron pastels from the team, for backgrounds and
+   fields only, plus one ink color for every text, line, icon and focus mark.
+   The pastels reach only 1.0–1.7:1 against white, so they never carry text
+   or lines themselves; tests/contrast.test.mjs checks every pair in use.
+
+   Roles:
+     blue    navigation and main actions (menu, primary buttons, player's speech)
+     yellow  highlight: the target kotoba in a conversation, the blank (a marker pen)
+     mint    correct, done, progress
+     pink    wrong, destructive actions
+     peach   warnings and things still to do
+     white   page and cards
+   Correct and wrong are always also told by icon and text, never by color alone. */
 
 :root {
   color-scheme: light;
@@ -9,20 +22,32 @@
   --font-ja: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic",
     YuGothic, Meiryo, sans-serif;
 
-  --bg: #f6f5f1;
-  --surface: #ffffff;
-  --text: #1c1b19; /* 16.9:1 on --surface */
-  --muted: #57534e; /* 7.6:1 on --surface, 7.0:1 on --bg */
-  --border: #d6d3cd;
-  --primary: #1e40af; /* 8.7:1 with white */
-  --primary-soft: #e3e8fb;
-  --error: #b42318; /* 6.3:1 on --surface */
-  --error-soft: #fef3f2;
-  --warning: #7a4100; /* 7.7:1 on --warning-soft */
-  --warning-soft: #fff6e0;
-  --success: #17692f; /* 6.9:1 on --success-soft */
-  --success-soft: #e8f5ec;
-  --highlight: #fde68a; /* text on it: 14:1 */
+  /* Team palette */
+  --macaron-pink: #ffb3ba;
+  --macaron-blue: #bae1ff;
+  --macaron-yellow: #ffffba;
+  --macaron-mint: #bffcc6;
+  --macaron-peach: #ffdfba;
+  --macaron-white: #fdfdff;
+  --ink: #403c3c; /* outline color of the team's character art */
+
+  /* Roles */
+  --bg: var(--macaron-white);
+  --surface: var(--macaron-white);
+  --text: var(--ink);
+  --muted: #524d4d; /* secondary text: at least 4.5:1 on every pastel */
+  --border: var(--ink);
+  --line: 2px; /* outline of everything that can be touched, after the character art */
+  --primary: var(--ink); /* links, focus ring, lines of accented elements */
+  --primary-soft: var(--macaron-blue);
+  --nav: var(--macaron-blue);
+  --error: var(--ink);
+  --error-soft: var(--macaron-pink);
+  --warning: var(--ink);
+  --warning-soft: var(--macaron-peach);
+  --success: var(--ink);
+  --success-soft: var(--macaron-mint);
+  --highlight: var(--macaron-yellow);
 
   --radius: 12px;
   --gutter: 16px;
@@ -461,15 +486,15 @@ rt {
 }
 
 .button--primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+  background: var(--nav);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .button--danger {
-  background: var(--surface);
-  border-color: var(--error);
-  color: var(--error);
+  background: var(--error-soft);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .button--block {
@@ -555,8 +580,8 @@ rt {
 .mastery progress {
   appearance: none;
   width: 100%;
-  height: 0.625rem;
-  border: 1px solid var(--border);
+  height: 0.875rem;
+  border: var(--line) solid var(--border);
   border-radius: 999px;
   background: var(--surface);
   overflow: hidden;
@@ -567,11 +592,12 @@ rt {
 }
 
 .mastery progress::-webkit-progress-value {
-  background: var(--success);
+  background: var(--success-soft);
+  border-right: 1px solid var(--ink);
 }
 
 .mastery progress::-moz-progress-bar {
-  background: var(--success);
+  background: var(--success-soft);
 }
 
 .question {
@@ -1216,8 +1242,8 @@ rt {
 .capacity progress {
   appearance: none;
   width: 100%;
-  height: 0.75rem;
-  border: 1px solid var(--border);
+  height: 0.875rem;
+  border: var(--line) solid var(--border);
   border-radius: 999px;
   background: var(--surface);
   overflow: hidden;
@@ -1228,19 +1254,19 @@ rt {
 }
 
 .capacity progress::-webkit-progress-value {
-  background: var(--primary);
+  background: var(--nav);
 }
 
 .capacity progress::-moz-progress-bar {
-  background: var(--primary);
+  background: var(--nav);
 }
 
 .capacity progress.is-warning::-webkit-progress-value {
-  background: var(--error);
+  background: var(--error-soft);
 }
 
 .capacity progress.is-warning::-moz-progress-bar {
-  background: var(--error);
+  background: var(--error-soft);
 }
 
 /* Stage 4 hint ---------------------------------------------------------------------- */
@@ -1608,24 +1634,66 @@ rt {
 }
 
 .dialog__line {
-  max-width: 88%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 94%;
+}
+
+.dialog__line--other {
+  align-self: flex-start;
+}
+
+.dialog__line--player {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.dialog__bubble {
+  min-width: 0;
   padding: 0.5rem 0.75rem 0.625rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   overflow-wrap: anywhere;
 }
 
-.dialog__line--other {
-  align-self: flex-start;
+.dialog__line--other .dialog__bubble {
   border-top-left-radius: 2px;
 }
 
-.dialog__line--player {
-  align-self: flex-end;
+.dialog__line--player .dialog__bubble {
   border-top-right-radius: 2px;
   background: var(--primary-soft);
-  border-color: #b9c6f2;
+}
+
+.avatar {
+  flex: none;
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+  border: var(--line) solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.avatar__img,
+.avatar__crop {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-repeat: no-repeat;
+}
+
+.avatar__initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--warning-soft);
+  font-weight: 700;
 }
 
 .dialog__speaker {
@@ -1703,7 +1771,7 @@ mark.highlight {
   gap: 0.75rem;
   min-height: var(--tap);
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   cursor: pointer;
@@ -1779,7 +1847,7 @@ mark.highlight {
   gap: 0.125rem;
   min-height: 72px;
   padding: 0.375rem 0.25rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -1879,7 +1947,7 @@ mark.highlight {
   gap: 0.75rem;
   min-height: var(--tap);
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -1992,7 +2060,7 @@ mark.highlight {
   flex-direction: column;
   align-items: center;
   padding: 0.5rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -2026,7 +2094,7 @@ mark.highlight {
   align-items: baseline;
   gap: 0.25rem 0.75rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -2092,7 +2160,7 @@ mark.highlight {
   flex-direction: column;
   align-items: center;
   padding: 0.5rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -2190,7 +2258,7 @@ mark.highlight {
   gap: 1rem;
   min-height: var(--tap);
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -2226,7 +2294,7 @@ mark.highlight {
 .segmented {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--primary);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -2242,8 +2310,10 @@ mark.highlight {
 }
 
 .segmented__option[aria-pressed="true"] {
-  background: var(--primary);
-  color: #fff;
+  background: var(--nav);
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .kana-table {
@@ -2356,10 +2426,68 @@ mark.highlight {
   justify-content: center;
   min-width: 64px;
   min-height: 64px;
-  border: 1px solid var(--border);
+  border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font-size: 2.5rem;
   text-decoration: none;
+}
+
+/* Character selection ---------------------------------------------------------------- */
+
+.character-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.5rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.character-card[aria-pressed="true"] {
+  border-width: 3px;
+  background: var(--primary-soft);
+}
+
+.character-card__image {
+  width: 70%;
+}
+
+.figure-crop {
+  display: block;
+  background-repeat: no-repeat;
+}
+
+.character-card__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.character-card__tag {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.button:disabled {
+  border-style: dashed;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: not-allowed;
 }

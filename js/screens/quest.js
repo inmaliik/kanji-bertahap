@@ -21,6 +21,7 @@ import { STREAK_TO_MASTER, STATUS, beginAttempt, consentStatus, createId, FURIGA
 import { nodeStatuses, questPassed, sampleRegionReview } from "../progression.js";
 import { kotobaVisible, pendingReadingLeaks, questByKotoba, readingSettled } from "../reveal.js";
 import { uiLabel } from "../ui-labels.js";
+import { castFor } from "../cast.js";
 import { renderIntro } from "../stages/intro.js";
 import { renderShape } from "../stages/shape.js";
 import { renderReading } from "../stages/reading.js";
@@ -201,6 +202,7 @@ function sessionScreen(app, cfg) {
   const byKotoba = questByKotoba(model);
   const exitHref = regionHref(region);
   const sceneSlot = app.assets?.get("adegan");
+  const cast = castFor(app);
 
   const persist = () => {
     touch(app.progress);
@@ -301,6 +303,7 @@ function sessionScreen(app, cfg) {
       // D-100: the intro is the teaching moment; every word keeps its furigana
       // (following the player's setting), including other quests' kotoba.
       sceneSlot,
+      cast,
       onDone: ({ replays }) => {
         record(quest, {
           questStep: "intro",
@@ -399,6 +402,7 @@ function sessionScreen(app, cfg) {
       readingRevealed: isRevealed(kotoba, phase),
       otherLeaks: otherLeaksFor(quest),
       sceneSlot,
+      cast,
     });
   }
 

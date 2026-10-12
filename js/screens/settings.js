@@ -117,7 +117,7 @@ export function settingsScreen(app) {
         title: "Reset progres di perangkat ini?",
         details: [
           "Semua progres quest dihapus, termasuk quest yang sudah tuntas.",
-          "Pemain berikutnya mendapat ID pemain baru; kode peserta dan pilihan persetujuan dikosongkan, dan setelan furigana kembali ke bawaan.",
+          "Pemain berikutnya mendapat ID pemain baru; kode peserta, pilihan persetujuan, dan karakter dikosongkan, dan setelan furigana kembali ke bawaan.",
           "Riwayat jawaban (log) tidak dihapus.",
         ],
         confirmLabel: "Ya, reset progres",

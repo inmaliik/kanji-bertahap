@@ -1,6 +1,6 @@
 // App bootstrap and hash routing.
 
-import { ASSETS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, UI_LABELS_URL } from "./config.js";
+import { ASSETS_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, UI_LABELS_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
@@ -20,6 +20,8 @@ import { regionScreen } from "./screens/region.js";
 import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
 import { kanaScreen, loadKana } from "./screens/kana.js";
 import { aboutScreen, welcomeScreen } from "./screens/about.js";
+import { characterScreen } from "./screens/character.js";
+import { loadCharacters } from "./cast.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -41,6 +43,8 @@ const app = {
   assets: new Map(), // data/assets.json slots by id (D-70)
   assetProblems: [],
   kana: null, // data/kana.json
+  characters: null, // data/characters.json (D-102)
+  characterProblems: [],
   kanaError: null,
   notices: [], // { kind, text } shown on the home screen
   render,
@@ -48,8 +52,8 @@ const app = {
 
 // desain-peta branch: the printable preview returns in step 5.
 const ROUTES = [
-  // Every new player sees the welcome screen with the disclaimer once (D-71).
-  { pattern: /^#?\/?$/, screen: () => (app.progress.welcomeSeen ? mapScreen(app) : welcomeScreen(app, render)) },
+  // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
+  { pattern: /^#?\/?$/, screen: () => firstScreen() },
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => regionScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
   { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
@@ -66,6 +70,12 @@ const ROUTES = [
     screen: () => consentScreen(app, { afterChoice: () => (location.hash = "#/settings"), backHref: "#/settings" }),
   },
 ];
+
+function firstScreen() {
+  if (!app.progress.welcomeSeen) return welcomeScreen(app, navigate);
+  if (!app.progress.character && app.characters?.players?.length) return characterScreen(app, navigate);
+  return mapScreen(app);
+}
 
 function notFoundScreen() {
   return h(
@@ -113,13 +123,16 @@ function navigate() {
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent, ui, assets, kana] = await Promise.all([
+  const [result, consent, ui, assets, kana, characters] = await Promise.all([
     loadContent(CONTENT_URL),
     loadConsentText(CONSENT_URL),
     loadUiLabels(UI_LABELS_URL),
     loadAssetManifest(ASSETS_URL),
     loadKana(KANA_URL),
+    loadCharacters(CHARACTERS_URL),
   ]);
+  app.characters = characters.characters;
+  app.characterProblems = characters.problems;
   app.kana = kana.kana;
   app.kanaError = kana.error;
   app.consentText = consent.text;

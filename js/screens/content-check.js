@@ -3,6 +3,7 @@
 
 import { h } from "../dom.js";
 import { checkAssets } from "../assets.js";
+import { unknownSpeakers } from "../cast.js";
 import { backLink, issueList } from "./common.js";
 
 const ASSET_STATE = {
@@ -54,6 +55,20 @@ function assetSection(app) {
   );
 }
 
+function charactersSection(app) {
+  const unknown = app.model && app.characters ? unknownSpeakers(app.model, app.characters) : [];
+  const problems = [
+    ...app.characterProblems,
+    ...unknown.map((id) => `Pembicara "${id}" dipakai di percakapan, tetapi belum terdaftar di bagian "others".`),
+  ];
+  return h(
+    "section",
+    { class: "card", "aria-labelledby": "characters-title" },
+    h("h2", { id: "characters-title" }, "Karakter (data/characters.json)"),
+    problems.length ? problems.map((p) => h("p", { class: "notice notice--warning" }, `⚠ ${p}`)) : h("p", {}, "✓ Semua karakter lengkap.")
+  );
+}
+
 export function contentCheckScreen(app) {
   return h(
     "div",
@@ -82,6 +97,7 @@ export function contentCheckScreen(app) {
         ? app.uiProblems.map((p) => h("p", { class: "notice notice--warning" }, `⚠ ${p}`))
         : h("p", {}, "✓ Semua label lengkap dan berfurigana.")
     ),
+    charactersSection(app),
     assetSection(app)
   );
 }

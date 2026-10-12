@@ -919,7 +919,7 @@ function validateLine(line, index, role, convCtx, quest, report) {
     report.error(
       ctx.field("speaker"),
       "INVALID_SPEAKER",
-      `Pembicara harus "pemain" (di JSON: "player") atau id tokoh dengan huruf kecil latin, angka, dan "-" (misalnya hana). Ditemukan "${speaker}".`
+      `Pembicara harus "pemain" (di JSON: "player") atau id tokoh dengan huruf kecil latin, angka, dan "-" (misalnya lawan-bicara). Ditemukan "${speaker}".`
     );
   }
 
