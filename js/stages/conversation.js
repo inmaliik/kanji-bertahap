@@ -13,13 +13,44 @@ export function speakerName(speaker) {
   return speaker === PLAYER_SPEAKER ? "Kamu" : speaker.charAt(0).toUpperCase() + speaker.slice(1);
 }
 
-export function sceneCaption(conversation) {
+/** File of a conversation's scene illustration, from the asset slot pattern. */
+export const scenePath = (slot, conversation) => slot?.pattern?.replace("{conversationId}", conversation.id) ?? null;
+
+/**
+ * Scene illustration with the scene description as its caption. Until the
+ * team draws it, a box names the file and its size; together with the
+ * caption below it, that is the brief for the asset team (D-94).
+ * @param {object} conversation
+ * @param {object|undefined} slot the "adegan" slot of data/assets.json
+ */
+export function sceneFigure(conversation, slot) {
+  const path = scenePath(slot, conversation);
+  const placeholder = () =>
+    h(
+      "span",
+      { class: "scene__placeholder" },
+      h("span", { class: "scene__placeholder-title" }, "Ilustrasi belum ada"),
+      path ? h("span", {}, `${path} · ${slot.width}×${slot.height} ${slot.format}`) : null
+    );
+  const box = h("span", { class: "asset scene__image", style: slot ? `aspect-ratio: ${slot.width} / ${slot.height}` : "aspect-ratio: 3 / 2" });
+  if (path) {
+    const img = h("img", { class: "asset__img", src: path, alt: "" });
+    img.addEventListener("error", () => box.replaceChildren(placeholder()), { once: true });
+    box.append(img);
+  } else {
+    box.append(placeholder());
+  }
   return h(
-    "p",
-    { class: "dialog__scene" },
-    h("span", { class: "sr-only" }, "Situasi: "),
-    conversation.scene,
-    conversation.isPlaceholder ? h("span", { class: "dialog__placeholder" }, " · percakapan sementara, akan diganti tim konten") : null
+    "figure",
+    { class: "scene" },
+    box,
+    h(
+      "figcaption",
+      { class: "dialog__scene" },
+      h("span", { class: "sr-only" }, "Situasi: "),
+      conversation.scene,
+      conversation.isPlaceholder ? h("span", { class: "dialog__placeholder" }, " · percakapan sementara, akan diganti tim konten") : null
+    )
   );
 }
 

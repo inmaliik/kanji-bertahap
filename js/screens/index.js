@@ -209,8 +209,35 @@ export function kanjiDetailScreen(app, ch) {
       detailRow(uiLabel(app, "strokeCount"), Number.isInteger(entry.strokeCount) ? String(entry.strokeCount) : h("span", { class: "muted" }, "belum diisi")),
       detailRow("JLPT", entry.jlptLevel)
     ),
+    sameBushu(app, c, entry),
     h("h2", {}, uiLabel(app, "strokeOrder")),
     strokeOrder(app, entry)
+  );
+}
+
+/**
+ * Other kanji of the index with the same bushu (D-90). Only while this
+ * bushu may be shown, and only kanji whose own shape question is no longer
+ * pending: listing 休 under 亻 would answer 休's shape question.
+ */
+function sameBushu(app, c, entry) {
+  if (!shapeSettled(c.model, c.progress, entry.char)) return null;
+  const forms = new Set([entry.bushu.char, ...(entry.bushu.variants ?? [])]);
+  const others = c.kanji
+    .filter((ch) => ch !== entry.char)
+    .map((ch) => c.model.kanji.get(ch))
+    .filter((k) => k && forms.has(k.bushu.char) && shapeSettled(c.model, c.progress, k.char));
+  return h(
+    "section",
+    { class: "same-bushu" },
+    h("h2", {}, "Kanji lain dengan ", uiLabel(app, "bushu", { gloss: false }), " ini"),
+    others.length
+      ? h(
+          "ul",
+          { class: "same-bushu__list" },
+          others.map((k) => h("li", {}, h("a", { class: "same-bushu__kanji", href: kanjiHref(k.char), lang: "ja" }, k.char)))
+        )
+      : h("p", { class: "muted" }, "Belum ada di index. Kanji lain dengan bushu ini muncul setelah kamu mempelajarinya.")
   );
 }
 

@@ -17,7 +17,7 @@ Kode A1–A11 merujuk pada daftar masalah spesifikasi yang dibahas pada putaran 
 
 Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan ada di entri masing-masing.
 
-- **D-15** — Varian soal tahap Bentuk untuk kanji yang sekaligus bushu (misalnya 食 → 食): soal apa yang dipakai sebagai pengganti?
+- **D-15 / D-90** — Kanji yang sekaligus bushu (人, 日, 月, …; 16 dari 41 kanji materi tim): di cabang `desain-peta` soal Bentuk diganti kartu perkenalan tanpa nilai. Apakah ini diterima?
 - **D-18** — Tabel cara baca menampilkan okurigana redup (た + べる kecil) alih-alih notasi bentuk kamus た(べる): apakah tampilan ini diterima?
 - **D-20** — Pengecoh lintas jenis bacaan (misalnya しょくべます untuk 食べます): bolehkah bentuk yang salah ditampilkan kepada pemula?
 - **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
@@ -148,6 +148,7 @@ dengan nilai pretest dan posttest, sehingga kode peserta diperlukan untuk uji ef
 ditolak:** Reset yang ikut menghapus log, dan sistem login.
 
 ### D-15 · Varian soal tahap Bentuk untuk kanji yang sekaligus bushu ditunda *(Menunggu dosen)*
+*Diselesaikan sementara oleh D-90 di cabang `desain-peta`, menunggu tinjauan dosen.*
 **Tanggal:** 2026-09-13. **Keputusan:** Tahap Bentuk tetap berjalan seperti spesifikasi. Field opsional
 `bushu.variants` ditambahkan sekarang tetapi belum dipakai logika mana pun. **Alasan:** Untuk kanji yang
 sekaligus bushu (食 → 食), soal terlihat identik dengan jawabannya. Namun varian soal lain (misalnya
@@ -559,6 +560,7 @@ spreadsheet oleh skrip Apps Script (memberi siapa pun yang mengetahui URL kemamp
 menawarkan penghapusan sama sekali.
 
 ### D-54 · Versi peta dibangun di cabang `desain-peta`; `main` menjadi cadangan
+*Bagian alat ekspor dibatalkan oleh D-96.*
 **Tanggal:** 2026-09-29. **Keputusan:** Arah baru dari tim (peta wilayah per bab, quest percakapan, index kanji,
 karakter pemain, tabel kana) dibangun di cabang git `desain-peta` dalam lima langkah dengan titik berhenti. Cabang
 `main` tidak diubah dan tetap bisa dipakai sebagai cadangan jika versi peta belum siap saat validasi ahli. Tim konten
@@ -933,6 +935,71 @@ peta dan di Pengaturan) dan akan ada di kepala pratinjau (langkah 5). Judul buku
 (label `bookTitle`, berfurigana). Pemilihan karakter (langkah 5) akan disisipkan setelah layar sambutan.
 **Alasan:** D-71.
 
+### D-90 · Kanji yang bushunya dirinya sendiri: kartu perkenalan, bukan soal Bentuk
+**Tanggal:** 2026-10-12. **Keputusan:** Menyelesaikan D-15 (A9). Jika `bushu.char` sama dengan kanjinya (人, 日, 月, 木,
+…), soal Bentuk ditiadakan. Setelah percakapan pengantar, quest menampilkan kartu tanpa nilai yang menyatakan bahwa
+kanji ini sendiri merupakan bushu, beserta nama dan artinya. Kartu ini tidak dicatat sebagai jawaban dan tidak ikut
+syarat kelulusan; `bushu_options` boleh kosong untuk kanji ini. Jendela detail kanji di index menampilkan kanji lain
+yang memakai bushu yang sama (termasuk variannya), hanya yang soal Bentuknya sudah tidak tertunda (D-79). Deteksinya
+dari data, tanpa daftar di kode. **Alasan:** Soal "pilih bushu dari kanji ini" untuk 日 jawabannya 日 itu sendiri, jadi
+tidak menguji apa pun; di materi tim, hampir separuh kanji (16 dari 41) termasuk jenis ini. **Status:** *Menunggu
+dosen*. **Alternatif ditolak:** Tetap menanyakannya (soal tanpa isi); mengganti dengan soal lain yang belum dirancang.
+
+### D-91 · Penanda di dalam materi
+**Tanggal:** 2026-10-12. **Keputusan:** Isi yang belum ditulis diberi penanda di teksnya, bukan dikosongkan.
+`«NAMA-…»` menandai nama yang harus dibuat tim (pengganti nama tokoh, perusahaan, dan universitas dari buku) dan
+selalu **error**, jadi materi yang masih memuatnya tidak bisa dimuat aplikasi. `«BELUM DIISI: …»`, `«TULIS ULANG: …»`,
+dan `«PERIKSA: …»` mengikuti aturan draf (D-92). Setiap teks di materi diperiksa. **Alasan:** Kolom kosong tidak
+membedakan "lupa" dari "belum ditulis", dan tidak bisa dicari di spreadsheet. Nama dari buku tidak boleh lolos ke
+aplikasi dalam keadaan apa pun, karena materi tidak boleh disalin dari buku (D-62).
+
+### D-92 · Kelengkapan dipaksa saat rilis, bukan saat draf
+**Tanggal:** 2026-10-12. **Keputusan:** Selama `contentRevision` diawali `draft`, quest tanpa percakapan uji,
+penanda `«BELUM DIISI»`/`«TULIS ULANG»`/`«PERIKSA»`, dan nilai `?` di `sentence_chapter` atau `stroke_count` hanya
+memunculkan **peringatan**. Quest tanpa percakapan uji tetap bisa dimainkan: langkah uji dilewati, dan layar quest serta
+jendela bab menandainya belum lengkap. Begitu revisi bukan draf, semuanya menjadi **error**. **Alasan:** Tim bisa
+mencoba alur pengantar dan latihan dengan materi sungguhan tanpa menunggu puluhan percakapan uji selesai, sementara
+materi yang belum lengkap tidak mungkin terbawa ke rilis.
+
+### D-93 · Kotoba khusus index dari daftar jukugo
+**Tanggal:** 2026-10-12. **Keputusan:** Kata dari daftar jukugo tim yang bukan kotoba quest diimpor sebagai kotoba
+khusus index. Kotoba ini boleh berbab `null` (di luar buku); kotoba quest tetap wajib berbab 1–12. Aturan tampilnya:
+kotoba khusus index muncul di index setelah **semua quest yang melatih salah satu kanjinya tuntas** (dan, jika babnya
+punya wilayah, semua quest wilayah itu tuntas). Kotoba tanpa kanji sasaran apa pun tidak tampil. Kotoba berbab `null`
+tidak ikut kartu kontras di soal cara baca. **Alasan:** Bacaan kotoba seperti 本日 (日 dibaca じつ) bisa menjawab soal
+cara baca quest yang memakai kanji yang sama; menunggu quest-quest itu tuntas adalah penerapan langsung D-79. Kotoba
+ini tidak punya percakapan pengantar, jadi tidak ada momen pengenalan lain. **Alternatif ditolak:** Menampilkannya
+setelah wilayah tertentu terbuka (wilayahnya tidak ada untuk kata di luar buku).
+
+### D-94 · Ilustrasi adegan per percakapan
+**Tanggal:** 2026-10-12. **Keputusan:** Deskripsi ilustrasi dari dokumen tim menjadi kolom `scene`. Setiap percakapan
+punya slot gambar `assets/adegan/<ID percakapan>.png` (960×640, 3:2, maks 150 KB), tampil di atas percakapan pengantar
+dan uji, dengan deskripsi sebagai keterangan di bawahnya. Selama berkasnya belum ada, kotak bertuliskan nama berkas dan
+ukurannya menggantikan gambar, sehingga kotak itu bersama deskripsinya menjadi brief bagi tim aset. Slot ini tidak
+punya berkas placeholder; pemeriksa aset menandai berkas yang belum ada dengan ⚠, bukan ✗. **Alasan:** Puluhan berkas
+placeholder akan dibuat ulang setiap kali ID percakapan berubah; kotak dari kode selalu sesuai data.
+
+### D-95 · Impor materi tim: menyalin, bukan menulis
+**Tanggal:** 2026-10-12. **Keputusan:** Isi `konteks.docx` disalin ke lima CSV di `sumber/impor/` (tidak masuk git,
+tidak diunggah), bersama `CATATAN-IMPOR.md` berisi tanda per butir. Satu butir = satu quest dengan kotoba dari kurung
+di dokumen, kecuali tiga koreksi yang ditetapkan (一階, 八百, 九時); pembagian wilayah mengikuti tabel tim. Yang
+**disalin**: kalimat percakapan, pilihan A–D sebagai pengecoh cara baca, deskripsi ilustrasi, arti dari daftar jukugo.
+Yang **diisi pengembang sebagai draf dan masuk daftar verifikasi**: furigana setiap baris (dokumen tidak berfurigana),
+data kanji (bushu, pilihan bushu, guratan, bacaan kun/on, JLPT), `reading_type` dan `pos`, serta pembagian pembicara.
+Yang **tidak diisi** dan diberi penanda: terjemahan, arti kotoba dan kanji, nama dan ringkasan wilayah,
+`sentence_chapter`, percakapan uji. Nama dari buku diganti penanda `«NAMA-…»` (D-91). Butir 車 tidak diimpor karena
+babnya belum diketahui; isinya tercatat di catatan impor. **Pembicara:** baris yang memuat nama selalu diucapkan
+lawan bicara; pada tiga butir (学生, 会社, 社員) kedua baris memuat nama atau identitas, sehingga ditandai untuk ditata
+ulang tim. **Alasan:** Materi adalah karya tim; pengembang hanya memindahkan format dan menandai kekurangannya.
+
+### D-96 · Alat ekspor ke `main` dibatalkan; `main` diarsipkan dengan tag
+**Tanggal:** 2026-10-12. **Keputusan:** Membatalkan alat ekspor satu arah dari D-54. Di langkah 5, `main` yang sekarang
+diberi tag `v1-akhir` sebagai arsip cadangan, lalu `desain-peta` digabung ke `main`. **Alasan:** (1) `desain-peta` sudah
+bisa dimainkan utuh dan teruji di empat langkah; (2) materi sungguhan tim hanya ada dalam skema v2 dan memakai hal yang
+tidak dikenal skema lama (ilustrasi adegan, kotoba khusus index, kartu bushu), sehingga ekspor hanya menghasilkan versi
+yang jauh lebih miskin untuk validator; (3) alat ekspor harus dirawat setiap kali skema v2 berubah, padahal skema itu
+masih berubah. Tag memberi cadangan tanpa biaya perawatan.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -1051,3 +1118,12 @@ yang mengubahnya menjadi teks. **Tindakan:** Isi disusun lewat `h()`, yang merat
 mengikuti panduan akan tampil tanpa peta dan ikon. **Tindakan:** `assets/` ditambahkan ke daftar salin, dan
 `ASSETS.md` ke daftar jangan salin. **Dampak:** Setiap folder baru yang dibaca aplikasi harus ikut diperiksa di
 panduan deploy.
+
+### T-16 · On'yomi 日 disembunyikan tanpa alasan
+**Tanggal:** 2026-10-12. **Temuan:** Pada tangkapan layar umpan balik soal cara baca 日本 dari materi tim, baris on'yomi
+tabel bacaan 日 disembunyikan, dengan pesan versi lama "Ditampilkan setelah soal On'yomi dijawab". Penyebabnya:
+kotoba khusus index yang berbab `null` (今日, 本日, 来日, …) ikut terhitung sebagai kotoba "bab sebelumnya", karena di
+JavaScript `null <= 1` bernilai benar; kotoba itu belum boleh tampil, sehingga jenis bacaannya ikut disembunyikan.
+**Tindakan:** Kartu kontras hanya mengambil kotoba yang babnya bilangan bulat; pesannya diganti "Tampil setelah soal
+cara bacanya kamu kuasai". Uji otomatis ditambahkan. **Dampak:** Bukan kebocoran, tetapi penyembunyian berlebihan
+yang membuat umpan balik kehilangan isinya. Terlihat hanya dengan materi sungguhan.

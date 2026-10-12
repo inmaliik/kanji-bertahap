@@ -9,6 +9,9 @@ Thumbs.db
 exports/
 logs/
 
+# Team source material (documents, original artwork). Not part of the app; never uploaded.
+sumber/
+
 # Temporary test folders (e.g. 30-level dummy content)
 tmp/
 .tmp/

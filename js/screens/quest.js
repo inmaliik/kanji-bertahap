@@ -12,9 +12,9 @@
 // Routes use the region and the quest's position, never the quest id, which
 // may spell the kotoba (Q-tabemasu) in the address bar (D-81).
 
-import { h } from "../dom.js";
+import { h, ja } from "../dom.js";
 import { APP_VERSION } from "../config.js";
-import { buildQuestItems, itemId } from "../model.js";
+import { buildQuestItems, isIncompleteQuest, isOwnBushu, itemId } from "../model.js";
 import { createSession, PHASE } from "../session.js";
 import { logAnswer } from "../logger.js";
 import { STREAK_TO_MASTER, STATUS, beginAttempt, consentStatus, createId, FURIGANA_MODE, isRecordingAllowed, saveProgress, touch } from "../state.js";
@@ -83,6 +83,7 @@ export function questScreen(app, regionKey, position) {
     region,
     isReview: false,
     title: `Bab ${region.chapter} · Quest ${index + 1}`,
+    incomplete: isIncompleteQuest(modelQuest), // draft only (D-92)
     levelId: quest.id,
     items: buildQuestItems(model, modelQuest),
     streaks: app.progress.items,
@@ -199,6 +200,7 @@ function sessionScreen(app, cfg) {
   const mode = app.progress.settings.furiganaMode;
   const byKotoba = questByKotoba(model);
   const exitHref = regionHref(region);
+  const sceneSlot = app.assets?.get("adegan");
 
   const persist = () => {
     touch(app.progress);
@@ -275,6 +277,9 @@ function sessionScreen(app, cfg) {
         h("span", { class: "play-header__level" }, cfg.title)
       ),
       phase ? h("p", { class: "play-header__stage" }, h("span", {}, stepLabel(phase, stage, isReview))) : null,
+      cfg.incomplete
+        ? h("p", { class: "notice notice--warning play-header__incomplete" }, "⚠ Quest belum lengkap: belum ada uji konteks, jadi langkah itu dilewati.")
+        : null,
       progress
         ? h(
             "div",
@@ -294,6 +299,7 @@ function sessionScreen(app, cfg) {
       targetKanji: quest.targetKanji,
       mode,
       otherLeaks: otherLeaksFor(quest),
+      sceneSlot,
       onDone: ({ replays }) => {
         record(quest, {
           questStep: "intro",
@@ -307,9 +313,43 @@ function sessionScreen(app, cfg) {
         });
         entry.introDone = true;
         persist();
-        show();
+        const ownBushu = quest.targetKanji.map((ch) => model.kanji.get(ch)).filter(isOwnBushu);
+        if (ownBushu.length) showCard(bushuCards(ownBushu));
+        else show();
       },
     });
+  }
+
+  // D-90: a target kanji that is its own bushu gets an unscored card instead
+  // of the shape question. Not logged as an answer, not part of passing.
+  function bushuCards(kanjiList) {
+    return h(
+      "div",
+      { class: "question bushu-card" },
+      h("h2", { class: "question__title", tabindex: "-1" }, kanjiList.length > 1 ? "Kanji yang sekaligus bushu" : "Kanji ini sekaligus bushu"),
+      kanjiList.map((k) =>
+        h(
+          "section",
+          { class: "card bushu-card__item" },
+          ja("p", { class: "kanji-main" }, k.char),
+          h(
+            "p",
+            {},
+            "Kanji ",
+            ja("span", { class: "inline-kanji" }, k.char),
+            ` sendiri merupakan bushu: ${k.bushu.name}, "${k.bushu.meaning}". Bushu ini juga menjadi bagian dari kanji lain, `,
+            "jadi mengenalinya membantu membaca kanji-kanji itu."
+          )
+        )
+      ),
+      h("button", { type: "button", class: "button button--primary button--block", onClick: show }, "Lanjut")
+    );
+  }
+
+  function showCard(body) {
+    root.replaceChildren(header({ phase: "intro" }), body);
+    window.scrollTo(0, 0);
+    root.querySelector(".question__title")?.focus({ preventScroll: true });
   }
 
   function itemView(step) {
@@ -357,6 +397,7 @@ function sessionScreen(app, cfg) {
       mode,
       readingRevealed: isRevealed(kotoba, phase),
       otherLeaks: otherLeaksFor(quest),
+      sceneSlot,
     });
   }
 

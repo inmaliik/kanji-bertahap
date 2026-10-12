@@ -8,7 +8,7 @@ import { parseRuby, renderRuby } from "../ruby.js";
 import { containsAny, visibleSegments } from "../furigana.js";
 import { anyLeak } from "../reveal.js";
 import { choiceQuestion } from "./choice.js";
-import { dialogLine, lineTranslation, sceneCaption } from "./conversation.js";
+import { dialogLine, lineTranslation, sceneFigure } from "./conversation.js";
 
 const BLANK_MARK = "___"; // how the blank appears in the logged prompt
 
@@ -21,7 +21,7 @@ const BLANK_MARK = "___"; // how the blank appears in the logged prompt
  * @param {boolean} ctx.readingRevealed D-29: the kotoba's reading is no longer pending
  * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  */
-export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, otherLeaks = () => false, random, onAnswer, onContinue }) {
+export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, otherLeaks = () => false, sceneSlot, random, onAnswer, onContinue }) {
   const { conversation, lineIndex, line, blankRange, plain } = item;
   const options = blankOptions(line, random);
   const targetLeaks = anyLeak(containsAny(targetKanji), otherLeaks);
@@ -64,7 +64,7 @@ export function renderTest({ item, kotoba, targetKanji, mode, readingRevealed, o
   return choiceQuestion({
     prompt: [
       h("h2", { class: "question__title", tabindex: "-1" }, "Pilih kotoba yang tepat untuk bagian kosong"),
-      sceneCaption(conversation),
+      sceneFigure(conversation, sceneSlot),
       h("ol", { class: "dialog" }, lines),
       h("div", { class: "hint" }, hintButton),
     ],

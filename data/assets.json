@@ -43,6 +43,17 @@
       "maxKB": 30,
       "screen": "Menu di peta dan layar lain di luar quest: tombol Pengaturan",
       "placeholderSha256": "71b75424aad515aff45ab9fcf1d1ba0ff4b4b88672a3f0a6dd342c903dffb6ad"
+    },
+    {
+      "id": "adegan",
+      "pattern": "assets/adegan/{conversationId}.png",
+      "format": "PNG",
+      "width": 960,
+      "height": 640,
+      "transparent": false,
+      "maxKB": 150,
+      "screen": "Percakapan pengantar dan uji: ilustrasi adegan, satu berkas per percakapan (nama berkas = ID percakapan)",
+      "placeholderSha256": null
     }
   ]
 }

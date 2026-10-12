@@ -270,7 +270,7 @@ punya baris; di index kanji itu tampil dengan bacaannya saja.
 | `bushu_name` | Nama bushu | `shoku` |
 | `bushu_meaning` | Arti bushu | `makan / makanan` |
 | `bushu_variants` | *Daftar, boleh kosong.* Bentuk lain bushu yang sama | `飠` |
-| `bushu_options` | *Daftar.* Pilihan soal Bentuk, termasuk jawaban benar | `食;人;米;皿` |
+| `bushu_options` | *Daftar.* Pilihan soal Bentuk, termasuk jawaban benar. **Kosongkan** untuk kanji yang bushunya dirinya sendiri (人, 日, 月, …): kanji itu mendapat kartu perkenalan, bukan soal (D-90). | `口;夕;人;十` |
 | `kunyomi` | *Daftar, boleh kosong.* Hiragana, okurigana dalam kurung | `た(べる);く(う)` |
 | `onyomi` | *Daftar, boleh kosong.* Katakana | `ショク` |
 
@@ -289,7 +289,7 @@ Satu baris = satu kotoba. Kotoba masuk ke wilayah bab yang sama dengan kolom `ch
 | `reading_type` | `kunyomi`, `onyomi`, atau `special` (jukujikun seperti 今日, atau bacaan yang tidak bisa dipisah per kanji) | `kunyomi` |
 | `pos` | `verb`, `noun`, `i-adj`, `na-adj`, `adverb`, `other` | `verb` |
 | `meaning` | Arti kotoba | `makan` |
-| `chapter` | Bab Minna tempat kotoba ini diajarkan, **1–12**. Di luar itu adalah error. | `6` |
+| `chapter` | Bab Minna tempat kotoba ini diajarkan, **1–12**. Kotoba quest wajib punya bab. Kotoba khusus index (bukan quest) boleh `-` untuk "di luar buku". | `6` |
 | `note` | *Boleh kosong.* Catatan untuk umpan balik, misalnya perubahan bunyi | |
 | `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca **sejenis** buatan tim | `くべます;のべます;しらべます` |
 | `reading_distractors_cross` | *Daftar, boleh kosong.* Pengecoh cara baca **lintas jenis** (lihat [Menulis pengecoh](#menulis-pengecoh)) | `しょくべます` |
@@ -327,9 +327,23 @@ beberapa baris, isinya harus sama.
 | `highlight` | *Hanya percakapan pengantar, boleh kosong.* Bagian kalimat yang disorot (kotoba quest, dalam bentuk yang muncul di kalimat) | `食べます` |
 | `blank` | *Hanya percakapan uji.* Bagian yang dikosongkan; tepat satu baris per percakapan uji | `食べます` |
 | `distractors` | *Hanya baris ber-`blank`, wajib minimal 3.* Pengecoh buatan tim | `飲みます;読みます;書きます` |
-| `sentence_chapter` | **Wajib.** Bab Minna tertinggi yang dibutuhkan **seluruh** percakapan. `-` jika memakai kata atau pola di luar buku. | `6` |
-| `scene` | Keterangan situasi dalam bahasa Indonesia, tampil di atas percakapan | `Di kantin kampus` |
+| `sentence_chapter` | **Wajib.** Bab Minna tertinggi yang dibutuhkan **seluruh** percakapan. `-` jika memakai kata atau pola di luar buku; `?` jika belum diperiksa (hanya boleh selama draf). | `6` |
+| `scene` | Deskripsi adegan dalam bahasa Indonesia. Tampil di bawah ilustrasi percakapan, dan sekaligus menjadi brief ilustrasi untuk tim aset (lihat `ASSETS.md`). | `Dua orang di kantin kampus` |
 | `placeholder` | *Boleh kosong.* `ya` hanya untuk percakapan sementara buatan pengembang | |
+
+### Penanda dan aturan draf
+
+Isi yang belum ditulis tidak dikosongkan, tetapi diberi **penanda** supaya pemeriksa materi bisa melacaknya (D-91, D-92):
+
+| Penanda | Dipakai untuk | Selama revisi `draft…` | Saat rilis |
+|---|---|---|---|
+| `«NAMA-…»`, misalnya `«NAMA-TOKOH-1»` | Nama yang harus dibuat tim (tidak boleh nama tokoh, perusahaan, atau universitas dari buku) | **Error** | **Error** |
+| `«BELUM DIISI: …»`, `«TULIS ULANG: …»`, `«PERIKSA: …»` | Isi yang belum ditulis atau harus diperbaiki | Peringatan | Error |
+| `?` di `sentence_chapter` atau `stroke_count` | Angka yang belum diperiksa | Peringatan | Error |
+| Quest tanpa percakapan uji | — | Peringatan; quest bisa dimainkan tanpa uji konteks dan bertanda belum lengkap | Error |
+
+Dengan begitu tim bisa langsung mencoba alur pengantar dan latihan dengan materi sungguhan, tanpa menunggu semua
+percakapan uji selesai, sementara materi yang belum lengkap tidak mungkin terbawa ke rilis.
 
 > Template `tools/templates/percakapan.csv` masih berisi **empat percakapan sementara** satu baris, disusun dari
 > contoh kalimat lama supaya aplikasi bisa diuji. Template itu contoh **bentuk kolom**, bukan contoh percakapan
@@ -662,6 +676,15 @@ Semua ambang ada di bagian atas `js/state.js` sebagai konstanta bernama:
 
 Quest tuntas bila semua item dikuasai dan Produksi sudah dikirim. Kotoba ber-`reading_type` `special` tidak
 punya soal cara baca.
+
+**Kanji yang bushunya dirinya sendiri** (人, 日, 月, 木, …; terdeteksi dari data: `bushu_char` sama dengan kanjinya)
+tidak punya soal Bentuk. Setelah percakapan pengantar, quest menampilkan **kartu perkenalan** tanpa nilai: kanji ini
+sendiri adalah bushu, beserta namanya dan artinya. Kartu ini tidak dicatat sebagai jawaban dan tidak ikut syarat
+kelulusan (D-90, menunggu tinjauan dosen). Jendela detail kanji di index menampilkan kanji lain yang memakai bushu
+itu, hanya yang soal Bentuknya sudah tidak tertunda.
+
+**Ilustrasi adegan.** Setiap percakapan punya slot gambar `assets/adegan/<ID percakapan>.png`. Selama belum digambar,
+tampil kotak bertuliskan nama berkasnya, dengan deskripsi adegan (`scene`) di bawahnya (D-94).
 
 **Soal Bentuk berlaku di seluruh permainan.** Satu kanji punya satu item Bentuk (`K:食:shape`). Jika sudah
 dikuasai di satu quest, quest lain dengan kanji sasaran yang sama tidak menanyakannya lagi, tetapi item itu
@@ -1176,7 +1199,8 @@ Aturan D-79 berlaku di semua tingkat:
 
 | Isi | Tampil jika |
 |---|---|
-| Kanji dan kotoba | Percakapan pengantar quest-nya sudah disimak. |
+| Kanji dan kotoba quest | Percakapan pengantar quest-nya sudah disimak. |
+| Kotoba khusus index (dari daftar jukugo, bukan quest) | Semua quest yang melatih salah satu kanjinya sudah tuntas (D-93). Kotoba tanpa kanji sasaran mana pun tidak tampil. |
 | Cara baca kotoba dan bacaan kanji di dalamnya | Soal cara baca kotoba itu sudah dikuasai, atau quest-nya tuntas. |
 | Baris 音読み / 訓読み di detail kanji | Tidak ada kotoba quest dengan kanji itu dan jenis bacaan itu yang soal cara bacanya masih tertunda. |
 | 部首 | Soal Bentuk kanji itu sudah dikuasai (jawaban soal itu adalah bushunya). |

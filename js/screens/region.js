@@ -11,7 +11,7 @@ import { h, ja } from "../dom.js";
 import { FURIGANA_MODE, STATUS } from "../state.js";
 import { nodeStatuses, questIntroduced, questPassed, questStarted, regionSummary } from "../progression.js";
 import { kotobaVisible, questByKotoba, readingSettled } from "../reveal.js";
-import { kotobaWithKanji } from "../model.js";
+import { isIncompleteQuest, kotobaWithKanji } from "../model.js";
 import { uiLabel } from "../ui-labels.js";
 import { backLink, kotobaWithReading, LABELS, READING_DISPLAY } from "./common.js";
 import { menuBar } from "./menu.js";
@@ -74,6 +74,7 @@ export function regionScreen(app, regionKey) {
         h("p", { class: "quest-row__title" }, `Quest ${i + 1}`),
         h("p", { class: "quest-row__kotoba" }, word, word ? " · " : null, kotoba.meaning),
         h("p", { class: `quest-row__status status status--${status.cls}` }, status.text),
+        isIncompleteQuest(quest) ? h("p", { class: "quest-row__note" }, "⚠ Belum lengkap: belum ada uji konteks.") : null,
         recurring.map(({ ch, other }) =>
           h(
             "p",

@@ -6,7 +6,7 @@
 // shown, but its reading only once the reading question is no longer pending
 // (quest passed, or reading mastered).
 
-import { itemId, kotobaParts, plainLine } from "./model.js";
+import { isOwnBushu, itemId, kotobaParts, plainLine } from "./model.js";
 import { STREAK_TO_MASTER } from "./state.js";
 import { questIntroduced, questPassed } from "./progression.js";
 import { isKanji, toHiragana } from "./jp-text.js";
@@ -18,15 +18,20 @@ export function questByKotoba(model) {
 
 /**
  * May the kotoba itself appear outside its quest (region window, index)?
- * Quest kotoba: once their intro was read. Kotoba that are not a quest: once
- * every quest of their region is passed, because their readings may answer a
- * question of that region (a kotoba with 食 read しょく before the 食堂 quest).
+ * Quest kotoba: once their intro was read. Index-only kotoba (D-93): once
+ * every quest that drills one of its kanji is passed, because their readings
+ * may answer those quests' questions (本日 shows 日 read じつ); a kotoba with no
+ * drilled kanji at all has nothing to anchor it in the index and stays hidden.
+ * If it belongs to a chapter that has a region, that region's quests must be
+ * passed as well.
  */
 export function kotobaVisible(model, progress, kotoba, byKotoba = questByKotoba(model)) {
   const quest = byKotoba.get(kotoba.id);
   if (quest) return questIntroduced(progress, quest) || questPassed(progress, quest);
+  const drilling = [...model.quests.values()].filter((q) => q.targetKanji.some((ch) => kotoba.word.includes(ch)));
+  if (!drilling.length || !drilling.every((q) => questPassed(progress, q))) return false;
   const region = model.regions.find((r) => r.chapter === kotoba.chapter);
-  return Boolean(region) && region.quests.every((q) => questPassed(progress, q));
+  return !region || region.quests.every((q) => questPassed(progress, q));
 }
 
 /** May the kotoba's reading appear outside its quest? */
@@ -80,6 +85,7 @@ export function indexKanji(kotobaList) {
  * shape question, so only once that item is mastered, or when no quest asks it.
  */
 export function shapeSettled(model, progress, kanji) {
+  if (isOwnBushu(model.kanji.get(kanji))) return true; // no shape question, an introduction card (D-90)
   const asking = [...model.quests.values()].filter((q) => q.targetKanji.includes(kanji));
   if (!asking.length) return true;
   if (asking.every((q) => questPassed(progress, q))) return true;

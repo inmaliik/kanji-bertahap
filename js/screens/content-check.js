@@ -16,18 +16,18 @@ function assetSection(app) {
   const list = h("ul", { class: "asset-checks", "aria-live": "polite" }, h("li", { class: "muted" }, "Memeriksa aset…"));
   const summary = h("p", {});
   if (app.assets.size) {
-    checkAssets(app.assets).then((results) => {
+    checkAssets(app.assets, app.model ? [...app.model.conversations.keys()] : []).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;
       summary.textContent =
-        `${results.length} slot: ${count("ok")} sudah diganti, ${count("placeholder")} masih placeholder, ` +
+        `${results.length} berkas: ${count("ok")} sudah diganti, ${count("placeholder")} masih placeholder, ` +
         `${count("missing") + count("problem")} perlu diperbaiki.`;
       list.replaceChildren(
-        ...results.map(({ slot, state, messages, bytes }) => {
+        ...results.map(({ slot, path, state, messages, bytes }) => {
           const s = ASSET_STATE[state];
           return h(
             "li",
             { class: `asset-check asset-check--${s.cls}` },
-            h("p", { class: "asset-check__head" }, h("span", { "aria-hidden": "true" }, `${s.icon} `), `${s.text} · `, h("code", {}, slot.path)),
+            h("p", { class: "asset-check__head" }, h("span", { "aria-hidden": "true" }, `${s.icon} `), `${s.text} · `, h("code", {}, path)),
             h(
               "p",
               { class: "asset-check__spec muted" },

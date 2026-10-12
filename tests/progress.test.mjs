@@ -12,7 +12,8 @@ const { parseRuby } = await import(jsModule("ruby.js"));
 const S = await import(jsModule("state.js"));
 
 const model = buildModel(loadSampleContent());
-const QUEST = model.quests.get("Q-tabemasu");
+// 飲 has a separate bushu (飠), so its quest has all three stages; 食 is its own bushu (D-90).
+const QUEST = model.quests.get("Q-nomimasu");
 const questItems = buildQuestItems(model, QUEST);
 const freshEntry = () => ({ status: "in_progress", attempts: 1, introDone: true, learningDone: false, productionSubmitted: false });
 
@@ -37,12 +38,16 @@ function play({ items = questItems, streaks = {}, entry = freshEntry(), decide =
 }
 
 test("quest items: shape per target kanji, one reading, one test per test conversation", () => {
-  assert.deepEqual(
-    questItems.map((i) => i.id),
-    ["K:食:shape", "W:tabemasu:reading", "C:C-tabemasu-uji-1:test"]
-  );
+  assert.deepEqual(questItems.map((i) => i.id), ["K:飲:shape", "W:nomimasu:reading", "C:C-nomimasu-uji-1:test"]);
   const testItem = questItems[2];
-  assert.equal(testItem.plain.slice(testItem.blankRange.start, testItem.blankRange.end), "食べます");
+  assert.equal(testItem.plain.slice(testItem.blankRange.start, testItem.blankRange.end), "飲みます");
+  // 食 is its own bushu: an unscored introduction card replaces the shape question (D-90).
+  assert.deepEqual(buildQuestItems(model, model.quests.get("Q-tabemasu")).map((i) => i.id), ["W:tabemasu:reading", "C:C-tabemasu-uji-1:test"]);
+  // Draft content may lack test conversations (D-92): the quest has no test items then.
+  const draft = clone(loadSampleContent());
+  draft.regions[0].quests[1].tests = [];
+  const m = buildModel(draft);
+  assert.deepEqual(buildQuestItems(m, m.quests.get("Q-nomimasu")).map((i) => i.stage), ["shape", "reading"]);
 });
 
 test("all correct: practice and test in stage order, production, consolidation, passed", () => {
@@ -84,7 +89,7 @@ test("leaving mid-quest keeps progress, and reopening continues where the player
   const first = play({ stopAfter: 1 });
   const stored = clone({ streaks: first.streaks, entry: first.entry });
   let again = play({ ...stored, stopAfter: 1 });
-  assert.equal(again.trace[0].id, "W:tabemasu:reading", "the answered item is not asked again");
+  assert.equal(again.trace[0].id, "W:nomimasu:reading", "the answered item is not asked again");
 
   // Left during consolidation.
   const mid = play({ stopAfter: 5 });
@@ -97,19 +102,19 @@ test("leaving mid-quest keeps progress, and reopening continues where the player
 
 test("a kanji shape mastered in one quest is not asked again in another quest", () => {
   const content = clone(loadSampleContent());
-  content.kotoba.push({ ...content.kotoba[0], id: "shokudou", word: "食堂", ruby: "[食|しょく][堂|どう]", reading: "しょくどう", readingType: "onyomi" });
-  const quest = clone(content.regions[0].quests[0]);
-  Object.assign(quest, { id: "Q-shokudou", kotoba: "shokudou" });
+  content.kotoba.push({ ...content.kotoba[1], id: "nomimono", word: "飲み物", ruby: "[飲|の]み[物|もの]", reading: "のみもの", pos: "noun" });
+  const quest = clone(content.regions[0].quests[1]);
+  Object.assign(quest, { id: "Q-nomimono", kotoba: "nomimono" });
   quest.tests[0].id = "C-other";
   content.regions[0].quests.push(quest);
   const m = buildModel(content);
 
   const streaks = {};
-  play({ items: buildQuestItems(m, m.quests.get("Q-tabemasu")), streaks });
-  assert.equal(streaks["K:食:shape"], S.STREAK_TO_MASTER);
+  play({ items: buildQuestItems(m, m.quests.get("Q-nomimasu")), streaks });
+  assert.equal(streaks["K:飲:shape"], S.STREAK_TO_MASTER);
 
-  const { trace, done } = play({ items: buildQuestItems(m, m.quests.get("Q-shokudou")), streaks });
-  assert.ok(!trace.some((t) => t.id === "K:食:shape"), "shape of 食 is skipped");
+  const { trace, done } = play({ items: buildQuestItems(m, m.quests.get("Q-nomimono")), streaks });
+  assert.ok(!trace.some((t) => t.id === "K:飲:shape"), "shape of 飲 is skipped");
   assert.equal(done.total, 3, "it still counts as a mastered item of the quest");
 });
 

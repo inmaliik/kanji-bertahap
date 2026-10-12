@@ -2299,3 +2299,67 @@ mark.highlight {
 .map-screen__about {
   text-align: center;
 }
+
+/* Scene illustrations and bushu cards ------------------------------------------------- */
+
+.scene {
+  margin: 0;
+}
+
+.scene__image {
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+.scene__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: 100%;
+  padding: 0.75rem;
+  border: 2px dashed var(--muted);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.scene__placeholder-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.bushu-card__item {
+  text-align: center;
+}
+
+.play-header__incomplete {
+  font-size: 0.875rem;
+}
+
+.same-bushu__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.same-bushu__kanji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 2.5rem;
+  text-decoration: none;
+}

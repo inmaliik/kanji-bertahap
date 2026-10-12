@@ -68,20 +68,33 @@ const RATIO_TOLERANCE = 0.02;
 
 /**
  * Check every slot: missing file, still the placeholder, over the size limit,
- * or a different pixel size or ratio.
- * @returns {Promise<Array<{slot: object, state: string, messages: string[], bytes?: number}>>}
+ * or a different pixel size or ratio. A pattern slot (one file per
+ * conversation, D-94) is checked once per conversation; a missing file there
+ * only means the illustration is not drawn yet.
+ * @param {Map<string, object>} slots
+ * @param {string[]} [conversationIds] for pattern slots
+ * @returns {Promise<Array<{slot: object, path: string, state: string, messages: string[], bytes?: number}>>}
  *   state: "ok" | "placeholder" | "missing" | "problem"
  */
-export async function checkAssets(slots) {
+export async function checkAssets(slots, conversationIds = []) {
+  const targets = [...slots.values()].flatMap((slot) =>
+    slot.pattern
+      ? conversationIds.map((id) => ({ slot, path: slot.pattern.replace("{conversationId}", id), optional: true }))
+      : [{ slot, path: slot.path, optional: false }]
+  );
   return Promise.all(
-    [...slots.values()].map(async (slot) => {
+    targets.map(async ({ slot, path, optional }) => {
       let response;
       try {
-        response = await fetch(slot.path, { cache: "no-cache" });
+        response = await fetch(path, { cache: "no-cache" });
       } catch (err) {
-        return { slot, state: "missing", messages: [`Berkas tidak bisa diambil: ${err.message}`] };
+        return { slot, path, state: "missing", messages: [`Berkas tidak bisa diambil: ${err.message}`] };
       }
-      if (!response.ok) return { slot, state: "missing", messages: [`Berkas tidak ada (HTTP ${response.status}).`] };
+      if (!response.ok) {
+        return optional
+          ? { slot, path, state: "placeholder", messages: ["Belum digambar: aplikasi menampilkan kotak berisi deskripsi adegan."] }
+          : { slot, path, state: "missing", messages: [`Berkas tidak ada (HTTP ${response.status}).`] };
+      }
       const buffer = await response.arrayBuffer();
       const bytes = buffer.byteLength;
       const messages = [];
@@ -112,7 +125,7 @@ export async function checkAssets(slots) {
         state = state === "ok" ? "placeholder" : state;
         messages.unshift("Masih gambar placeholder.");
       }
-      return { slot, state, messages, bytes };
+      return { slot, path, state, messages, bytes };
     })
   );
 }

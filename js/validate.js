@@ -41,6 +41,14 @@ export const PLAYER_SPEAKER = "player";
 /** Speakers per conversation: the player and one other character. */
 export const SPEAKERS_PER_CONVERSATION = 2;
 
+// Placeholders left for the team (D-91). «NAMA-…» stands for a name that the
+// team must invent (never a name from the book) and is always an error;
+// any other «…» is unfinished work: a warning in a draft, an error in a release.
+const PLACEHOLDER = /«([^»]*)»/g;
+const NAME_PLACEHOLDER = /^NAMA-/;
+/** sentenceChapter (and strokeCount) value meaning "not checked yet". */
+export const UNKNOWN_VALUE = "?";
+
 const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const NPC_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const RESERVED_QUEST_ID = /^(REV-|all$)/i;
@@ -81,6 +89,7 @@ class Context {
 
 class Report {
   constructor() {
+    this.draft = false; // contentRevision starts with "draft": incompleteness is a warning, not an error
     this.errors = [];
     this.warnings = [];
     this.notes = []; // information only: never blocks and never counts as a warning
@@ -96,6 +105,11 @@ class Report {
   }
   note(ctx, code, message) {
     this.add(this.notes, "note", ctx, code, message, false);
+  }
+  /** Something still to be written by the team: a warning in a draft, an error in a release (D-92). */
+  incomplete(ctx, code, message) {
+    if (this.draft) this.warn(ctx, code, `${message} Boleh selama revisi masih draf; menjadi error saat rilis.`);
+    else this.error(ctx, code, `${message} Revisi bukan draf, jadi materi belum boleh dipakai.`);
   }
   result() {
     const byProminence = (a, b) => Number(b.prominent) - Number(a.prominent);
@@ -241,11 +255,13 @@ export function validateContent(data) {
   }
   checkKeys(data, ROOT_KEYS, root, report);
   requireString(data, "contentRevision", root, report);
+  report.draft = typeof data.contentRevision === "string" && /^draft/i.test(data.contentRevision);
 
   const kanji = validateKanjiTable(data.kanji, root, report);
   const kotoba = validateKotobaTable(data.kotoba, kanji, root, report);
   const usage = validateRegions(data.regions, { kanji, kotoba }, root, report);
   if (usage) checkUsage(data, { kanji, kotoba, usage }, root, report);
+  checkPlaceholders(data, root, report);
 
   return report.result();
 }
@@ -297,7 +313,7 @@ function validateKanjiEntry(entry, ctx, report) {
     report.error(ctx.field("jlptLevel"), "INVALID_JLPT", `Harus salah satu dari ${JLPT_LEVELS.join(", ")}. Ditemukan ${show(entry.jlptLevel)}.`);
   }
 
-  if (entry.strokeCount === null) {
+  if (entry.strokeCount === null || entry.strokeCount === UNKNOWN_VALUE) {
     report.warn(ctx.field("strokeCount"), "STROKE_COUNT_MISSING", "Jumlah guratan belum diisi. Jendela detail kanji akan menulis \"belum diisi\".");
   } else if (!Number.isInteger(entry.strokeCount) || entry.strokeCount < 1 || entry.strokeCount > STROKE_COUNT_MAX) {
     report.error(
@@ -319,7 +335,9 @@ function validateKanjiEntry(entry, ctx, report) {
   }
 
   const bushu = validateBushu(entry, ctx, report);
-  validateBushuOptions(entry, bushu, ctx, report);
+  // A kanji that is its own bushu gets an introduction card instead of the
+  // shape question (D-90), so it needs no options.
+  if (bushu?.char === undefined || bushu.char !== validChar) validateBushuOptions(entry, bushu, ctx, report);
   validateReadings(entry, ctx, report);
   return validChar;
 }
@@ -503,7 +521,8 @@ function validateKotoba(entry, ctx, report) {
     report.error(ctx.field("pos"), "INVALID_POS", `Harus salah satu dari ${PARTS_OF_SPEECH.join(", ")}. Ditemukan ${show(entry.pos)}.`);
   }
   requireString(entry, "meaning", ctx, report);
-  const chapter = scopeChapter(entry, "chapter", ctx, report, "Kotoba");
+  // null = outside the book: allowed for index-only kotoba, not for quest kotoba (checked per quest).
+  const chapter = entry.chapter === null ? null : scopeChapter(entry, "chapter", ctx, report, "Kotoba");
   optionalString(entry, "note", ctx, report);
 
   const readingLists = {};
@@ -690,6 +709,7 @@ function validateQuest(quest, index, region, tables, usage, parentCtx, report) {
         usage.questKotoba.set(kotobaId, ctx.where);
       }
       if (region.chapter !== undefined && kotoba.chapter !== undefined && kotoba.chapter !== region.chapter) {
+        // also catches null: a quest kotoba must be taught in the book
         report.error(
           ctx.field("kotoba"),
           "KOTOBA_CHAPTER_MISMATCH",
@@ -707,8 +727,17 @@ function validateQuest(quest, index, region, tables, usage, parentCtx, report) {
   const intro = validateConversation(quest.intro, "intro", ctx.child("intro", "percakapan pengantar"), questInfo, usage, report);
 
   const tctx = ctx.field("tests");
-  if (!Array.isArray(quest.tests) || quest.tests.length === 0) {
-    report.error(tctx, "NO_TESTS", "Setiap quest butuh minimal satu percakapan uji (konteks lain dari percakapan pengantar).");
+  if (!Array.isArray(quest.tests)) {
+    report.error(tctx, "EXPECTED_ARRAY", `Harus berupa daftar percakapan uji [...], ditemukan ${show(quest.tests)}.`);
+    return;
+  }
+  if (quest.tests.length === 0) {
+    report.incomplete(
+      tctx,
+      "NO_TESTS",
+      "Quest ini belum punya percakapan uji (konteks lain dari percakapan pengantar). Selama draf, quest bisa dimainkan " +
+        "dengan langkah uji dilewati dan ditandai belum lengkap."
+    );
     return;
   }
   quest.tests.forEach((test, k) => {
@@ -989,6 +1018,10 @@ function checkSentenceChapter(conversation, regionChapter, ctx, report) {
     return;
   }
   const value = conversation.sentenceChapter;
+  if (value === UNKNOWN_VALUE) {
+    report.incomplete(sctx, "SENTENCE_CHAPTER_UNKNOWN", "Bab yang dibutuhkan percakapan ini belum diperiksa (kolom sentence_chapter berisi ?).");
+    return;
+  }
   if (value === null) {
     report.warn(sctx, "SENTENCE_OUTSIDE_BOOK", "Percakapan ini memakai kata atau pola kalimat di luar buku. Pastikan mahasiswa sudah mengenalnya.");
     return;
@@ -1124,7 +1157,7 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
 
   const allKotoba = Array.isArray(data.kotoba) ? data.kotoba.filter(isPlainObject) : [];
   for (const [id, { entry, ctx, chapter }] of kotoba) {
-    if (chapter !== undefined && !usage.regionChapters.has(chapter)) {
+    if (Number.isInteger(chapter) && !usage.regionChapters.has(chapter)) {
       report.warn(
         ctx,
         "KOTOBA_WITHOUT_REGION",
@@ -1162,4 +1195,30 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
       );
     }
   }
+}
+
+// Every string in the content is scanned for placeholders (D-91).
+function checkPlaceholders(data, root, report) {
+  const walk = (value, path) => {
+    if (typeof value === "string") {
+      for (const [, inner] of value.matchAll(PLACEHOLDER)) {
+        const ctx = new Context(path, path);
+        if (NAME_PLACEHOLDER.test(inner)) {
+          report.error(
+            ctx,
+            "NAME_PLACEHOLDER",
+            `Penanda nama «${inner}» belum diganti. Tim menggantinya dengan nama buatan sendiri, bukan nama tokoh, ` +
+              "perusahaan, atau universitas dari buku. Pakai nama yang sama untuk penanda yang sama di semua percakapan."
+          );
+        } else {
+          report.incomplete(ctx, "PLACEHOLDER_TEXT", `Masih ada penanda «${inner}».`);
+        }
+      }
+    } else if (Array.isArray(value)) {
+      value.forEach((v, i) => walk(v, `${path}[${i}]`));
+    } else if (isPlainObject(value)) {
+      for (const [key, v] of Object.entries(value)) walk(v, path ? `${path}.${key}` : key);
+    }
+  };
+  walk(data, root.path);
 }

@@ -128,7 +128,7 @@ export function readingsTable(readings, hiddenTypes = []) {
   const row = (label, list, type) => {
     let cell;
     if (hiddenTypes.includes(type)) {
-      cell = h("span", { class: "muted" }, `Ditampilkan setelah soal ${label} dijawab.`);
+      cell = h("span", { class: "muted" }, "Tampil setelah soal cara bacanya kamu kuasai.");
     } else if (list.length) {
       cell = h("ul", { class: "reading-list" }, list.map((r) => h("li", {}, readingNotation(r))));
     } else {

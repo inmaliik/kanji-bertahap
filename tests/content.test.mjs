@@ -107,8 +107,8 @@ test("sentenceChapter is required and warns when later than the region", () => {
 test("validator catches kanji, kotoba and quest mistakes", () => {
   const data = sample();
   const [shoku, nomu] = data.kanji;
-  shoku.bushuOptions = ["飠", "人", "米", "皿"]; // answer missing, variant as distractor
-  nomu.strokeCount = 0;
+  nomu.bushuOptions = ["食", "欠", "氵", "口"]; // answer 飠 missing, its variant 食 as distractor
+  shoku.strokeCount = 0;
   data.kotoba[0].ruby = "[食|く]べます"; // spells くべます, reading is たべます
   data.kotoba[1].ruby = "飲みます"; // kanji without furigana
   const tabe = questOf(data, "Q-tabemasu");
@@ -219,4 +219,42 @@ test("reading options put cross-type distractors first and skip kotoba sharing a
   const line = questOf(data, "Q-tabemasu").tests[0].lines[0];
   const options = blankOptions(line, random);
   assert.deepEqual(options.map((o) => o.value).sort(), [line.blank, ...line.distractors].sort());
+});
+
+test("placeholders: names are always errors; unfinished work is a warning in a draft and an error in a release", () => {
+  const data = sample();
+  const nomu = questOf(data, "Q-nomimasu");
+  nomu.intro.lines[0].ja = "«NAMA-TOKOH-1»さんはお[茶|ちゃ]を[飲|の]みます。";
+  nomu.intro.lines[0].translation = "«BELUM DIISI: terjemahan»";
+  nomu.intro.sentenceChapter = "?";
+  nomu.tests = [];
+  let result = validateContent(data);
+  assert.deepEqual(codes(result.errors), ["NAME_PLACEHOLDER"]);
+  for (const code of ["PLACEHOLDER_TEXT", "SENTENCE_CHAPTER_UNKNOWN", "NO_TESTS"]) assert.ok(codes(result.warnings).includes(code), code);
+
+  data.contentRevision = "rev-1";
+  result = validateContent(data);
+  for (const code of ["NAME_PLACEHOLDER", "PLACEHOLDER_TEXT", "SENTENCE_CHAPTER_UNKNOWN", "NO_TESTS"]) assert.ok(codes(result.errors).includes(code), `${code} in a release`);
+});
+
+test("index-only kotoba may be outside the book; a kanji that is its own bushu needs no options", async () => {
+  const data = sample();
+  data.kanji[0].bushuOptions = []; // 食 is its own bushu (D-90)
+  data.kotoba.push({ ...data.kotoba[0], id: "shokuji", word: "食事", ruby: "[食|しょく][事|じ]", reading: "しょくじ", readingType: "onyomi", pos: "noun", chapter: null, readingDistractors: [], readingDistractorsCross: [] });
+  const { errors, warnings } = validateContent(data);
+  assert.deepEqual(errors, []);
+  assert.ok(!codes(warnings).includes("KOTOBA_WITHOUT_REGION"));
+
+  const { kotobaWithKanji } = await import(jsModule("model.js"));
+  const R = await import(jsModule("reveal.js"));
+  const S = await import(jsModule("state.js"));
+  const model = buildModel(data);
+  assert.deepEqual(kotobaWithKanji(model, "食", 6).map((k) => k.id), ["tabemasu"], "outside-book kotoba are not region material");
+  const progress = S.createProgress();
+  const shokuji = model.kotoba.get("shokuji");
+  progress.quests["Q-tabemasu"] = { status: "in_progress", introDone: true };
+  assert.equal(R.kotobaVisible(model, progress, shokuji), false, "visible only after every quest drilling 食 is passed (D-93)");
+  progress.quests["Q-tabemasu"] = { status: "passed", introDone: true };
+  progress.quests["Q-nomimasu"] = { status: "passed", introDone: true };
+  assert.equal(R.kotobaVisible(model, progress, shokuji), true);
 });

@@ -25,6 +25,7 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
 | `menu-kana` | `assets/ui/menu-kana.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Panduan kana |
 | `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Pengaturan |
+| `adegan` | `assets/adegan/<ID percakapan>.png`, satu per percakapan, misalnya `assets/adegan/C-B01-01-pengantar.png` | PNG | 960 × 640 | 3 : 2 (mendatar) | tidak transparan | 150 KB | Di atas percakapan pengantar dan percakapan uji |
 
 Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan akan didaftarkan di tabel ini.
 
@@ -57,6 +58,19 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
   3 : 4. Pemeriksa aset memberi tanda ✗ jika rasionya meleset lebih dari 2%.
 - Status wilayah (terkunci, terbuka, tuntas) ditunjukkan pin dengan ikon dan teks. Tidak perlu menggambar versi
   peta per status.
+
+## Ilustrasi adegan (`assets/adegan/`)
+
+- **Satu gambar per percakapan.** Nama berkasnya adalah ID percakapan dari tab `percakapan` di spreadsheet, ditambah
+  `.png`. Contoh: percakapan `C-B01-01-pengantar` → `assets/adegan/C-B01-01-pengantar.png`.
+- **Brief-nya sudah ada di aplikasi.** Selama gambar belum ada, aplikasi menampilkan kotak bertuliskan nama berkas dan
+  ukurannya, dan **deskripsi adegan dari tim konten** (kolom `scene`) tepat di bawahnya. Deskripsi itulah yang digambar.
+- Berbeda dari slot lain, slot ini tidak punya berkas placeholder: berkas yang belum ada bukan kesalahan, hanya tanda
+  bahwa ilustrasinya belum digambar. Pemeriksa aset menandainya ⚠.
+- **Mendatar 960 × 640 (3 : 2)**, tampil selebar layar (±343 piksel). Ilustrasi berwarna penuh biasanya lebih kecil
+  jika disimpan dengan jumlah warna dikurangi; batasnya 150 KB per berkas karena ada puluhan percakapan.
+- **Jangan menulis kotoba atau kanji yang diajarkan di dalam gambar**, misalnya di papan nama atau kalender: percakapan
+  uji memakai ilustrasi yang sama, dan tulisan di gambar bisa menjadi jawaban soal.
 
 ## Ikon menu (`assets/ui/menu-*.png`)
 

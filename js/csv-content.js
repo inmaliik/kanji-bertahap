@@ -10,7 +10,7 @@
 //   percakapan  one row per conversation line
 // Each file is recognised by its header row, so file names do not matter.
 
-import { SCHEMA_VERSION, PLAYER_SPEAKER } from "./validate.js";
+import { SCHEMA_VERSION, PLAYER_SPEAKER, UNKNOWN_VALUE } from "./validate.js";
 
 export const TABS = Object.freeze({
   wilayah: ["chapter", "title", "intro_summary", "intro_points", "pin_x", "pin_y"],
@@ -115,7 +115,8 @@ const splitList = (cell) =>
 // "食", "食;事", "食事" and "食 事" all mean the kanji 食 and 事.
 const splitChars = (cell) => Array.from(cell.replace(/[;；,、\s]/g, ""));
 
-function parseInteger(cell, column, tab, rows, problems, { allowDash }) {
+function parseInteger(cell, column, tab, rows, problems, { allowDash, allowUnknown = false }) {
+  if (allowUnknown && cell === UNKNOWN_VALUE) return UNKNOWN_VALUE; // not checked yet (D-92)
   if (cell === "") {
     problems.add(tab, rows, `Kolom ${column} kosong. Isi angka${allowDash ? ", atau tanda - jika di luar buku" : ""}.`);
     return undefined;
@@ -241,7 +242,8 @@ function buildKanji(rows, problems, rowMap) {
       char: cells.kanji,
       meaning: cells.meaning,
       jlptLevel: cells.jlpt_level,
-      strokeCount: cells.stroke_count === "" ? null : parseInteger(cells.stroke_count, "stroke_count", "kanji", [row], problems, { allowDash: false }) ?? null,
+      strokeCount:
+        cells.stroke_count === "" ? null : parseInteger(cells.stroke_count, "stroke_count", "kanji", [row], problems, { allowDash: false, allowUnknown: true }) ?? null,
       bushu: {
         char: cells.bushu_char,
         name: cells.bushu_name,
@@ -328,7 +330,8 @@ function buildConversations(rows, problems) {
     const conversation = {
       id,
       scene: conv.scene,
-      sentenceChapter: parseInteger(conv.sentence_chapter, "sentence_chapter", "percakapan", allRows, problems, { allowDash: true }) ?? null,
+      sentenceChapter:
+        parseInteger(conv.sentence_chapter, "sentence_chapter", "percakapan", allRows, problems, { allowDash: true, allowUnknown: true }) ?? null,
     };
     if (conv.placeholder) {
       if (YES_WORDS.includes(conv.placeholder.toLowerCase())) conversation.isPlaceholder = true;

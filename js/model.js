@@ -57,6 +57,12 @@ export function kanjiReadingIn(kotoba, kanji) {
   return part ? part.reading : null;
 }
 
+/** True for a kanji whose bushu is the kanji itself, such as 人 or 日 (D-90). */
+export const isOwnBushu = (kanji) => Boolean(kanji) && kanji.bushu?.char === kanji.char;
+
+/** The quest has no test conversation yet: allowed while the content is a draft (D-92). */
+export const isIncompleteQuest = (quest) => !quest.tests?.length;
+
 /** Plain text of every conversation line: ruby markup removed. */
 export function plainLine(line) {
   try {
@@ -126,7 +132,11 @@ export function buildModel(content) {
 export function buildQuestItems(model, quest) {
   const base = { questId: quest.id };
   const kotoba = model.kotoba.get(quest.kotoba);
-  const shape = quest.targetKanji.map((ch) => ({ ...base, id: itemId.shape(ch), stage: "shape", kanji: model.kanji.get(ch) }));
+  // A kanji that is its own bushu has no shape question; the quest shows an
+  // unscored introduction card instead (D-90).
+  const shape = quest.targetKanji
+    .filter((ch) => !isOwnBushu(model.kanji.get(ch)))
+    .map((ch) => ({ ...base, id: itemId.shape(ch), stage: "shape", kanji: model.kanji.get(ch) }));
   const reading =
     kotoba.readingType === "special" ? [] : [{ ...base, id: itemId.reading(kotoba.id), stage: "reading", kotoba }];
   const test = quest.tests.map((conversation) => {
@@ -155,5 +165,7 @@ export function buildQuestItems(model, quest) {
  * this is the kun'yomi–on'yomi contrast across regions (D-56).
  */
 export function kotobaWithKanji(model, kanji, chapter, except = null) {
-  return (model.kotobaByKanji.get(kanji) ?? []).filter((k) => k !== except && k.chapter <= chapter);
+  // Index-only kotoba outside the book (chapter null) are not part of any
+  // region's progression; `null <= chapter` would be true in JavaScript.
+  return (model.kotobaByKanji.get(kanji) ?? []).filter((k) => k !== except && Number.isInteger(k.chapter) && k.chapter <= chapter);
 }

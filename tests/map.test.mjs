@@ -72,12 +72,13 @@ test("a region review takes 70% from its region and 30% from earlier ones, witho
   const random = seededRandom(5);
   const b07 = P.sampleRegionReview(model, model.regions[1], random, 10);
   const fromB06 = b07.filter((item) => model.quests.get(item.questId).region.chapter === 6).length;
-  // Bab 7 has only 3 items, so earlier regions fill the rest.
-  assert.equal(b07.length, 10);
-  assert.equal(10 - fromB06, 3);
+  // Bab 7 has only 3 items, so earlier regions fill the rest; bab 6 has 6
+  // more (食 is its own bushu, and K:飲:shape went to bab 7 already).
+  assert.equal(b07.length, 9);
+  assert.equal(b07.length - fromB06, 3);
   const b06 = P.sampleRegionReview(model, model.regions[0], random, 10);
   assert.ok(b06.every((item) => model.quests.get(item.questId).region.chapter === 6), "no earlier region: all from this one");
-  for (const sample of [b06, b07]) assert.equal(new Set(sample.map((i) => i.id)).size, sample.length, "K:食:shape is shared by two quests but sampled once");
+  for (const sample of [b06, b07]) assert.equal(new Set(sample.map((i) => i.id)).size, sample.length, "K:飲:shape is shared by two quests but sampled once");
 
   const plenty = P.sampleRegionReview(model, model.regions[1], random, 4);
   assert.equal(plenty.filter((item) => item.questId === "Q-7").length, 3, "70% of 4 rounds to 3 from the region");
@@ -151,6 +152,11 @@ test("every asset slot has its placeholder file, within limits, and is listed in
   const doc = readFileSync(join(ROOT, "ASSETS.md"), "utf8");
   assert.ok(slots.length >= 4);
   for (const slot of slots) {
+    if (slot.pattern) {
+      // One file per conversation; a missing one shows a text placeholder (D-94).
+      assert.ok(doc.includes(slot.pattern.split("{")[0]), `ASSETS.md describes ${slot.pattern}`);
+      continue;
+    }
     const bytes = readFileSync(join(ROOT, slot.path));
     assert.ok(bytes.length <= slot.maxKB * 1024, `${slot.path} over ${slot.maxKB} KB`);
     assert.equal(bytes.readUInt32BE(16), slot.width, `${slot.path} width`);
@@ -163,7 +169,8 @@ test("every asset slot has its placeholder file, within limits, and is listed in
 test("index windows: bushu, reading types and example lines follow D-79", () => {
   const model = twoRegions();
   const progress = S.createProgress();
-  assert.equal(R.shapeSettled(model, progress, "食"), false, "shape question still ahead");
+  assert.equal(R.shapeSettled(model, progress, "飲"), false, "shape question still ahead");
+  assert.equal(R.shapeSettled(model, progress, "食"), true, "食 is its own bushu: no shape question to protect (D-90)");
   assert.deepEqual(R.pendingReadingTypes(model, progress, "食"), ["kunyomi", "onyomi"], "食べます and 食堂 both ahead");
   assert.equal(R.shapeSettled(model, progress, "堂"), true, "no quest asks the shape of 堂");
 
@@ -174,9 +181,9 @@ test("index windows: bushu, reading types and example lines follow D-79", () => 
   progress.items["C:C-tabemasu-uji-1:test"] = 0; // answered once, wrongly
   assert.deepEqual(R.seenLines(model, progress, taberu).map((s) => s.conversation.id), ["C-tabemasu-pengantar", "C-tabemasu-uji-1"]);
 
-  progress.items["K:食:shape"] = S.STREAK_TO_MASTER;
+  progress.items["K:飲:shape"] = S.STREAK_TO_MASTER;
   progress.items["W:tabemasu:reading"] = S.STREAK_TO_MASTER;
-  assert.equal(R.shapeSettled(model, progress, "食"), true);
+  assert.equal(R.shapeSettled(model, progress, "飲"), true, "shape of 飲 mastered");
   assert.deepEqual(R.pendingReadingTypes(model, progress, "食"), ["onyomi"], "食堂 still ahead");
 });
 

@@ -7,7 +7,7 @@ import { h, ja } from "../dom.js";
 import { parseRuby } from "../ruby.js";
 import { visibleSegments } from "../furigana.js";
 import { FURIGANA_MODE } from "../state.js";
-import { dialogLine, lineTranslation, sceneCaption } from "./conversation.js";
+import { dialogLine, lineTranslation, sceneFigure } from "./conversation.js";
 import { kotobaWithReading, READING_DISPLAY } from "../screens/common.js";
 
 /**
@@ -17,9 +17,10 @@ import { kotobaWithReading, READING_DISPLAY } from "../screens/common.js";
  * @param {string[]} ctx.targetKanji
  * @param {string} ctx.mode furigana setting
  * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
+ * @param {object} [ctx.sceneSlot] "adegan" slot of data/assets.json
  * @param {(result: {replays: number}) => void} ctx.onDone
  */
-export function renderIntro({ conversation, kotoba, targetKanji, mode, otherLeaks = () => false, onDone }) {
+export function renderIntro({ conversation, kotoba, targetKanji, mode, otherLeaks = () => false, sceneSlot, onDone }) {
   const lines = conversation.lines.map((line) => {
     const { segments, plain } = parseRuby(line.ja);
     const start = line.highlight ? plain.indexOf(line.highlight) : -1;
@@ -91,6 +92,6 @@ export function renderIntro({ conversation, kotoba, targetKanji, mode, otherLeak
 
   renderLines();
   renderActions();
-  root.append(h("h2", { class: "question__title", tabindex: "-1" }, "Simak percakapan ini"), sceneCaption(conversation), list, actions);
+  root.append(h("h2", { class: "question__title", tabindex: "-1" }, "Simak percakapan ini"), sceneFigure(conversation, sceneSlot), list, actions);
   return root;
 }
