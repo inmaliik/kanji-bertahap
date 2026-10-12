@@ -129,7 +129,7 @@ test("furigana: the setting applies, the intro may show target readings, and ant
   assert.deepEqual(rubies(visibleSegments(segments, { mode: AFTER, answered: true, leaks })), ["毎朝"]);
   assert.deepEqual(rubies(visibleSegments(segments, { mode: NEVER, answered: true })), []);
   assert.deepEqual(rubies(visibleSegments(segments, { mode: AFTER, intro: true })), ["毎朝", "食"], "intro: teaching moment, 'after' acts as 'always'");
-  assert.deepEqual(rubies(visibleSegments(segments, { mode: ALWAYS, intro: true, leaks })), ["毎朝"], "readings pending elsewhere stay hidden in the intro");
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: ALWAYS, intro: true })), ["毎朝", "食"], "the intro shows every reading (D-100)");
   assert.deepEqual(rubies(visibleSegments(segments, { mode: NEVER, intro: true })), [], "'never' holds in the intro too");
 
   const progress = S.createProgress();

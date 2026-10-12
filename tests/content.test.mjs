@@ -258,3 +258,11 @@ test("index-only kotoba may be outside the book; a kanji that is its own bushu n
   progress.quests["Q-nomimasu"] = { status: "passed", introDone: true };
   assert.equal(R.kotobaVisible(model, progress, shokuji), true);
 });
+
+test("a reading distractor that is a reading of the word's kanji gets a warning (D-98)", () => {
+  const data = sample();
+  data.kotoba[0].readingDistractors = ["くべます", "く", "しょく"]; // く and しょく are readings of 食
+  const { warnings } = validateContent(data);
+  const hits = warnings.filter((w) => w.code === "DISTRACTOR_IS_KANJI_READING").map((w) => w.path);
+  assert.deepEqual(hits, ["kotoba[0].readingDistractors[1]", "kotoba[0].readingDistractors[2]"]);
+});

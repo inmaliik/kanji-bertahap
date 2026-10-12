@@ -1118,10 +1118,8 @@ function checkOtherQuestKotoba(data, kotoba, root, report) {
     });
   });
   for (const own of quests) {
-    const conversations = [
-      ["intro", own.quest.intro],
-      ...(Array.isArray(own.quest.tests) ? own.quest.tests.map((t, k) => [`tests[${k}]`, t]) : []),
-    ];
+    // Intro conversations show every reading (D-100); only test conversations hide them.
+    const conversations = Array.isArray(own.quest.tests) ? own.quest.tests.map((t, k) => [`tests[${k}]`, t]) : [];
     for (const [key, conversation] of conversations) {
       if (!isPlainObject(conversation) || !Array.isArray(conversation.lines)) continue;
       conversation.lines.forEach((line, n) => {
@@ -1137,8 +1135,41 @@ function checkOtherQuestKotoba(data, kotoba, root, report) {
           report.warn(
             root.child(`${own.path}.${key}.lines[${n}].ja`, `quest ${own.quest.id} › percakapan "${conversation.id}" › baris ${n + 1}`),
             "OTHER_QUEST_KOTOBA_IN_LINE",
-            `Baris ini memuat "${other.word}", kotoba quest ${other.quest.id}, yang mungkin belum dimainkan. Furigananya ` +
-              "disembunyikan sampai cara bacanya dikuasai di quest itu, jadi pemain melihat kanjinya tanpa bacaan."
+            `Baris percakapan uji ini memuat "${other.word}", kotoba quest ${other.quest.id}, yang mungkin belum dimainkan. ` +
+              "Furigananya disembunyikan sampai cara bacanya dikuasai di quest itu, jadi pemain melihat kanjinya tanpa bacaan."
+          );
+        }
+      });
+    }
+  }
+}
+
+// A reading distractor that is a reading of one of the word's kanji may be a
+// valid reading of the word itself (し for 四, なな for 七): the most frequent
+// defect of this project (T-12, D-98). A warning only, because a reading of
+// the kanji is not always a reading of the word (じん for the word 人).
+function checkKanjiReadingDistractors(kotoba, kanji, report) {
+  for (const { entry, ctx } of kotoba.values()) {
+    if (typeof entry.word !== "string") continue;
+    const forms = new Set();
+    for (const ch of new Set(Array.from(entry.word).filter(isKanji))) {
+      const readings = kanji.get(ch)?.entry.readings;
+      if (!isPlainObject(readings)) continue;
+      for (const r of [...(readings.kunyomi ?? []), ...(readings.onyomi ?? [])]) {
+        if (typeof r !== "string") continue;
+        const { kanjiPart, okurigana } = splitReadingNotation(r);
+        forms.add(toHiragana(kanjiPart));
+        if (okurigana) forms.add(toHiragana(kanjiPart + okurigana));
+      }
+    }
+    for (const key of ["readingDistractors", "readingDistractorsCross"]) {
+      (Array.isArray(entry[key]) ? entry[key] : []).forEach((d, i) => {
+        if (typeof d === "string" && forms.has(toHiragana(d))) {
+          report.warn(
+            ctx.child(`${key}[${i}]`, `${key} #${i + 1}`),
+            "DISTRACTOR_IS_KANJI_READING",
+            `Pengecoh "${d}" adalah salah satu bacaan kanji di tabel kanji. Pastikan ini bukan bacaan sah kata "${entry.word}"; ` +
+              "jika sah, pengecoh ini adalah jawaban benar kedua dan harus diganti."
           );
         }
       });
@@ -1148,6 +1179,7 @@ function checkOtherQuestKotoba(data, kotoba, root, report) {
 
 function checkUsage(data, { kanji, kotoba, usage }, root, report) {
   checkOtherQuestKotoba(data, kotoba, root, report);
+  checkKanjiReadingDistractors(kotoba, kanji, report);
   for (const [char, { ctx }] of kanji) {
     const inKotoba = [...kotoba.values()].some((k) => typeof k.entry.word === "string" && k.entry.word.includes(char));
     if (!usage.targetKanji.has(char) && !inKotoba) {

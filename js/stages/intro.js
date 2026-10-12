@@ -16,17 +16,16 @@ import { kotobaWithReading, READING_DISPLAY } from "../screens/common.js";
  * @param {object} ctx.kotoba
  * @param {string[]} ctx.targetKanji
  * @param {string} ctx.mode furigana setting
- * @param {(segment: object) => boolean} [ctx.otherLeaks] readings pending in other quests (D-79)
  * @param {object} [ctx.sceneSlot] "adegan" slot of data/assets.json
  * @param {(result: {replays: number}) => void} ctx.onDone
  */
-export function renderIntro({ conversation, kotoba, targetKanji, mode, otherLeaks = () => false, sceneSlot, onDone }) {
+export function renderIntro({ conversation, kotoba, targetKanji, mode, sceneSlot, onDone }) {
   const lines = conversation.lines.map((line) => {
     const { segments, plain } = parseRuby(line.ja);
     const start = line.highlight ? plain.indexOf(line.highlight) : -1;
     return {
       line,
-      segments: visibleSegments(segments, { mode, intro: true, leaks: otherLeaks }),
+      segments: visibleSegments(segments, { mode, intro: true }),
       range: start === -1 ? null : { start, end: start + line.highlight.length },
     };
   });

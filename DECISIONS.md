@@ -23,7 +23,7 @@ Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan a
 - **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
 - **D-66** — Lisensi data urutan guratan KanjiVG (CC BY-SA 3.0): boleh dipakai, dan bagaimana atribusinya? Sampai diputuskan, tidak ada data guratan di repo.
 
-*Terakhir diperbarui: 2026-10-12.*
+*Terakhir diperbarui: 2026-10-13.*
 
 ---
 
@@ -821,6 +821,7 @@ adalah prosesnya, yaitu setiap angka di data diperiksa manusia terhadap sumber, 
 pemeriksaan.
 
 ### D-79 · Materi quest tidak tampil di luar quest sebelum percakapan pengantarnya (perluasan D-29)
+*Disempurnakan oleh D-100: percakapan pengantar menampilkan furigana untuk semua kata.*
 **Tanggal:** 2026-09-29. **Keputusan:** Prinsip: **materi sebuah quest tidak ditampilkan di luar quest itu sebelum
 pemain melewati percakapan pengantarnya**; setelah itu kotobanya boleh tampil, dan cara bacanya baru tampil jika
 soal cara bacanya tidak lagi tertunda (quest tuntas atau cara baca dikuasai). Penerapan: (1) jendela bab
@@ -999,6 +1000,42 @@ bisa dimainkan utuh dan teruji di empat langkah; (2) materi sungguhan tim hanya 
 tidak dikenal skema lama (ilustrasi adegan, kotoba khusus index, kartu bushu), sehingga ekspor hanya menghasilkan versi
 yang jauh lebih miskin untuk validator; (3) alat ekspor harus dirawat setiap kali skema v2 berubah, padahal skema itu
 masih berubah. Tag memberi cadangan tanpa biaya perawatan.
+
+### D-97 · Aturan pembicara diperjelas: pemain tidak menyebut identitas dirinya
+**Tanggal:** 2026-10-13. **Keputusan:** Mengoreksi penerapan D-72 di impor Bagian A, yang memakai aturan terlalu luas
+("baris yang memuat nama selalu diucapkan tokoh lain"). Aturan yang benar: karakter pemain **tidak menyebut nama atau
+identitas dirinya sendiri** (nama, pekerjaan, perusahaan, asal negara, status lain miliknya); pemain **boleh** menyebut
+nama orang lain dan nama entitas, misalnya bertanya 「«NAMA»さんは学生ですか」. Butir 7–11 diatur ulang: pemain bertanya,
+tokoh lain menjawab; tanda "pembicara tidak bisa diatur" pada butir 8, 9, dan 10 dihapus. **Alasan:** Tujuan aturan ini
+adalah bahwa ucapan pemain cocok untuk karakter mana pun; menyebut orang lain tidak mengganggu tujuan itu.
+
+### D-98 · Kanji angka ditanyakan sebagai kata dalam konteks; peringatan pengecoh yang berupa bacaan kanji
+**Tanggal:** 2026-10-13. **Keputusan:** Kotoba quest kanji angka mengikuti kata dalam percakapannya: 二階, 三百, 四階,
+六時, 七時, 十万 (bersama 一階, 八百, 九時 dari D-95); 五 tetap. Pengecoh dari dokumen tidak berlaku lagi untuk keenamnya
+dan ditandai harus ditulis ulang; `note` 三百 menunggu penjelasan perubahan bunyi. Validator memberi **peringatan** jika
+pengecoh cara baca sama dengan salah satu bacaan kanji kata itu di tabel kanji. **Alasan:** Kanji angka sendirian punya
+lebih dari satu bacaan sah (四: し/よん, 七: しち/なな, 十: じゅう/とお), sehingga pengecoh seperti し untuk 四 sebenarnya
+juga benar: kelas cacat paling dominan di proyek ini (T-12). Peringatan, bukan error, karena bacaan kanji tidak selalu
+bacaan kata (じん adalah bacaan 人, tetapi bukan bacaan kata 人). Peringatan ini langsung menemukan ばん sebagai pengecoh
+万 di materi tim.
+
+### D-99 · Quest 何 pindah ke B01 dengan kotoba 何歳
+**Tanggal:** 2026-10-13. **Keputusan:** 何 sebagai kata tunggal (なん) baru diajarkan di bab 2, tetapi 何歳 ada di kosakata
+bab 1. Quest 何 pindah ke B01 dengan kotoba 何歳 (arti dari daftar jukugo: "umur berapa?"). Percakapan dokumen
+(それは何ですか…) tidak cocok untuk kotoba ini dan disimpan di catatan impor sebagai bahan tidak terpakai; percakapan
+pengantar 何歳 sementara satu baris penanda (`isPlaceholder`) dan harus ditulis tim; pengecohnya harus ditulis ulang.
+**Alasan:** 何 muncul di banyak baris bab 1–4 (お名前は何ですか di quest pertama B01), jadi sebaiknya dipelajari sedini
+mungkin.
+
+### D-100 · Penyempurnaan D-79: furigana penuh di percakapan pengantar
+**Tanggal:** 2026-10-13. **Keputusan:** Di percakapan pengantar, furigana tampil untuk **semua** kata, termasuk kotoba
+milik quest lain, mengikuti setelan furigana pemain. Di latihan, uji konteks, Produksi, pemantapan, dan 復習, D-79
+tetap berlaku penuh. Peringatan validator "baris memuat kotoba quest lain" kini hanya untuk percakapan uji.
+**Alasan:** Kalimat seperti お名前は何ですか di quest pertama tidak bisa dibaca mahasiswa jika furigana 何 disembunyikan,
+padahal 何 termasuk kanji yang paling sering muncul. Percakapan pengantar adalah momen mengajar (D-65); paparan bacaan
+di sana adalah paparan belajar, sama seperti buku pelajaran, bukan kebocoran jawaban. Ukuran penguasaan tetap dari
+putaran pemantapan (D-06), bukan dari jawaban pertama. **Alternatif ditolak:** Menyembunyikan furigana quest lain di
+percakapan pengantar (D-79 versi langkah 3), yang membuat kalimat pengantar tidak terbaca.
 
 ---
 

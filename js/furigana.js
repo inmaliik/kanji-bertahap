@@ -4,10 +4,9 @@
 // 1. The player's setting: always / after answering / never.
 // 2. Anti-leak (D-29): the reading of a target kanji stays hidden while its
 //    reading question is still ahead. This always wins over the setting.
-// The intro conversation is a teaching moment: the quest's own target readings
-// may show (the caller leaves them out of `leaks`), and "after answering"
-// behaves like "always" because nothing is asked there. Readings pending in
-// other quests stay hidden there too (D-79).
+// The intro conversation is a teaching moment: every reading shows there,
+// including other quests' kotoba (D-65, D-100), and "after answering" behaves
+// like "always" because nothing is asked there. Only the setting applies.
 
 import { FURIGANA_MODE } from "./state.js";
 import { hideRuby } from "./ruby.js";

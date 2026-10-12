@@ -128,7 +128,8 @@ test("region texts may not contain the kotoba of their quests; lines naming anot
 
   const other = clone(loadSampleContent());
   other.regions[0].intro.summary = "Kanji 食 muncul di bab ini.";
-  other.regions[0].quests[0].intro.lines[0].ja = "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。[食|た]べます。";
+  other.regions[0].quests[0].intro.lines[0].ja = "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。[食|た]べます。"; // intro: no warning (D-100)
+  other.regions[0].quests[0].tests[0].lines[0].ja = "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。レストランで[晩|ばん]ごはんを[食|た]べます。";
   result = validateContent(other);
   assert.deepEqual(result.errors, []);
   assert.ok(codes(result.warnings).includes("REGION_TEXT_SHOWS_KANJI"));

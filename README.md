@@ -438,9 +438,12 @@ di konteks lain, dengan kotoba itu dikosongkan.
 
 **Aturan yang tidak bisa diperiksa kode — wajib dijaga penulis**
 - **Semua percakapan dan kalimat ditulis tim sendiri. Percakapan tidak boleh disalin dari 会話 buku Minna.**
-- **Baris karakter pemain** tidak boleh memuat nama pemain, dan tidak boleh memakai ragam bahasa yang terikat
-  jenis kelamin (misalnya kata ganti orang pertama atau partikel akhir yang khas laki-laki atau perempuan).
-  Pemain bisa memilih karakter mana pun, jadi ucapannya harus cocok untuk semua karakter.
+- **Karakter pemain tidak menyebut nama atau identitas dirinya sendiri**: namanya, pekerjaannya, perusahaannya,
+  asal negaranya, atau status lain miliknya. Pemain **boleh** menyebut nama orang lain dan nama entitas, misalnya
+  bertanya 「«NAMA»さんは学生ですか」. Pola yang aman: pemain bertanya, tokoh lain menjawab tentang dirinya sendiri.
+- **Baris karakter pemain tidak memakai ragam bahasa yang terikat jenis kelamin** (misalnya kata ganti orang pertama
+  atau partikel akhir yang khas laki-laki atau perempuan). Pemain bisa memilih karakter mana pun, jadi ucapannya
+  harus cocok untuk semua karakter.
 - **Tokoh lain tidak memanggil pemain dengan nama.**
 - **Nama tokoh adalah buatan tim**, bukan tokoh buku (ミラー, 山田, dan sebagainya). ID tokoh di kolom `speaker`
   (misalnya `hana`) nanti dicocokkan dengan daftar tokoh di data karakter.
@@ -495,6 +498,12 @@ jenis bacaan yang salah, dan log mencatat `answerType` = `manual-cross`.
 
 Jika jumlah pengecoh (manual + otomatis) kurang dari 3, pemeriksa konten memberi **peringatan** dan
 soal ditampilkan dengan pilihan lebih sedikit.
+
+**Pengecoh yang ternyata bacaan sah.** Jika sebuah pengecoh sama dengan salah satu bacaan kanji di tab kanji, pemeriksa
+konten memberi peringatan: pastikan itu bukan bacaan sah kata tersebut. Contoh: ばん untuk 万 (万 juga dibaca ばん di
+万歳). Karena itu **kanji angka ditanyakan sebagai kata dalam konteks** (四階, 七時, 十万), bukan kanji sendirian: 四
+sendirian sah dibaca し maupun よん, sehingga pengecoh し juga benar (D-98). Peringatan ini bukan error, karena bacaan
+kanji tidak selalu bacaan kata (じん adalah bacaan 人, tetapi bukan bacaan kata 人).
 
 ### Uji konteks (bagian kosong di percakapan)
 
@@ -590,6 +599,11 @@ ubah `readingNotation()` di `js/screens/common.js`; data tidak perlu diubah.
 
 Tim konten mencentang setiap baris setelah memeriksa langsung di みんなの日本語初級I (nomor bab) atau di kamus
 (jumlah guratan). `contentRevision` tetap `draft-0` sampai semua baris dicentang.
+
+> **Materi tim hasil impor** punya daftar verifikasi sendiri di `sumber/impor/DAFTAR-VERIFIKASI.md` (tidak masuk git),
+> dikelompokkan per jenis data yang diisi pengembang: furigana di baris percakapan (paling atas, karena paling terlihat),
+> furigana kotoba, bacaan kanji, bushu dan pilihannya, jumlah guratan, JLPT, jenis bacaan, kelas kata, dan pembicara.
+> Daftar di bawah ini hanya untuk data contoh B06 di `data/content.json`.
 
 - **Wilayah B06**
   - [x] 食べます — bab 6
@@ -716,8 +730,10 @@ seperti "selalu tampil", karena di sana tidak ada yang ditanyakan.
 **Cara baca yang belum boleh terlihat (selalu menang atas setelan furigana).** Furigana kanji sasaran dan
 cara baca kotoba hanya ditampilkan jika soal cara bacanya tidak akan segera muncul: sudah dijawab benar sekali
 (putaran belajar) atau sudah dikuasai (Produksi dan putaran pemantapan). Di percakapan uji, furigana kanji
-sasaran selalu disembunyikan sebelum menjawab. Pengecualian: percakapan pengantar, karena memang bertugas
-memperkenalkan cara baca (D-65).
+sasaran selalu disembunyikan sebelum menjawab. Pengecualian: **percakapan pengantar** menampilkan furigana untuk
+semua kata, termasuk kotoba milik quest lain, mengikuti setelan furigana pemain, karena memang bertugas
+memperkenalkan cara baca (D-65, D-100). Di latihan, uji konteks, Produksi, pemantapan, dan 復習, aturan ini berlaku
+penuh: di sanalah jawaban diukur.
 
 **Ulangan wilayah (復習) dan penguncian wilayah**: lihat [Peta, jendela bab, dan index](#peta-jendela-bab-dan-index).
 
@@ -1233,7 +1249,7 @@ bahasa Indonesia yang tampil kecil di sebelahnya. Dosen atau tim boleh mengubahn
 | Jendela bab | Sebelum pengantar: nomor quest dan arti. Sesudahnya: kotoba; cara baca setelah dikuasai. |
 | Teks wilayah (`title`, `intro_summary`, `intro_points`) | **Error** jika memuat kotoba atau cara baca kotoba quest di wilayah itu; peringatan jika memuat kanji sasarannya. |
 | Index | Hanya yang pengantarnya sudah disimak; cara baca setelah dikuasai. |
-| Baris percakapan yang memuat kotoba quest lain | Furigana kotoba itu disembunyikan sampai cara bacanya dikuasai di quest-nya; pemeriksa konten memberi peringatan. |
+| Baris **percakapan uji** yang memuat kotoba quest lain | Furigana kotoba itu disembunyikan sampai cara bacanya dikuasai di quest-nya; pemeriksa konten memberi peringatan. Di percakapan pengantar furigana tetap tampil (D-100). |
 | Alamat halaman | Quest dibuka lewat posisinya (`#/quest/B06/2`), bukan ID-nya, karena ID quest bisa mengeja kotobanya. |
 
 ## Uji otomatis

@@ -298,7 +298,8 @@ function sessionScreen(app, cfg) {
       kotoba: model.kotoba.get(quest.kotoba),
       targetKanji: quest.targetKanji,
       mode,
-      otherLeaks: otherLeaksFor(quest),
+      // D-100: the intro is the teaching moment; every word keeps its furigana
+      // (following the player's setting), including other quests' kotoba.
       sceneSlot,
       onDone: ({ replays }) => {
         record(quest, {
