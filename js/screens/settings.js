@@ -442,9 +442,10 @@ export function settingsScreen(app) {
       isDraft
         ? h("p", { class: "notice notice--error" }, "✗ DRAF — nomor bab belum diverifikasi terhadap buku. Jangan kirim ke validator ahli.")
         : null,
-      // desain-peta branch: the printable preview is rebuilt for regions and conversations in step 5.
-      h("p", { class: "muted" }, "Pratinjau materi untuk validator sedang dibangun ulang untuk versi peta."),
-      h("p", {}, h("a", { href: "#/content-check" }, "Pemeriksaan konten dan aset (untuk tim)"))
+      // No links to the content check or the preview: both show all material.
+      // The team opens them by address (MULAI-DI-SINI.md), D-85.
+      h("p", {}, h("a", { href: "#/about" }, "Tentang aplikasi")),
+      h("p", { class: "muted" }, "Halaman pemeriksaan konten dan pratinjau untuk tim dibuka lewat alamatnya; lihat MULAI-DI-SINI.md.")
     );
   }
 

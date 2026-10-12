@@ -54,12 +54,13 @@ function readingContrast({ model, quest, kotoba, isRevealed, showReading }) {
  * @param {object} ctx.quest quest from the model
  * @param {(kotoba: object) => boolean} ctx.isRevealed D-29
  * @param {boolean} ctx.showReading false when the furigana setting is "never"
+ * @param {object[]} ctx.candidates kotoba whose readings may serve as automatic distractors (D-84)
  */
-export function renderReading({ item, model, quest, isRevealed, showReading, random, onAnswer, onContinue }) {
+export function renderReading({ item, model, quest, isRevealed, showReading, candidates, random, onAnswer, onContinue }) {
   const { kotoba } = item;
   const type = kotoba.readingType;
   const otherType = type === "kunyomi" ? "onyomi" : "kunyomi";
-  const options = readingOptions([...model.kotoba.values()], kotoba, random);
+  const options = readingOptions(candidates, kotoba, random);
   const longest = Math.max(...options.map((o) => Array.from(o.value).length));
 
   return choiceQuestion({

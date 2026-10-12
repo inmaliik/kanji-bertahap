@@ -23,7 +23,7 @@ Daftar ringkas untuk dibawa ke pertemuan dengan dosen pengampu. Rincian alasan a
 - **D-50** — Redaksi teks layar persetujuan peserta (saat ini placeholder): apa isi yang disetujui?
 - **D-66** — Lisensi data urutan guratan KanjiVG (CC BY-SA 3.0): boleh dipakai, dan bagaimana atribusinya? Sampai diputuskan, tidak ada data guratan di repo.
 
-*Terakhir diperbarui: 2026-09-29.*
+*Terakhir diperbarui: 2026-10-12.*
 
 ---
 
@@ -875,6 +875,64 @@ D-79: bushu dan bacaan kanji yang soalnya masih tertunda ikut disembunyikan. Pan
 sudah ada dan menampilkan pemberitahuan. **Alasan:** Laporan langkah 3 meminta tangkapan index sebelum dan sesudah,
 yang cukup ditunjukkan oleh daftar; jendela detail adalah pekerjaan langkah 4.
 
+### D-84 · Pengecoh cara baca otomatis hanya dari kotoba yang bacaannya sudah aman
+**Tanggal:** 2026-10-12. **Keputusan:** Kumpulan pengecoh otomatis soal cara baca hanya mengambil bacaan kotoba yang
+bagi pemain itu sudah tidak tertunda (sudah diperkenalkan dan cara bacanya dikuasai, quest-nya tuntas, atau kotoba
+bukan quest dari bab yang semua quest-nya tuntas). Validator menghitung kandidat otomatis hanya dari kotoba **bab
+sebelumnya**, karena hanya itu yang pasti aman saat quest dimainkan, dan peringatannya menjelaskan alasannya.
+**Alasan:** のみます yang muncul sebagai pilihan salah untuk 食べます akan muncul lagi sebagai jawaban benar di quest
+飲みます; paparan itu bisa mengacaukan soal tersebut ke dua arah. **Konsekuensi yang diterima:** quest awal di
+wilayah pertama kekurangan kandidat otomatis; validator memberi peringatan dan tim mengisi pengecoh manual.
+
+### D-85 · Pengecoh uji konteks manual dari quest lain: kebocoran kecil yang diterima dengan sadar
+**Tanggal:** 2026-10-12. **Keputusan:** Pengecoh manual di uji konteks boleh berupa kotoba quest lain yang belum
+dimainkan (misalnya 飲みます sebagai pengecoh 食べます). Tidak ada peringatan validator untuk kasus ini.
+**Alasan:** Pengecoh terbaik untuk sebuah kotoba justru kotoba sejenis dari bab yang sama (飲みます, 見ます, 読みます).
+Melarangnya menurunkan kualitas pengecoh tajam, padahal pengecoh adalah titik paling rawan di proyek ini (T-12).
+Paparannya hanya berupa tulisan sebagai pilihan yang salah, tanpa bacaan dan tanpa arti, sehingga tidak mengajarkan
+bushu maupun cara bacanya. Peringatan validator sengaja tidak dibuat supaya tim tidak terdorong menghindari
+pengecoh terbaik. **Alternatif ditolak:** Melarang atau memperingatkan pengecoh dari quest yang belum dimainkan.
+Ini pengecualian yang disengaja dari D-79.
+
+### D-86 · Halaman yang memuat seluruh materi tidak ditautkan dari aplikasi
+**Tanggal:** 2026-10-12. **Keputusan:** Tautan ke Pemeriksaan konten (`#/content-check`) dihapus dari Pengaturan, dan
+pratinjau (`#/preview/all`, dibangun ulang di langkah 5) juga tidak akan ditautkan. Tim dan validator membukanya
+lewat alamat yang dicatat di `MULAI-DI-SINI.md`, yang tidak ikut diunggah ke Netlify (begitu pula README dan
+`DECISIONS.md`). **Batas yang harus disadari:** ini hanya mencegah **paparan tidak sengaja**, bukan kecurangan yang
+disengaja. Situs statis tidak bisa menyembunyikan apa pun: `data/content.json` dapat dibuka langsung oleh siapa saja
+yang tahu alamatnya dan isinya lebih lengkap daripada halaman mana pun; alamat rute juga terbaca di berkas JS yang
+diunggah. Pengaman yang sebenarnya adalah data log: pembukaan index tercatat beserta quest yang sedang dikerjakan
+(D-68, D-83), dan setiap jawaban mencatat waktu jawab serta apakah tab sempat ditinggalkan (`wasHidden`). Jangan
+menganggap masalah ini tertutup sepenuhnya. **Alternatif ditolak:** Kata sandi di sisi browser (bisa dibaca di kode,
+memberi rasa aman palsu).
+
+### D-87 · Jendela index dan aturan tampilnya
+**Tanggal:** 2026-10-12. **Keputusan:** Index tiga tingkat: daftar → jendela kanji (kanji besar, arti, 熟語/kotoba yang
+sudah diperkenalkan) → detail kanji (音読み, 訓読み, 部首, 画数, JLPT, 書き方); daftar atau jendela kanji → jendela kotoba
+(kanji penyusun beserta bacaannya, 例文). Aturan D-79 di tingkat detail: baris 音読み atau 訓読み disembunyikan selama
+ada kotoba quest dengan kanji itu dan jenis bacaan itu yang soal cara bacanya tertunda, termasuk quest yang belum
+dimulai; 部首 disembunyikan sampai soal Bentuk kanji itu dikuasai, karena bushu adalah jawabannya; 例文 hanya baris
+percakapan yang sudah pernah dilihat (pengantar yang sudah disimak, uji yang sudah dijawab), dengan furigana bacaan
+yang masih tertunda disembunyikan. Alamat yang diketik untuk isi yang belum diperkenalkan menampilkan "Belum tersedia"
+dan tidak dicatat. Alamat jendela kotoba memakai posisi, bukan ID (D-81). Setiap pembukaan daftar dan jendela
+dicatat sebagai baris peristiwa (`prompt` = `daftar`, `kanji`, `detail kanji`, atau `kotoba`; `answer` = yang dilihat).
+Slot 書き方 menampilkan kotak kosong selama `strokes` bernilai `null` (D-66). **Alasan:** Detail kanji memuat jawaban dua
+jenis soal (Bentuk dan cara baca), jadi aturan tampilnya harus per bagian, bukan per kanji.
+
+### D-88 · Panduan kana dari data
+**Tanggal:** 2026-10-12. **Keputusan:** Tabel hiragana dan katakana (46 dasar, 25 bunyi bersuara, 33 bunyi gabungan)
+beserta romaji Hepburn ada di `data/kana.json`, dengan catatan tentang っ kecil dan tanda panjang ー. Satu tabel,
+dengan tombol untuk beralih antara hiragana dan katakana. Uji otomatis memastikan setiap katakana sesuai pasangan
+hiragananya. **Alasan:** Aturan "tidak ada teks Jepang di kode" (D-76); tim bisa menambah baris tanpa menyentuh kode.
+
+### D-89 · Disclaimer dan layar sambutan
+**Tanggal:** 2026-10-12. **Keputusan:** Pemain baru, termasuk setelah reset, pertama kali melihat layar sambutan
+berisi disclaimer: materi mengikuti cakupan みんなの日本語初級I bab 1–12, dan semua kalimat serta percakapan ditulis
+tim pengembang dan tidak disalin dari buku. Disclaimer yang sama ada di halaman Tentang aplikasi (tautan di bawah
+peta dan di Pengaturan) dan akan ada di kepala pratinjau (langkah 5). Judul buku diambil dari `data/ui.json`
+(label `bookTitle`, berfurigana). Pemilihan karakter (langkah 5) akan disisipkan setelah layar sambutan.
+**Alasan:** D-71.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -979,3 +1037,17 @@ jawaban), dan tanpa bacaan. Index, jendela bab, dan kartu pengantar pada mode "t
 bacaan". Uji otomatis memastikan "tanpa bacaan" menghasilkan kata saja. **Dampak:** Sejenis T-02: kebocoran
 lewat jalur tampilan yang dipakai ulang untuk tujuan lain. Hanya terlihat dari tangkapan layar, bukan dari uji
 logika.
+
+### T-14 · Panduan kana tampil sebagai teks "[object HTMLDivElement]"
+**Tanggal:** 2026-10-12. **Temuan:** Pada tangkapan layar pertama panduan kana, isi halaman tampil sebagai
+"[object HTMLDivElement],[object HTMLElement],…". Daftar elemen bersarang diteruskan langsung ke `replaceChildren`,
+yang mengubahnya menjadi teks. **Tindakan:** Isi disusun lewat `h()`, yang meratakan daftar bersarang dan melewati
+`null`, persis seperti perbaikan T-06. **Dampak:** Kesalahan jenis yang sama terulang di layar baru; setiap
+`replaceChildren` yang baru ditulis diperiksa ulang. Uji logika tidak menangkapnya, tangkapan layar menangkapnya.
+
+### T-15 · Folder `assets/` tidak ada di daftar unggahan Netlify
+**Tanggal:** 2026-10-12. **Temuan:** Saat memeriksa berkas mana yang ikut diunggah (untuk D-86), ternyata folder
+`assets/` yang ditambahkan di langkah 3 belum masuk tabel "Salin" di README bagian deploy. Situs yang diunggah
+mengikuti panduan akan tampil tanpa peta dan ikon. **Tindakan:** `assets/` ditambahkan ke daftar salin, dan
+`ASSETS.md` ke daftar jangan salin. **Dampak:** Setiap folder baru yang dibaca aplikasi harus ikut diperiksa di
+panduan deploy.

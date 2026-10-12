@@ -44,7 +44,8 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
    format, dan batas ukuran berkas.
 2. Mengganti gambar = **menimpa berkas dengan nama yang sama**. Tidak perlu menyentuh kode atau JSON.
 3. Di aplikasi, gambar yang belum diganti tampil sebagai kotak abu-abu bertuliskan nama slot dan ukurannya.
-   Periksa hasilnya di **Pengaturan → Pemeriksaan konten dan aset**.
+   Periksa hasilnya di halaman **Pemeriksaan konten dan aset** (alamatnya di bagian
+   [Alamat halaman untuk tim](#alamat-halaman-untuk-tim-tidak-ditautkan-dari-aplikasi)).
 4. Jangan menaruh kanji atau kotoba yang diajarkan di dalam gambar: peta dan menu tampil sebelum quest dimainkan.
 
 ## Saya yang menjalankan aplikasi (pengelola, koordinator data, penjaga stan)
@@ -64,10 +65,25 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 Validator diberi dua tautan:
 
 - **Daftar materi untuk dinilai dan dicetak:** `https://NAMA-SITUS.netlify.app/#/preview/all`
+  (di cabang `desain-peta` dibangun ulang di langkah 5)
 - **Aplikasi untuk dicoba dimainkan:** `https://NAMA-SITUS.netlify.app/`
 
 Kirim tautan **hanya setelah** [Daftar periksa sebelum validasi ahli](README.md#daftar-periksa-sebelum-validasi-ahli)
 selesai. Jika halaman pratinjau masih bertanda **DRAF**, jangan dikirim.
+
+## Alamat halaman untuk tim (tidak ditautkan dari aplikasi)
+
+Halaman berikut memuat seluruh materi, jadi **sengaja tidak ditautkan** dari dalam aplikasi supaya peserta tidak
+membukanya tanpa sengaja. Berkas ini tidak ikut diunggah ke Netlify, jadi alamatnya hanya tercatat di sini.
+
+| Halaman | Alamat |
+|---|---|
+| Pemeriksaan konten dan aset | `https://NAMA-SITUS.netlify.app/#/content-check` |
+| Pratinjau semua materi (untuk validator) | `https://NAMA-SITUS.netlify.app/#/preview/all` |
+| Pemeriksa dan konverter materi (CSV) | `https://NAMA-SITUS.netlify.app/tools/convert.html` |
+
+Ini mencegah paparan tidak sengaja, **bukan** kecurangan yang disengaja: situs statis tidak bisa menyembunyikan
+apa pun, dan `data/content.json` bisa dibuka langsung oleh siapa saja yang tahu alamatnya (DECISIONS D-86).
 
 ## Saya programmer berikutnya
 

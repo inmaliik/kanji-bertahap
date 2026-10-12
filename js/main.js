@@ -1,6 +1,6 @@
 // App bootstrap and hash routing.
 
-import { ASSETS_URL, CONSENT_URL, CONTENT_URL, UI_LABELS_URL } from "./config.js";
+import { ASSETS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, UI_LABELS_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
@@ -17,8 +17,9 @@ import { contentCheckScreen } from "./screens/content-check.js";
 import { questScreen, reviewScreen } from "./screens/quest.js";
 import { mapScreen } from "./screens/map.js";
 import { regionScreen } from "./screens/region.js";
-import { indexScreen } from "./screens/index.js";
-import { kanaScreen } from "./screens/kana.js";
+import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
+import { kanaScreen, loadKana } from "./screens/kana.js";
+import { aboutScreen, welcomeScreen } from "./screens/about.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -39,17 +40,24 @@ const app = {
   uiProblems: [],
   assets: new Map(), // data/assets.json slots by id (D-70)
   assetProblems: [],
+  kana: null, // data/kana.json
+  kanaError: null,
   notices: [], // { kind, text } shown on the home screen
   render,
 };
 
 // desain-peta branch: the printable preview returns in step 5.
 const ROUTES = [
-  { pattern: /^#?\/?$/, screen: () => mapScreen(app) },
+  // Every new player sees the welcome screen with the disclaimer once (D-71).
+  { pattern: /^#?\/?$/, screen: () => (app.progress.welcomeSeen ? mapScreen(app) : welcomeScreen(app, render)) },
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => regionScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
   { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/index$/, screen: () => indexScreen(app) },
+  { pattern: /^#\/index\/kanji\/([^/]+)$/, screen: (ch) => kanjiScreen(app, decodeURIComponent(ch)) },
+  { pattern: /^#\/index\/kanji\/([^/]+)\/detail$/, screen: (ch) => kanjiDetailScreen(app, decodeURIComponent(ch)) },
+  { pattern: /^#\/index\/kotoba\/(\d+)$/, screen: (n) => kotobaScreen(app, n) },
+  { pattern: /^#\/about$/, screen: () => aboutScreen(app) },
   { pattern: /^#\/kana$/, screen: () => kanaScreen(app) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
@@ -105,12 +113,15 @@ function navigate() {
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent, ui, assets] = await Promise.all([
+  const [result, consent, ui, assets, kana] = await Promise.all([
     loadContent(CONTENT_URL),
     loadConsentText(CONSENT_URL),
     loadUiLabels(UI_LABELS_URL),
     loadAssetManifest(ASSETS_URL),
+    loadKana(KANA_URL),
   ]);
+  app.kana = kana.kana;
+  app.kanaError = kana.error;
   app.consentText = consent.text;
   app.consentError = consent.error;
   app.uiLabels = ui.labels;

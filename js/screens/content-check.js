@@ -58,7 +58,7 @@ export function contentCheckScreen(app) {
   return h(
     "div",
     { class: "screen" },
-    backLink("#/settings", "Pengaturan"),
+    backLink("#/", "Peta"),
     h("h1", { tabindex: "-1" }, "Pemeriksaan konten"),
     h(
       "p",

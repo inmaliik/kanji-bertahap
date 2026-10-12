@@ -13,7 +13,8 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
    sama). Tidak ada file lain yang perlu diubah: tidak perlu menyentuh JSON, tidak perlu menyentuh kode.
 4. Serahkan berkasnya ke pengelola aplikasi, atau timpa sendiri di folder proyek lalu unggah ulang ke Netlify
    (README bagian "Menaruh aplikasi di Netlify").
-5. Periksa di aplikasi: **Pengaturan → Pemeriksaan konten dan aset → Aset gambar**. Slot yang sudah diganti
+5. Periksa di aplikasi: buka halaman **Pemeriksaan konten dan aset** (alamatnya ada di `MULAI-DI-SINI.md`,
+   bagian "Alamat halaman untuk tim"), bagian **Aset gambar**. Slot yang sudah diganti
    bertanda ✓; yang masih placeholder bertanda ⚠; berkas yang hilang, terlalu besar, atau salah rasio bertanda ✗.
 
 ## Daftar slot

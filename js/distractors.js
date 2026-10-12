@@ -5,7 +5,10 @@
 // Rules (DECISIONS.md):
 // - Reading: manual distractors first, then automatic ones. Automatic
 //   candidates are readings of OTHER kotoba that share no kanji with this one
-//   and have the SAME reading type, preferring similar length. Cross-type
+//   and have the SAME reading type, preferring similar length. The caller
+//   passes only kotoba whose reading is no longer pending for the player
+//   (D-84): のみます as a wrong option for 食べます would come back as the
+//   right answer in the 飲みます quest. Cross-type
 //   distractors (e.g. an on'yomi based reading for a kun'yomi word) exist only
 //   as manual entries and are always included, so their effect can be
 //   measured consistently.
@@ -42,16 +45,16 @@ const kanjiOf = (word) => new Set(Array.from(typeof word === "string" ? word : "
 /**
  * Candidate distractors for a reading item, grouped by origin.
  * Pure: also used by the validator to warn about thin pools.
- * @param {object[]} allKotoba every kotoba in the content
+ * @param {object[]} candidates kotoba whose readings may be shown (D-84)
  */
-export function readingDistractorPool(allKotoba, kotoba) {
+export function readingDistractorPool(candidates, kotoba) {
   const used = new Set([kotoba.reading]);
   const cross = uniqueExcluding(kotoba.readingDistractorsCross, used);
   const manual = uniqueExcluding(kotoba.readingDistractors, used);
   // Kotoba sharing a kanji are left out: their reading of that kanji may be
   // the very contrast the player is learning.
   const own = kanjiOf(kotoba.word);
-  const autoSource = (allKotoba ?? [])
+  const autoSource = (candidates ?? [])
     .filter((other) => other && other !== kotoba && other.readingType === kotoba.readingType)
     .filter((other) => ![...kanjiOf(other.word)].some((ch) => own.has(ch)))
     .map((other) => other.reading);
@@ -67,8 +70,8 @@ export function blankDistractorPool(line) {
 const withType = (values, type) => values.map((value) => ({ value, type }));
 
 /** @returns {Array<{value: string, type: string}>} shuffled, answer included */
-export function readingOptions(allKotoba, kotoba, random = Math.random) {
-  const pool = readingDistractorPool(allKotoba, kotoba);
+export function readingOptions(candidates, kotoba, random = Math.random) {
+  const pool = readingDistractorPool(candidates, kotoba);
   const lengthGap = (value) => Math.abs(Array.from(value).length - Array.from(kotoba.reading).length);
   const autoByLength = shuffle(pool.auto, random).sort((a, b) => lengthGap(a) - lengthGap(b));
   const picked = [

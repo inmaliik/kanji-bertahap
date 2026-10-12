@@ -87,6 +87,7 @@ export function mapScreen(app) {
           )
         );
       })
-    )
+    ),
+    h("p", { class: "map-screen__about" }, h("a", { href: "#/about" }, "Tentang aplikasi"))
   );
 }

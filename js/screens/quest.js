@@ -344,7 +344,11 @@ function sessionScreen(app, cfg) {
     const common = { item, random: Math.random, onAnswer, onContinue: show };
     if (item.stage === "shape") return renderShape(common);
     if (item.stage === "reading") {
-      return renderReading({ ...common, model, quest, isRevealed: (k) => isRevealed(k, phase), showReading: mode !== FURIGANA_MODE.NEVER });
+      // Automatic distractors only from kotoba whose reading is settled for this player (D-84).
+      const candidates = [...model.kotoba.values()].filter(
+        (k) => k !== kotoba && kotobaVisible(model, app.progress, k, byKotoba) && readingSettled(model, app.progress, k, byKotoba)
+      );
+      return renderReading({ ...common, model, quest, candidates, isRevealed: (k) => isRevealed(k, phase), showReading: mode !== FURIGANA_MODE.NEVER });
     }
     return renderTest({
       ...common,

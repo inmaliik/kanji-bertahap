@@ -17,6 +17,7 @@ export const UI_LABEL_FALLBACKS = Object.freeze({
   strokeOrder: "Cara menulis",
   jukugo: "Kata majemuk",
   example: "Contoh kalimat",
+  bookTitle: "Minna no Nihongo Shokyu I",
 });
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

@@ -9,10 +9,10 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 3 dari 5 selesai: struktur data, quest, peta).**
+> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 4 dari 5 selesai: struktur data, quest, peta, index).**
 > Materi tersusun sebagai wilayah, quest, dan percakapan (schemaVersion 2). Peta, jendela bab, 復習, penguncian
-> wilayah, menu tiga pintu, dan daftar index sudah jalan, dengan aset placeholder (lihat [`ASSETS.md`](ASSETS.md)).
-> Detail index, panduan kana, karakter, dan pratinjau cetak menyusul di langkah 4–5. Bagian README tentang
+> wilayah, menu tiga pintu, index tiga tingkat, panduan kana, dan disclaimer sudah jalan, dengan aset placeholder
+> (lihat [`ASSETS.md`](ASSETS.md)). Karakter dan pratinjau cetak menyusul di langkah 5. Bagian README tentang
 > pratinjau dan prosedur pameran masih menjelaskan versi lama.
 > Versi yang bisa dimainkan, dan menjadi cadangan untuk validasi ahli, ada di cabang `main`.
 >
@@ -60,9 +60,10 @@ Buat folder baru, misalnya `kanji-bertahap-situs`, lalu **salin** isi berikut da
 |---|---|
 | `index.html` | `.git` (folder tersembunyi) |
 | `css/` | `tests/` |
-| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` |
+| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` (memuat alamat halaman tim) |
 | `data/` | file CSV ekspor log jawaban |
-| `tools/` (berisi pemeriksa materi untuk tim konten) | |
+| `tools/` (berisi pemeriksa materi untuk tim konten) | `ASSETS.md` |
+| `assets/` (gambar peta dan ikon; **wajib**, tanpa folder ini peta tampil kosong) | |
 
 Dokumen internal tidak disalin karena semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya.
 
@@ -104,9 +105,10 @@ Jika pembaruan ternyata salah: tab **Deploys** → pilih unggahan sebelumnya →
 
 ### Tautan untuk validator ahli
 
-Berikan tautan langsung ke pratinjau: `https://nama-situs.netlify.app/#/preview/all`. Sebelum mengirimnya,
-jalankan [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli). Selama revisi
-materi masih `draft-…`, halaman itu bertanda DRAF dan **tidak boleh** dikirim ke validator.
+Berikan tautan langsung ke pratinjau. Alamatnya **tidak** ditautkan dari dalam aplikasi dan dicatat di
+`MULAI-DI-SINI.md`, yang tidak ikut diunggah (D-86). Sebelum mengirimnya, jalankan
+[Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli). Selama revisi materi masih
+`draft-…`, halaman itu bertanda DRAF dan **tidak boleh** dikirim ke validator.
 
 Situs dapat dibuka siapa pun yang mengetahui tautannya. Jangan menaruh data jawaban peserta di folder
 unggahan.
@@ -122,6 +124,7 @@ data/content.json           SELURUH materi pembelajaran (schemaVersion 2: wilaya
 data/archive/               materi yang keluar dari data aktif (tidak dibaca aplikasi); lihat README di dalamnya
 data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
 data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復習, 画数, …)
+data/kana.json              tabel hiragana dan katakana untuk panduan kana
 data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
 assets/                     gambar: peta dan ikon menu (saat ini PLACEHOLDER, lihat ASSETS.md)
 
@@ -164,7 +167,8 @@ js/screens/quest.js         layar quest dan 復習: menjalankan sesi, mencatat l
 js/screens/map.js           peta: gambar, pin wilayah, daftar wilayah
 js/screens/region.js        jendela bab: ringkasan, daftar quest, 復習
 js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
-js/screens/kana.js          panduan kana (langkah 4)
+js/screens/kana.js          panduan kana (data/kana.json)
+js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan disclaimer
 js/screens/menu.js          menu tiga pintu di luar quest
 js/screens/content-check.js daftar peringatan konten
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
@@ -815,9 +819,9 @@ Dibuka dari menu **Pengaturan** di peta dan layar lain di luar quest.
 | Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. |
 | Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
-| Materi | Revisi materi, tanda DRAF, dan tautan **Pemeriksaan konten dan aset**. |
+| Materi | Revisi materi, tanda DRAF, dan tautan **Tentang aplikasi**. Halaman tim (pemeriksaan konten, pratinjau) sengaja tidak ditautkan. |
 
-**Pemeriksaan konten dan aset** (untuk tim, jangan dibuka di depan peserta karena memuat isi materi): daftar
+**Pemeriksaan konten dan aset** (untuk tim, dibuka lewat alamatnya yang dicatat di `MULAI-DI-SINI.md`, jangan dibuka di depan peserta karena memuat isi materi): daftar
 peringatan konten, masalah di `data/ui.json`, dan **pemeriksa aset** yang menandai setiap slot gambar: ✓ sudah
 diganti, ⚠ masih placeholder, ✗ berkas hilang, terlalu besar, atau rasionya salah.
 
@@ -1163,7 +1167,32 @@ dan Pengaturan; **tidak ada** di dalam quest dan 復習 (D-69). Ikonnya slot ase
 percakapan pengantarnya **sudah disimak**; kotoba yang bukan quest muncul setelah semua quest di babnya tuntas.
 Cara baca muncul setelah soal cara bacanya dikuasai. Setiap pembukaan index ditulis ke log sebagai **baris
 peristiwa**, bukan jawaban (`questStep` = `index`, `phase` = `event`), dengan daftar quest yang sedang dikerjakan
-di kolom `openQuests`. Jendela detail kanji dan kotoba menyusul di langkah 4.
+di kolom `openQuests`.
+
+Index punya tiga tingkat: **daftar** → **jendela kanji** (kanji besar, arti, dan 熟語/kotoba dengan kanji itu) →
+**detail kanji** (ketuk kanji besar: 音読み, 訓読み, 部首, 画数, JLPT, dan 書き方); dari daftar atau jendela kanji,
+ketuk kotoba untuk **jendela kotoba** (kanji penyusun beserta bacaannya di kotoba itu, lalu 例文 di bagian bawah).
+Aturan D-79 berlaku di semua tingkat:
+
+| Isi | Tampil jika |
+|---|---|
+| Kanji dan kotoba | Percakapan pengantar quest-nya sudah disimak. |
+| Cara baca kotoba dan bacaan kanji di dalamnya | Soal cara baca kotoba itu sudah dikuasai, atau quest-nya tuntas. |
+| Baris 音読み / 訓読み di detail kanji | Tidak ada kotoba quest dengan kanji itu dan jenis bacaan itu yang soal cara bacanya masih tertunda. |
+| 部首 | Soal Bentuk kanji itu sudah dikuasai (jawaban soal itu adalah bushunya). |
+| 例文 | Hanya baris percakapan yang **sudah pernah dilihat**: percakapan pengantar yang sudah disimak dan percakapan uji yang sudah dijawab. |
+
+Alamat jendela kotoba memakai posisi kotoba, bukan ID-nya (D-81). Alamat yang diketik untuk kanji atau kotoba yang
+belum diperkenalkan menampilkan "Belum tersedia". 書き方 menampilkan kotak kosong selama data urutan guratan belum
+ada (D-66); jika kelak diisi, berkas KanjiVG maupun gambar tim masuk lewat field `strokes` yang sama.
+
+**Panduan kana**: tabel hiragana dan katakana (dasar, bunyi bersuara, bunyi gabungan) dari `data/kana.json`, dengan
+tombol untuk beralih antara hiragana dan katakana. Hanya rujukan: tidak dicatat dan tidak menuntaskan apa pun.
+
+**Sambutan dan disclaimer.** Pemain baru (termasuk setelah reset) pertama kali melihat layar sambutan dengan
+disclaimer: materi mengikuti cakupan みんなの日本語初級I bab 1–12, dan semua kalimat serta percakapan ditulis tim
+pengembang. Disclaimer yang sama ada di **Tentang aplikasi** (tautan di bawah peta dan di Pengaturan). Judul buku
+diambil dari `data/ui.json`.
 
 **Label antarmuka berbahasa Jepang** (復習, dan kelak 画数, 熟語, dan lainnya) ada di `data/ui.json`, ditulis
 dengan sintaks furigana yang sama, selalu tampil berfurigana apa pun setelan pemain, dan boleh punya padanan

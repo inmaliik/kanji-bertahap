@@ -159,3 +159,58 @@ test("every asset slot has its placeholder file, within limits, and is listed in
     assert.ok(doc.includes(slot.path), `ASSETS.md lists ${slot.path}`);
   }
 });
+
+test("index windows: bushu, reading types and example lines follow D-79", () => {
+  const model = twoRegions();
+  const progress = S.createProgress();
+  assert.equal(R.shapeSettled(model, progress, "食"), false, "shape question still ahead");
+  assert.deepEqual(R.pendingReadingTypes(model, progress, "食"), ["kunyomi", "onyomi"], "食べます and 食堂 both ahead");
+  assert.equal(R.shapeSettled(model, progress, "堂"), true, "no quest asks the shape of 堂");
+
+  const taberu = model.kotoba.get("tabemasu");
+  assert.deepEqual(R.seenLines(model, progress, taberu), [], "nothing seen yet");
+  progress.quests["Q-tabemasu"] = { status: "in_progress", introDone: true };
+  assert.deepEqual(R.seenLines(model, progress, taberu).map((s) => s.conversation.id), ["C-tabemasu-pengantar"]);
+  progress.items["C:C-tabemasu-uji-1:test"] = 0; // answered once, wrongly
+  assert.deepEqual(R.seenLines(model, progress, taberu).map((s) => s.conversation.id), ["C-tabemasu-pengantar", "C-tabemasu-uji-1"]);
+
+  progress.items["K:食:shape"] = S.STREAK_TO_MASTER;
+  progress.items["W:tabemasu:reading"] = S.STREAK_TO_MASTER;
+  assert.equal(R.shapeSettled(model, progress, "食"), true);
+  assert.deepEqual(R.pendingReadingTypes(model, progress, "食"), ["onyomi"], "食堂 still ahead");
+});
+
+test("automatic reading distractors come only from settled kotoba (D-84)", async () => {
+  const { readingDistractorPool } = await import(jsModule("distractors.js"));
+  const data = clone(loadSampleContent());
+  const nomu = data.kotoba.find((k) => k.id === "nomimasu");
+  const taberu = data.kotoba.find((k) => k.id === "tabemasu");
+  assert.deepEqual(readingDistractorPool([nomu], taberu).auto, ["のみます"]);
+  assert.deepEqual(readingDistractorPool([], taberu).auto, [], "飲みます not settled: not a candidate");
+
+  // The validator counts only kotoba of earlier chapters, which are sure to be settled.
+  taberu.readingDistractors = [];
+  taberu.readingDistractorsCross = [];
+  const { warnings } = validateContent(data);
+  const thin = warnings.find((w) => w.code === "READING_DISTRACTORS_TOO_FEW" && w.path === "kotoba[0]");
+  assert.ok(thin, "same-chapter 飲みます does not count");
+  assert.match(thin.message, /otomatis 0/);
+});
+
+test("data/kana.json covers hiragana and katakana with romaji in every cell", () => {
+  const { sections } = JSON.parse(readFileSync(join(ROOT, "data/kana.json"), "utf8"));
+  let cells = 0;
+  for (const section of sections) {
+    for (const row of section.rows) {
+      assert.equal(row.cells.length, section.columns.length, section.title);
+      for (const cell of row.cells.filter(Boolean)) {
+        cells += 1;
+        const toKatakana = [...cell.hiragana].map((ch) => String.fromCodePoint(ch.codePointAt(0) + 0x60)).join("");
+        assert.equal(cell.katakana, toKatakana, cell.hiragana);
+        assert.match(cell.romaji, /^[a-z]+$/);
+      }
+    }
+  }
+  assert.equal(cells, 46 + 25 + 33);
+  assert.equal(S.createProgress().welcomeSeen, false, "every new player sees the welcome screen with the disclaimer");
+});

@@ -1146,15 +1146,19 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
       continue;
     }
     if (typeof entry.reading !== "string") continue;
-    const { cross, manual, auto } = readingDistractorPool(allKotoba, entry);
+    // Only kotoba of earlier chapters are sure to be settled when this quest is
+    // played; same-chapter quests may still be ahead (D-84).
+    const settled = allKotoba.filter((k) => Number.isInteger(k.chapter) && Number.isInteger(entry.chapter) && k.chapter < entry.chapter);
+    const { cross, manual, auto } = readingDistractorPool(settled, entry);
     const total = cross.length + manual.length + auto.length;
     if (total < DISTRACTORS_NEEDED) {
       report.warn(
         ctx,
         "READING_DISTRACTORS_TOO_FEW",
         `Soal cara baca "${entry.word}" hanya punya ${total} pengecoh (manual ${cross.length + manual.length}, ` +
-          `otomatis ${auto.length}); seharusnya ${DISTRACTORS_NEEDED}. Soal tetap bisa dimainkan dengan pilihan ` +
-          "lebih sedikit. Tambahkan pengecoh di kolom reading_distractors."
+          `otomatis ${auto.length}); seharusnya ${DISTRACTORS_NEEDED}. Pengecoh otomatis hanya diambil dari kotoba bab ` +
+          "sebelumnya, karena bacaan kotoba quest yang belum dimainkan tidak boleh tampil. Soal tetap bisa dimainkan " +
+          "dengan pilihan lebih sedikit. Tambahkan pengecoh di kolom reading_distractors."
       );
     }
   }

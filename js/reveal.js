@@ -6,7 +6,7 @@
 // shown, but its reading only once the reading question is no longer pending
 // (quest passed, or reading mastered).
 
-import { itemId, kotobaParts } from "./model.js";
+import { itemId, kotobaParts, plainLine } from "./model.js";
 import { STREAK_TO_MASTER } from "./state.js";
 import { questIntroduced, questPassed } from "./progression.js";
 import { isKanji, toHiragana } from "./jp-text.js";
@@ -73,4 +73,55 @@ export function indexKotoba(model, progress) {
 /** Kanji of those kotoba, in order of first appearance. */
 export function indexKanji(kotobaList) {
   return [...new Set(kotobaList.flatMap((k) => Array.from(k.word).filter(isKanji)))];
+}
+
+/**
+ * May the bushu of a kanji appear outside a quest? It is the answer of the
+ * shape question, so only once that item is mastered, or when no quest asks it.
+ */
+export function shapeSettled(model, progress, kanji) {
+  const asking = [...model.quests.values()].filter((q) => q.targetKanji.includes(kanji));
+  if (!asking.length) return true;
+  if (asking.every((q) => questPassed(progress, q))) return true;
+  return (progress.items[itemId.shape(kanji)] ?? 0) >= STREAK_TO_MASTER;
+}
+
+/**
+ * Reading types of a kanji that must stay hidden in its readings table: a
+ * quest kotoba with this kanji and that reading type still has its reading
+ * question ahead (whether or not the quest has started).
+ * @returns {string[]} subset of ["kunyomi", "onyomi"]
+ */
+export function pendingReadingTypes(model, progress, kanji) {
+  const byKotoba = questByKotoba(model);
+  return ["kunyomi", "onyomi"].filter((type) =>
+    [...byKotoba.keys()]
+      .map((id) => model.kotoba.get(id))
+      .some((k) => k.readingType === type && k.word.includes(kanji) && !readingSettled(model, progress, k, byKotoba))
+  );
+}
+
+/**
+ * Conversation lines the player has already seen that show `kotoba`: lines of
+ * intro conversations read to the end, and of test conversations answered at
+ * least once. A line qualifies if it contains the word, or highlights or
+ * blanks the kotoba of its own quest (conjugated forms such as 食べました).
+ * @returns {Array<{line: object, conversation: object, quest: object}>}
+ */
+export function seenLines(model, progress, kotoba) {
+  const out = [];
+  for (const quest of model.quests.values()) {
+    const ownQuest = quest.kotoba === kotoba.id;
+    const conversations = [];
+    if (questIntroduced(progress, quest) || questPassed(progress, quest)) conversations.push(quest.intro);
+    for (const test of quest.tests) {
+      if (questPassed(progress, quest) || progress.items[itemId.test(test.id)] !== undefined) conversations.push(test);
+    }
+    for (const conversation of conversations) {
+      for (const line of conversation.lines) {
+        if (plainLine(line).includes(kotoba.word) || (ownQuest && (line.highlight || line.blank))) out.push({ line, conversation, quest });
+      }
+    }
+  }
+  return out;
 }
