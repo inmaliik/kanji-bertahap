@@ -1476,14 +1476,20 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini (90 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+Uji ini (91 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
 (sesi quest, pemantapan, kunci wilayah, 復習), dunia (dibuka bebas, urutan per dunia), materi yang tidak boleh tampil
 sebelum diperkenalkan, peta (potongan, posisi lokasi), XP, eksplorasi per dunia dan papan peringkat, kucing (lapisan,
 kombinasi kembar, nama kucing menurut D-79, kolom CSV lama), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
 penelitian), kontras palet warna, kontrak aset, log (penyimpanan penuh, kolom, antrean pengiriman, CSV, `buildId`),
 alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), **isi terbitan Netlify** (hanya enam butir
 situs dan `build.json`), **sintaks setiap skrip**, dan bahwa tidak ada materi bahasa Jepang yang ditulis langsung di
-kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di sini; periksa manual di ponsel.
+kode. Jalankan sebelum setiap commit.
+
+**Uji semua layar** (`tests/screens.test.mjs`, T-20) membuka aplikasi di Chrome headless dan mengunjungi setiap rute
+dalam beberapa keadaan (pemain baru, sedang bermain, semua tuntas, dunia tanpa materi, mode penelitian, mode pameran).
+Uji ini gagal jika ada teks `null`, `undefined`, `NaN`, atau `[object` di layar. Uji ini butuh Google Chrome atau
+Chromium (atur `CHROME_PATH` untuk lokasi lain); tanpa itu, uji dilewati dengan pesan. Tata letak dan rasa tampilan tetap
+diperiksa manual di ponsel.
 
 > `node --check berkas.js` **tidak** melaporkan galat sintaks untuk berkas `.js` di proyek ini (hasilnya selalu
 > lolos). Pemeriksaan sintaks yang sah adalah `tests/syntax.test.mjs`, yang memeriksa setiap skrip sebagai modul.

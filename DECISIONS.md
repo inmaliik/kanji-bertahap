@@ -1596,3 +1596,20 @@ layar Pengaturan; dan `node --check` untuk berkas `.js` di proyek ini selalu lol
 `tests/syntax.test.mjs` memeriksa setiap skrip di `js/` dan `tools/` sebagai modul; terbukti menangkap galat yang
 sengaja disisipkan. **Dampak:** Uji browser dijalankan **setelah suntingan terakhir** sebelum commit, dan `node
 --check` tidak dipakai lagi sebagai pemeriksaan sintaks.
+
+### T-20 · Nilai kosong tampil sebagai teks untuk ketiga kalinya; jenisnya ditutup dengan uji semua layar
+**Tanggal:** 2026-10-14. **Temuan:** Di tahap 3, kucing tanpa corak atau aksesori menampilkan teks "null", karena
+lapisan yang kosong diserahkan ke `append()`, yang mengubah nilai kosong menjadi teks. Ini kejadian ketiga dari jenis
+yang sama, setelah T-06 ("null" di Pengaturan) dan T-14 ("[object HTMLDivElement]" di panduan kana). Setiap kali
+diperbaiki per layar, dan setiap kali tertangkap hanya karena kebetulan ada tangkapan layar. **Tindakan:** Uji baru
+`tests/screens.test.mjs` membuka aplikasi di Chrome headless dan mengunjungi setiap rute (67 layar) dalam beberapa
+keadaan: pemain baru (koleksi dan index kosong), sedang bermain (kucing tanpa corak dan aksesori beserta momen
+penyelamatannya, misi tanpa percakapan uji sampai soal latihan pertama), semua tuntas, dunia tanpa materi
+(`#/dunia/2`), mode penelitian sebelum dan sesudah kode peserta, tautan penelitian di atas pemain lama, dan mode pameran.
+Uji gagal jika teks yang tampil, atau teks yang dibaca pembaca layar (`aria-label`, `title`, `alt`), memuat `null`,
+`undefined`, `NaN`, atau `[object`, atau jika ada galat yang tidak tertangkap. Uji ini ikut dalam
+`node --test tests/*.test.mjs`; tanpa Chrome ia dilewati dengan pesan, tidak dianggap lulus. **Pembuktian:** dua layar
+sengaja dirusak satu per satu (kesalahan "null" kucing dikembalikan persis; persentase daftar wilayah dibuat `NaN`);
+keduanya tertangkap dengan nama layar dan teksnya, lalu dikembalikan. **Dampak:** Setiap layar atau keadaan kosong baru
+ditambahkan ke daftar rute dan keadaan di uji ini pada tahap yang membuatnya.
+
