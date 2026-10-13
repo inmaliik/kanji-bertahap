@@ -1,5 +1,6 @@
-// Region window (chapter intro): what the chapter covers, its quests, and
-// its review (復習).
+// Region window (chapter intro), shown as a sheet sliding up over the map
+// (D-103): what the chapter covers, its quests with progress, its review
+// (復習), and one start button for the next thing to do.
 //
 // D-79: before a quest's intro conversation has been read, the list shows
 // only its number and Indonesian meaning; afterwards the kotoba itself, with
@@ -13,8 +14,7 @@ import { nodeStatuses, questIntroduced, questPassed, questStarted, regionSummary
 import { kotobaVisible, questByKotoba, readingSettled } from "../reveal.js";
 import { isIncompleteQuest, kotobaWithKanji } from "../model.js";
 import { uiLabel } from "../ui-labels.js";
-import { backLink, kotobaWithReading, LABELS, READING_DISPLAY } from "./common.js";
-import { menuBar } from "./menu.js";
+import { kotobaWithReading, LABELS, READING_DISPLAY } from "./common.js";
 import { questHref, reviewHref } from "./quest.js";
 
 function questStatus(progress, quest) {
@@ -23,29 +23,50 @@ function questStatus(progress, quest) {
   return { cls: "available", text: "Belum dimulai", action: "Mulai" };
 }
 
-export function regionScreen(app, regionKey) {
+/** The sheet frame: a backdrop that closes it, and a labelled dialog. */
+function sheet(title, ...content) {
+  return h(
+    "div",
+    { class: "sheet-layer" },
+    h("a", { class: "sheet-backdrop", href: "#/", "aria-label": "Tutup" }),
+    h(
+      "section",
+      { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "sheet-title" },
+      h("span", { class: "sheet__grip", "aria-hidden": "true" }),
+      h(
+        "div",
+        { class: "sheet__head" },
+        h("h1", { id: "sheet-title", tabindex: "-1" }, title),
+        h("a", { class: "button sheet__close", href: "#/" }, h("span", { "aria-hidden": "true" }, "✕ "), "Tutup")
+      ),
+      content
+    )
+  );
+}
+
+/** Where the start button leads: the first quest not passed yet, else the review. */
+function nextStep(app, region, reviewStatus) {
+  const index = region.quests.findIndex((q) => !questPassed(app.progress, q));
+  if (index !== -1) {
+    const started = questStarted(app.progress, region.quests[index]);
+    return { href: questHref(region, index), label: `${started ? "Lanjutkan" : "Mulai"} Quest ${index + 1}` };
+  }
+  if (reviewStatus !== STATUS.PASSED) return { href: reviewHref(region), label: reviewStatus === STATUS.IN_PROGRESS ? "Lanjutkan ulangan" : "Mulai ulangan" };
+  return null;
+}
+
+export function regionSheet(app, regionKey) {
   const { model, progress } = app;
   const region = model.regions.find((r) => r.id === regionKey);
-  if (!region) {
-    return h("div", { class: "screen" }, backLink("#/", "Peta"), h("h1", { tabindex: "-1" }, "Wilayah tidak ditemukan"));
-  }
+  if (!region) return sheet("Wilayah tidak ditemukan", h("p", {}, "Wilayah ini tidak ada di materi saat ini."));
   const statuses = nodeStatuses(model, progress);
   const summary = regionSummary(model, progress, region, statuses);
   const byKotoba = questByKotoba(model);
   const showReading = progress.settings.furiganaMode !== FURIGANA_MODE.NEVER;
-  const head = [
-    backLink("#/", "Peta"),
-    menuBar(app),
-    h("h1", { tabindex: "-1" }, `Bab ${region.chapter} — ${region.title}`),
-  ];
+  const title = `Bab ${region.chapter} — ${region.title}`;
 
   if (summary.state === "locked") {
-    return h(
-      "div",
-      { class: "screen region" },
-      head,
-      h("p", { class: "notice notice--warning" }, "🔒 Wilayah ini terbuka setelah wilayah sebelumnya dan ulangannya tuntas.")
-    );
+    return sheet(title, h("p", { class: "notice notice--warning" }, "🔒 Wilayah ini terbuka setelah wilayah sebelumnya dan ulangannya tuntas."));
   }
 
   // Kotoba of the player's earlier encounters that share a kanji with `quest` but are read differently.
@@ -108,10 +129,9 @@ export function regionScreen(app, regionKey) {
         ]
   );
 
-  return h(
-    "div",
-    { class: "screen region" },
-    head,
+  const next = nextStep(app, region, reviewStatus);
+  return sheet(
+    title,
     h(
       "div",
       { class: "mastery" },
@@ -132,6 +152,7 @@ export function regionScreen(app, regionKey) {
       "Quest boleh dikerjakan dalam urutan apa pun. Kotoba tiap quest muncul di daftar ini setelah kamu menyimak percakapan pengantarnya."
     ),
     h("ul", { class: "quest-list" }, questRows),
-    reviewRow
+    reviewRow,
+    next ? h("div", { class: "sheet__actions" }, h("a", { class: "button button--primary button--block", href: next.href }, next.label)) : null
   );
 }

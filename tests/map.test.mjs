@@ -153,7 +153,9 @@ test("every asset slot has its placeholder file, within limits, and is listed in
   const doc = readFileSync(join(ROOT, "ASSETS.md"), "utf8");
   assert.ok(slots.length >= 4);
   for (const slot of slots) {
-    if (slot.pattern) {
+    if (slot.pattern || slot.optional) {
+      if (slot.optional && !slot.pattern) assert.ok(doc.includes(slot.path), `ASSETS.md lists ${slot.path}`);
+      if (!slot.pattern) continue;
       // One file per conversation; a missing one shows a text placeholder (D-94).
       assert.ok(doc.includes(slot.pattern.split("{")[0]), `ASSETS.md describes ${slot.pattern}`);
       continue;
@@ -229,7 +231,7 @@ test("characters: two ready-made players on the standard canvas; the other speak
   assert.deepEqual(data.players.map((c) => c.id), ["hana", "kazu"]);
   for (const c of data.players) {
     const bytes = readFileSync(join(ROOT, c.image));
-    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20), bytes[25]], [2160, 2160, 6], `${c.image}: 2160×2160 RGBA`);
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20), bytes[25]], [1080, 1080, 6], `${c.image}: 1080×1080 RGBA`);
   }
   const problems = validateCharacters(data);
   assert.equal(problems.length, 1);
@@ -241,4 +243,62 @@ test("characters: two ready-made players on the standard canvas; the other speak
   assert.equal(castFor({ characters: data, progress: { character: null } }).nameOf("player"), "Kamu");
   assert.equal(cast.nameOf("lawan-bicara"), "«NAMA-TOKOH-LAWAN-BICARA»");
   assert.equal(S.createProgress().character, null, "a reset clears the chosen character");
+});
+
+test("XP comes from progress only: mastered items, passed quests and reviews; levels unlock nothing (D-105)", async () => {
+  const { xpOf, levelOf, exploration } = await import(jsModule("xp.js"));
+  const model = twoRegions();
+  const progress = S.createProgress();
+  assert.equal(xpOf(model, progress).xp, 0);
+
+  // Trying earns nothing: a wrong answer (0) and a first correct answer (1) are not mastery.
+  progress.items["W:tabemasu:reading"] = 0;
+  progress.items["K:飲:shape"] = 1;
+  assert.equal(xpOf(model, progress).xp, 0);
+
+  progress.items["W:tabemasu:reading"] = S.STREAK_TO_MASTER;
+  progress.items["K:飲:shape"] = S.STREAK_TO_MASTER;
+  pass(progress, "Q-tabemasu");
+  progress.quests["REV-B06"] = { status: "passed" };
+  const { xp, mastered, quests, reviews } = xpOf(model, progress);
+  assert.deepEqual({ mastered, quests, reviews }, { mastered: 2, quests: 1, reviews: 1 });
+  assert.equal(xp, 2 * S.XP_PER_MASTERED_ITEM + S.XP_PER_QUEST + S.XP_PER_REVIEW);
+  assert.equal(xpOf(model, progress).xp, xp, "the same progress always gives the same XP: nothing to farm");
+
+  assert.deepEqual(levelOf(0), { level: 1, floor: 0, next: S.LEVEL_THRESHOLDS[1] });
+  assert.equal(levelOf(S.LEVEL_THRESHOLDS[2]).level, 3);
+  assert.equal(levelOf(1e6).next, null);
+  assert.equal(exploration(model, progress), Math.round((2 / 6) * 100), "1 quest + 1 review of 4 quests + 2 reviews");
+  // Lots of XP without the bab 6 review: bab 7 stays locked.
+  delete progress.quests["REV-B06"];
+  for (const id of ["W:nomimasu:reading", "W:shokudou:reading", "C:C-tabemasu-uji-1:test"]) progress.items[id] = S.STREAK_TO_MASTER;
+  assert.ok(levelOf(xpOf(model, progress).xp).level > 1);
+  assert.equal(P.nodeStatuses(model, progress).get("B07"), "locked", "a level opens no region");
+});
+
+test("exhibition leaderboard: off by default, per device, numbered players, survives a progress reset", async () => {
+  const { MemoryStorage } = await import("./helpers.mjs");
+  globalThis.localStorage = new MemoryStorage();
+  try {
+    const L = await import(`${jsModule("leaderboard.js")}?board`);
+    L.recordScore({ playerId: "a", character: "hana", xp: 10, level: 1 });
+    assert.deepEqual(L.ranking(), [], "nothing is kept while exhibition mode is off");
+
+    L.saveDevice({ exhibitionMode: true });
+    L.recordScore({ playerId: "a", character: "hana", xp: 10, level: 1 });
+    L.recordScore({ playerId: "b", character: "kazu", xp: 70, level: 2 });
+    L.recordScore({ playerId: "a", character: "hana", xp: 40, level: 1 });
+    assert.deepEqual(L.ranking().map((r) => [L.playerLabel(r.number), r.xp]), [["Pemain 02", 70], ["Pemain 01", 40]]);
+
+    // A reset only replaces kanjiGame.progress.v2; the board and the device setting stay.
+    globalThis.localStorage.removeItem(S.PROGRESS_KEY);
+    assert.equal(L.ranking().length, 2);
+    assert.equal(L.loadDevice().exhibitionMode, true);
+    L.clearBoard();
+    assert.deepEqual(L.ranking(), []);
+    L.recordScore({ playerId: "c", character: "kazu", xp: 0, level: 1 });
+    assert.equal(L.ranking()[0].number, 1, "numbers start again after clearing");
+  } finally {
+    delete globalThis.localStorage;
+  }
 });

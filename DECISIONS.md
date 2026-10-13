@@ -1065,6 +1065,56 @@ mengisinya. ID `player` dicadangkan; pemeriksa konten mendaftar pembicara yang b
 direncanakan dalam bentuk lapisan kanvas yang sama (`layers`), tidak dibangun (D-70). **Catatan ukuran:** 281 KB dan
 233 KB, di bawah batas 300 KB; ekspor 1080×1080 diusulkan ke tim karena tampil paling besar ±160 piksel.
 
+### D-103 · Peta sebagai tempat-tempat di kota, jendela bab sebagai lembar bawah
+**Tanggal:** 2026-10-13. **Keputusan:** Setiap wilayah digambarkan sebagai satu lokasi di peta (gedung, toko, stasiun,
+…) dengan ikon dari tim (`assets/lokasi/<ID wilayah>.png`), bab dan persentase progres di bawah ikon, serta lencana
+status. Keadaan terkunci dibuat kode (dipucatkan, diberi gembok), sehingga tim menggambar satu ikon per lokasi. Jalur
+antar lokasi digambar kode sesuai urutan wilayah: garis putus-putus tinta, dengan motif ubin opsional
+(`assets/peta/jalur.png`) yang dipasang hanya jika berkasnya ada. Di atas peta: bilah level dan XP serta lencana
+eksplorasi seluruh peta (quest dan 復習 tuntas dibagi semuanya). Jendela pengantar bab tampil sebagai lembar dari
+bawah layar di atas peta (judul, deskripsi, daftar quest dengan progres, satu tombol langkah berikutnya), ditutup
+dengan tombol Tutup, Esc, atau ketukan di area gelap. Menu tiga pintu menjadi bilah tetap di bawah layar. Semua desain
+untuk tampilan tegak 375px; gambar referensi tim yang mendatar hanya diambil strukturnya. Lokasi tetap target sentuh
+≥48px (D-64), dan nama lokasi berasal dari judul wilayah, yang sudah diperiksa aturan teks wilayah (D-79). **Alasan:**
+Arah visual tim. **Temuan saat penerapan:** motif jalur yang berkasnya belum ada sempat tampil sebagai ikon gambar rusak
+berulang di sepanjang jalur, dan lencana eksplorasi tertutup lokasi bab 1 (T-17).
+
+### D-104 · Pembagian antara gambar tim dan kode
+**Tanggal:** 2026-10-13. **Keputusan:** Digambar tim (berkas gambar): karakter, latar peta, ikon lokasi, motif jalur,
+ilustrasi adegan, ikon menu. Dibuat kode (CSS, dengan palet dan garis tinta): tombol, kartu, lembar bawah, bilah
+progres, bilah level, lencana persentase dan eksplorasi, gembok dan tanda centang, tab, bilah menu. Pembagian ini
+ditulis di `ASSETS.md`. **Alasan:** Elemen antarmuka berbentuk gambar memberatkan ponsel kelas bawah, buram di ukuran
+layar tertentu, dan teks di dalamnya tidak terbaca pembaca layar.
+
+### D-105 · Level dan XP dihitung dari progres
+**Tanggal:** 2026-10-13. **Keputusan:** XP tidak disimpan; dihitung dari progres setiap kali ditampilkan: 10 XP per item
+yang dikuasai (streak global ≥ 2), 20 XP per quest tuntas, 50 XP per 復習 tuntas. Tidak ada XP untuk mencoba: jawaban
+salah, jawaban benar yang belum menjadi penguasaan, membuka index, dan sejenisnya tidak menambah XP. Ambang level
+(konstanta di `js/state.js`, satu tempat) hanya untuk tampilan; level tidak mengunci apa pun, pembukaan wilayah tetap
+mengikuti bab dan 復習 (D-80). **Alasan:** XP yang dihitung dari progres tidak bisa melenceng dari apa yang dipelajari
+dan tidak bisa ditimbun dengan mengulang; tidak memberi XP untuk mencoba menghindari dorongan menebak cepat, yang
+akan merusak data waktu jawab dan ketepatan.
+
+### D-106 · Papan peringkat per perangkat, hanya mode pameran
+**Tanggal:** 2026-10-13. **Keputusan:** Membalik secara terbatas larangan papan peringkat dari spesifikasi awal. Papan
+mati secara bawaan dan dinyalakan lewat setelan "Mode pameran" di Pengaturan (setelan perangkat, bukan pemain). Isinya
+pemain-pemain yang pernah bermain di perangkat itu, diurutkan menurut XP, ditampilkan dengan potret karakter pilihan
+dan nomor urut ("Pemain 07"); tidak ada kode peserta dan tidak ada teks yang diketik pengguna. Data papan disimpan di
+kunci terpisah (`kanjiGame.leaderboard.v1`) dan bertahan saat reset progres, karena setiap pengunjung stan memulai
+dengan reset; ada tombol tersendiri untuk mengosongkannya, dengan konfirmasi. Tidak memakai server, tidak dikirim, dan
+tidak dicatat di log penelitian. **Alasan pembatasan:** Papan peringkat daring bertentangan dengan janji anonim di layar
+persetujuan; persaingan juga merupakan perlakuan tersendiri yang akan mencampuri hasil uji coba, sehingga papan hanya
+ada di stan pameran dan tidak pernah aktif dalam uji coba penelitian. **Alternatif ditolak:** Papan daring; nama atau
+kode peserta di papan (nama tidak pantas atau identitas peserta bisa muncul di layar stan).
+
+### D-107 · Gambar karakter 1080×1080
+**Tanggal:** 2026-10-13. **Keputusan:** Standar karakter di `ASSETS.md` menjadi kanvas 1080×1080 (persegi, transparan,
+sosok di tengah, skala konsisten); tim menyimpan berkas induk 2160, yang masuk aplikasi adalah ekspor 1080. Hana dan
+Kazu diperkecil pengembang tepat setengah (143 KB dan 124 KB; batas 150 KB). Kotak potong dalam persen tetap berlaku
+karena skalanya identik. **Alasan:** Sosok setinggi ±730 px di kanvas 1080 cukup untuk tampilan terbesar ±160 px CSS
+(±480 px di layar 3×). **Temuan saat pemeriksaan ulang:** kotak `figure` dari Bagian B memotong kaki (berakhir di 73%
+tinggi, sosok sampai ±78%); diperbaiki menjadi 6–82% (T-18).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -1192,3 +1242,16 @@ JavaScript `null <= 1` bernilai benar; kotoba itu belum boleh tampil, sehingga j
 **Tindakan:** Kartu kontras hanya mengambil kotoba yang babnya bilangan bulat; pesannya diganti "Tampil setelah soal
 cara bacanya kamu kuasai". Uji otomatis ditambahkan. **Dampak:** Bukan kebocoran, tetapi penyembunyian berlebihan
 yang membuat umpan balik kehilangan isinya. Terlihat hanya dengan materi sungguhan.
+
+### T-17 · Ikon gambar rusak di sepanjang jalur peta; lencana tertutup lokasi
+**Tanggal:** 2026-10-13. **Temuan:** Pada tangkapan layar pertama peta kota, jalur antar lokasi penuh ikon gambar rusak:
+motif jalur dipasang sebagai pola SVG meskipun berkas `assets/peta/jalur.png` (opsional) belum ada, sehingga browser
+mengulang ikon gambar rusak. Lencana eksplorasi di sudut peta juga tertutup lokasi bab 1. **Tindakan:** Motif dipasang
+hanya setelah berkasnya termuat; lencana eksplorasi dipindah ke atas peta, di samping bilah level. **Dampak:** Aset
+opsional harus punya keadaan "tidak ada" yang rapi, bukan hanya keadaan placeholder.
+
+### T-18 · Kotak potong kartu karakter memotong kaki
+**Tanggal:** 2026-10-13. **Temuan:** Saat memeriksa ulang kotak potong setelah gambar karakter diperkecil, ternyata kotak
+`figure` di Bagian B memotong sepatu Hana dan Kazu; terlihat juga di tangkapan layar pemilihan karakter Bagian B tetapi
+terlewat. **Tindakan:** Kotak diperpanjang sampai 82% tinggi kanvas. **Dampak:** Tangkapan layar perlu diperiksa sampai
+tepi gambar, bukan hanya tata letaknya.

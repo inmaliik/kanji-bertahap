@@ -140,6 +140,8 @@ js/ui-labels.js             label antarmuka berbahasa Jepang dari data/ui.json
 js/assets.js                slot aset: gambar yang dipaskan ke wadahnya, pemeriksa aset
 js/event-log.js             baris log peristiwa (pembukaan index)
 js/cast.js                  karakter: nama dan potret pembicara, data karakter
+js/xp.js                    level, XP, dan eksplorasi, dihitung dari progres
+js/leaderboard.js           setelan perangkat (mode pameran) dan papan peringkat per perangkat
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
 js/storage.js               pembungkus localStorage yang tidak pernah error
@@ -173,6 +175,7 @@ js/screens/kana.js          panduan kana (data/kana.json)
 js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan disclaimer
 js/screens/menu.js          menu tiga pintu di luar quest
 js/screens/character.js     pemilihan karakter pemain
+js/screens/leaderboard.js   papan peringkat mode pameran
 js/screens/content-check.js daftar peringatan konten
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
@@ -1178,19 +1181,23 @@ Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeri
 
 ## Peta, jendela bab, dan index
 
-**Peta (layar utama).** Satu gambar peta dari tim (`assets/map/peta.png`) dengan satu pin per wilayah. Batas
-wilayah ada di dalam gambar, bukan digambar kode. Pin berupa tombol setinggi minimal 48 piksel yang hanya
-menampilkan **bab, status, dan persentase**, tidak pernah materi. Status ditunjukkan dengan ikon dan teks
-(🔒 terkunci, ▶ terbuka, ★ menunggu ulangan, ✓ tuntas), bukan warna saja. Di bawah peta ada daftar wilayah
-yang sama, untuk pembaca layar dan layar kecil. Posisi pin diisi di kolom `pin_x`/`pin_y` tab wilayah; selama
-kosong, pin diletakkan berurutan dari atas ke bawah.
+**Peta (layar utama) sebagai kota** (D-103). Gambar latar dari tim (`assets/map/peta.png`), dan setiap wilayah
+adalah **satu lokasi** dengan ikonnya sendiri (`assets/lokasi/<ID wilayah>.png`). Di bawah ikon tertulis bab dan
+**persentase progres**; lencana kecil menunjukkan status (🔒 terkunci, ▶ terbuka, ★ menunggu ulangan, ✓ tuntas),
+tidak dengan warna saja. Lokasi terkunci dipucatkan oleh kode, jadi tim cukup menggambar satu ikon per lokasi.
+Lokasi dihubungkan **jalur** sesuai urutan wilayah (garis putus-putus tinta, atau motif `assets/peta/jalur.png` jika
+ada). Di atas peta ada **bilah level dan XP** dan lencana **eksplorasi seluruh peta**. Di bawahnya ada daftar wilayah
+yang sama, untuk pembaca layar dan layar kecil. Batas wilayah ada di dalam gambar, bukan digambar kode. Posisi lokasi
+diisi di kolom `pin_x`/`pin_y` tab wilayah; selama kosong, lokasi diletakkan zigzag dari atas ke bawah.
 
 **Urutan dan kunci.** Wilayah, lalu 復習 wilayah itu, lalu wilayah berikutnya. Wilayah pertama selalu terbuka.
 復習 terbuka setelah semua quest di wilayahnya tuntas; wilayah berikutnya terbuka setelah 復習 itu tuntas.
 Persentase wilayah = quest tuntas ÷ jumlah quest; 復習 ditandai terpisah. Wilayah tuntas = semua quest dan
 復習 tuntas.
 
-**Jendela bab** (ketuk pin atau baris wilayah). Berisi ringkasan bab dari tim, daftar quest, dan 復習.
+**Jendela bab** (ketuk lokasi atau baris wilayah) tampil sebagai **lembar yang muncul dari bawah layar** di atas
+peta, dengan tombol **Tutup** (atau tombol Esc, atau ketuk area gelap di atasnya). Berisi ringkasan bab dari tim,
+daftar quest dengan progres, 復習, dan satu tombol untuk langkah berikutnya ("Mulai Quest 3", "Mulai ulangan").
 Sebelum percakapan pengantar sebuah quest disimak, daftar hanya menampilkan **nomor quest dan artinya**
 ("Quest 2 · minum"). Setelah itu kotobanya muncul, dengan cara baca setelah soal cara bacanya dikuasai. Jika
 kanji sasaran quest itu juga ada di kotoba lain yang sudah ditemui dengan jenis bacaan berbeda, ada catatan
@@ -1203,8 +1210,23 @@ berdampingan). Sampel dan streak-nya disimpan di entri 復習 sendiri, sehingga 
 item yang sama, dan salah menjawab di 復習 tidak mengubah penguasaan di quest asalnya. Di log: `levelId` =
 `REV-B06`, `isReview` = 1, `questStep` = `review`, dan `questId` = quest asal item.
 
-**Menu tiga pintu**: **Index**, **Panduan kana**, **Pengaturan**. Ada di peta, jendela bab, index, panduan kana,
-dan Pengaturan; **tidak ada** di dalam quest dan 復習 (D-69). Ikonnya slot aset (lihat [`ASSETS.md`](ASSETS.md)).
+**Menu tiga pintu**: **Index**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah layar**. Ada di peta,
+index, panduan kana, papan peringkat, dan Pengaturan; **tidak ada** di dalam quest dan 復習 (D-69). Ikonnya slot aset
+(lihat [`ASSETS.md`](ASSETS.md)).
+
+**Level dan XP** (D-105). XP **dihitung dari progres**, tidak disimpan sebagai angka tersendiri: 10 XP per item
+yang dikuasai, 20 XP per quest tuntas, 50 XP per 復習 tuntas (konstanta di `js/state.js`, bersama ambang setiap
+level). **Mencoba tidak menghasilkan XP**: jawaban salah, jawaban benar yang belum menjadi penguasaan, membuka index,
+dan sejenisnya tidak menambah apa pun, supaya pemain tidak terdorong menebak cepat. Karena dihitung ulang dari progres,
+XP tidak bisa melenceng dan tidak bisa ditimbun dengan mengulang quest. **Level tidak mengunci apa pun**: wilayah
+tetap hanya terbuka lewat penyelesaian bab dan 復習.
+
+**Papan peringkat — mode pameran** (D-106). Mati secara bawaan; dinyalakan petugas di **Pengaturan → Mode pameran**.
+Isinya pemain-pemain yang pernah bermain **di perangkat ini**, diurutkan menurut XP, masing-masing dengan potret
+karakter pilihannya dan nomor urut ("Pemain 07"), tanpa nama, tanpa kode peserta, dan tanpa teks ketikan. Tidak
+memakai server, tidak dikirim ke mana pun, dan tidak dicatat di log penelitian. Papan disimpan terpisah dan
+**bertahan saat reset progres** (setiap pengunjung baru memulai dengan reset); ada tombol tersendiri untuk
+mengosongkannya, dengan konfirmasi.
 
 **Index.** Rujukan atas apa yang sudah diajarkan, bukan progres. Isinya hanya kanji dan kotoba yang
 percakapan pengantarnya **sudah disimak**; kotoba yang bukan quest muncul setelah semua quest di babnya tuntas.

@@ -24,6 +24,20 @@ export const REVIEW_ITEM_COUNT = 10;
 /** Share of a region review taken from the region itself; the rest comes from earlier regions (D-63). */
 export const REVIEW_CURRENT_SHARE = 0.7;
 
+/**
+ * Experience points (D-105). XP is derived from progress, never stored, so it
+ * cannot drift from what was learned and cannot be farmed by replaying:
+ * only mastered items, passed quests and passed reviews count. Trying,
+ * wrong answers, a first correct answer that is not mastery yet, and opening
+ * the index earn nothing, so guessing fast is never rewarded.
+ */
+export const XP_PER_MASTERED_ITEM = 10;
+export const XP_PER_QUEST = 20;
+export const XP_PER_REVIEW = 50;
+
+/** XP needed to reach level 1, 2, 3, … Levels unlock nothing (D-105). */
+export const LEVEL_THRESHOLDS = [0, 50, 120, 220, 350, 520, 740, 1000, 1300, 1650, 2050, 2500];
+
 /** Choices shown in the reading and context-test questions (answer + distractors). */
 export const OPTION_COUNT = 4;
 

@@ -1,7 +1,17 @@
-// The map (home screen): the team's map image with one pin per region, and
-// the same regions as a list for screen readers and small screens (D-64).
-// Region shapes are part of the image; code never draws borders. Pins show
-// chapter, status and percentage only, never material (D-79).
+// The map (home screen) as places in a town (D-103): the team's map image,
+// one location per region with its own icon, the progress percentage under
+// it, paths between the locations in play order, and an exploration badge
+// for the whole map. A level and XP bar sits on top (D-105); the menu is the
+// bar at the bottom of the screen (D-69).
+//
+// Region shapes and the town are part of the image; code never draws borders.
+// Locked locations are drawn by code (faded, with a lock badge), so the team
+// draws one icon per location. Pins show the chapter, the location's name
+// (a region title, checked like all region texts, D-79), status and
+// percentage — never material. The region list below repeats the same
+// information for screen readers and small screens.
+//
+// #/region/B06 shows the same map with the region's sheet over it.
 
 import { h } from "../dom.js";
 import { APP_TITLE } from "../config.js";
@@ -9,8 +19,11 @@ import { assetImage } from "../assets.js";
 import { nodeStatuses, regionSummary } from "../progression.js";
 import { storageUsage } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
+import { exploration, levelOf, xpOf } from "../xp.js";
+import { loadDevice, recordScore } from "../leaderboard.js";
 import { menuBar } from "./menu.js";
 import { regionHref } from "./quest.js";
+import { regionSheet } from "./region.js";
 
 const STATE = {
   locked: { icon: "🔒", text: "Terkunci" },
@@ -20,45 +33,127 @@ const STATE = {
   done: { icon: "✓", text: "Tuntas" },
 };
 
-/** Pin position in percent. Regions without a pin get a temporary one, top to bottom by chapter. */
+/** Pin position in percent. Regions without a pin get a temporary one, zigzagging down by chapter. */
 function pinPosition(region, index, count) {
   if (region.pin) return region.pin;
-  const step = count > 1 ? 80 / (count - 1) : 0;
-  return { x: 50, y: 10 + index * step };
+  const step = count > 1 ? 76 / (count - 1) : 0;
+  return { x: index % 2 ? 68 : 32, y: 12 + index * step };
 }
 
-export function mapScreen(app) {
+/** Icon of a location: assets/lokasi/<region id>.png, or a drawn disc until the team supplies it. */
+function locationIcon(app, region) {
+  const slot = app.assets?.get("lokasi");
+  const box = h("span", { class: "location__icon" });
+  const fallback = () => box.replaceChildren(h("span", { class: "location__placeholder" }, region.id));
+  const path = slot?.pattern?.replace("{regionId}", region.id);
+  if (!path) {
+    fallback();
+    return box;
+  }
+  const img = h("img", { class: "asset__img", src: path, alt: "" });
+  img.addEventListener("error", fallback, { once: true });
+  box.append(img);
+  return box;
+}
+
+/** SVG paths between consecutive locations: an ink dashed line under the team's motif tile. */
+function paths(app, points) {
+  if (points.length < 2) return null;
+  const ns = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs) => {
+    const node = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  };
+  const svg = el("svg", { class: "map__paths", viewBox: "0 0 100 100", preserveAspectRatio: "none", "aria-hidden": "true" });
+  const motif = app.assets?.get("jalur");
+  const d = points.map((p, i) => `${i ? "L" : "M"}${p.x} ${p.y}`).join(" ");
+  svg.append(el("path", { d, class: "map__path" }));
+  // The motif tile is optional: it is laid under the dashed line only once
+  // the file has loaded, so a missing file never shows broken-image tiles.
+  if (motif?.path) {
+    const probe = new Image();
+    probe.addEventListener("load", () => {
+      const defs = el("defs", {});
+      const pattern = el("pattern", { id: "path-motif", patternUnits: "userSpaceOnUse", width: 4, height: 4 });
+      pattern.append(el("image", { href: motif.path, width: 4, height: 4 }));
+      defs.append(pattern);
+      svg.prepend(defs, el("path", { d, class: "map__path-motif", stroke: "url(#path-motif)" }));
+    });
+    probe.src = motif.path;
+  }
+  return svg;
+}
+
+function levelBar(app) {
+  const { xp } = xpOf(app.model, app.progress);
+  const { level, floor, next } = levelOf(xp);
+  return h(
+    "div",
+    { class: "level-bar" },
+    h("span", { class: "level-bar__level" }, `Level ${level}`),
+    h(
+      "span",
+      { class: "level-bar__track" },
+      h("label", { for: "xp-bar", class: "level-bar__xp" }, next ? `${xp} / ${next} XP` : `${xp} XP · level tertinggi`),
+      h("progress", { id: "xp-bar", max: next ? next - floor : 1, value: next ? xp - floor : 1 })
+    )
+  );
+}
+
+export function mapScreen(app, { sheetRegion = null } = {}) {
   const { model, progress } = app;
   const statuses = nodeStatuses(model, progress);
   const summaries = model.regions.map((region) => regionSummary(model, progress, region, statuses));
   const usage = storageUsage();
+  const explored = exploration(model, progress);
+  const device = loadDevice();
 
+  // Exhibition mode keeps this player's score on the device board (D-106).
+  const { xp } = xpOf(model, progress);
+  recordScore({ playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
+
+  const points = summaries.map((s, i) => pinPosition(s.region, i, summaries.length));
   const pins = summaries.map((s, i) => {
-    const { x, y } = pinPosition(s.region, i, summaries.length);
+    const { x, y } = points[i];
     const state = STATE[s.state];
     return h(
       "a",
       {
-        class: `map-pin map-pin--${s.state}`,
+        class: `location location--${s.state}`,
         href: regionHref(s.region),
         style: `left: ${x}%; top: ${y}%`,
-        "aria-label": `Bab ${s.region.chapter}, ${state.text}, ${s.percent} persen`,
+        "aria-label": `Bab ${s.region.chapter}, ${s.region.title}, ${state.text}, ${s.percent} persen`,
       },
-      h("span", { class: "map-pin__icon", "aria-hidden": "true" }, state.icon),
-      h("span", { class: "map-pin__text", "aria-hidden": "true" }, `Bab ${s.region.chapter} · ${s.percent}%`)
+      h("span", { class: "location__badge", "aria-hidden": "true" }, state.icon),
+      locationIcon(app, s.region),
+      h("span", { class: "location__name", "aria-hidden": "true" }, `Bab ${s.region.chapter}`),
+      h("span", { class: "location__percent", "aria-hidden": "true" }, `${s.percent}%`)
     );
   });
 
   return h(
     "div",
     { class: "screen map-screen" },
-    h("h1", { tabindex: "-1", class: "map-screen__title" }, APP_TITLE),
-    menuBar(app),
+    h(
+      "div",
+      { class: "map-top" },
+      h("h1", { tabindex: sheetRegion ? null : "-1", class: "map-screen__title" }, APP_TITLE),
+      levelBar(app),
+      h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), `Eksplorasi seluruh peta: ${explored}%`)
+    ),
     app.notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, n.text)),
     usage.warning
       ? h("p", { class: "notice notice--warning", role: "alert" }, "⚠ Penyimpanan perangkat hampir penuh. Minta petugas mengekspor dan mengosongkan log di Pengaturan.")
       : null,
-    h("div", { class: "map", role: "group", "aria-label": "Peta wilayah" }, assetImage(app, "peta", { className: "map__image" }), pins),
+    h(
+      "div",
+      { class: "map", role: "group", "aria-label": "Peta wilayah" },
+      assetImage(app, "peta", { className: "map__image" }),
+      paths(app, points),
+      pins
+    ),
+    device.exhibitionMode ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
     h("h2", { class: "map-list__title" }, "Wilayah"),
     h(
       "ul",
@@ -88,6 +183,8 @@ export function mapScreen(app) {
         );
       })
     ),
-    h("p", { class: "map-screen__about" }, h("a", { href: "#/about" }, "Tentang aplikasi"))
+    h("p", { class: "map-screen__about" }, h("a", { href: "#/about" }, "Tentang aplikasi")),
+    menuBar(app),
+    sheetRegion ? regionSheet(app, sheetRegion) : null
   );
 }

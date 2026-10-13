@@ -12,6 +12,30 @@
       "placeholderSha256": "64d15f4925d9341f5b7180a8146b31aca8a40cd89842d1fbff62797f5d9a8057"
     },
     {
+      "id": "lokasi",
+      "pattern": "assets/lokasi/{regionId}.png",
+      "format": "PNG",
+      "width": 256,
+      "height": 256,
+      "transparent": true,
+      "maxKB": 40,
+      "screen": "Peta: ikon lokasi satu per wilayah (nama berkas = ID wilayah, misalnya B06). Keadaan terkunci digambar kode.",
+      "placeholderSha256": null,
+      "optional": true
+    },
+    {
+      "id": "jalur",
+      "path": "assets/peta/jalur.png",
+      "format": "PNG",
+      "width": 64,
+      "height": 64,
+      "transparent": true,
+      "maxKB": 10,
+      "screen": "Peta: motif ubin jalur antar lokasi, diulang sepanjang jalur. Tanpa berkas ini jalur tampil sebagai garis putus-putus tinta.",
+      "placeholderSha256": null,
+      "optional": true
+    },
+    {
       "id": "menu-index",
       "path": "assets/ui/menu-index.png",
       "format": "PNG",
@@ -53,16 +77,17 @@
       "transparent": false,
       "maxKB": 150,
       "screen": "Percakapan pengantar dan uji: ilustrasi adegan, satu berkas per percakapan (nama berkas = ID percakapan)",
-      "placeholderSha256": null
+      "placeholderSha256": null,
+      "optional": true
     },
     {
       "id": "karakter-hana",
       "path": "assets/karakter/hana.png",
       "format": "PNG",
-      "width": 2160,
-      "height": 2160,
+      "width": 1080,
+      "height": 1080,
       "transparent": true,
-      "maxKB": 300,
+      "maxKB": 150,
       "screen": "Pemilihan karakter dan potret pembicara di percakapan: karakter pemain Hana",
       "placeholderSha256": null
     },
@@ -70,10 +95,10 @@
       "id": "karakter-kazu",
       "path": "assets/karakter/kazu.png",
       "format": "PNG",
-      "width": 2160,
-      "height": 2160,
+      "width": 1080,
+      "height": 1080,
       "transparent": true,
-      "maxKB": 300,
+      "maxKB": 150,
       "screen": "Pemilihan karakter dan potret pembicara di percakapan: karakter pemain Kazu",
       "placeholderSha256": null
     }

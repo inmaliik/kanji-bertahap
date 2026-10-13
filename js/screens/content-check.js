@@ -17,7 +17,8 @@ function assetSection(app) {
   const list = h("ul", { class: "asset-checks", "aria-live": "polite" }, h("li", { class: "muted" }, "Memeriksa aset…"));
   const summary = h("p", {});
   if (app.assets.size) {
-    checkAssets(app.assets, app.model ? [...app.model.conversations.keys()] : []).then((results) => {
+    const ids = app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {};
+    checkAssets(app.assets, ids).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;
       summary.textContent =
         `${results.length} berkas: ${count("ok")} sudah diganti, ${count("placeholder")} masih placeholder, ` +

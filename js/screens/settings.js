@@ -9,6 +9,7 @@ import { isStorageAvailable } from "../storage.js";
 import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
 import { menuBar } from "./menu.js";
+import { clearBoard, loadDevice, ranking, saveDevice } from "../leaderboard.js";
 
 const DELETE_CONFIRM_WORD = "HAPUS";
 const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
@@ -173,6 +174,51 @@ export function settingsScreen(app) {
         "Setelan ini disimpan untuk pemain saat ini dan tidak bisa diubah di tengah quest. Apa pun setelannya, ",
         "cara baca yang masih akan ditanyakan tetap disembunyikan supaya jawabannya tidak bocor."
       )
+    );
+  }
+
+  // --- Exhibition mode (D-106) ------------------------------------------------
+
+  function exhibitionCard() {
+    const device = loadDevice();
+    const count = ranking().length;
+    return h(
+      "section",
+      { class: "card", "aria-labelledby": "exhibition-title" },
+      h("h2", { id: "exhibition-title" }, "Mode pameran"),
+      messageFor("exhibition"),
+      h(
+        "label",
+        { class: "switch" },
+        h("input", {
+          type: "checkbox",
+          checked: device.exhibitionMode,
+          onChange: (event) => {
+            saveDevice({ ...device, exhibitionMode: event.target.checked });
+            setMessage("exhibition", "success", event.target.checked ? "✓ Mode pameran menyala: papan peringkat tampil di peta." : "✓ Mode pameran mati.");
+          },
+        }),
+        h("span", {}, "Tampilkan papan peringkat di perangkat ini")
+      ),
+      h(
+        "p",
+        { class: "muted" },
+        "Untuk stan pameran. Papan hanya berisi pemain di perangkat ini, dengan potret karakter dan nomor pemain, tanpa nama atau kode peserta. ",
+        "Tidak dikirim ke mana pun dan tidak masuk log penelitian. Papan tidak ikut terhapus saat reset progres."
+      ),
+      h("p", {}, `Pemain di papan: ${count}`),
+      count
+        ? confirmFlow({
+            openLabel: "Kosongkan papan peringkat",
+            title: "Kosongkan papan peringkat?",
+            details: ["Semua pemain di papan perangkat ini dihapus, dan nomor pemain mulai lagi dari 01.", "Progres pemain dan log jawaban tidak berubah."],
+            confirmLabel: "Ya, kosongkan",
+            onConfirm: () => {
+              clearBoard();
+              setMessage("exhibition", "success", "✓ Papan peringkat dikosongkan.");
+            },
+          })
+        : null
     );
   }
 
@@ -462,6 +508,7 @@ export function settingsScreen(app) {
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),
       resetCard(),
+      exhibitionCard(),
       furiganaCard(),
       consentCard(),
       participantCard(),

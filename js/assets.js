@@ -72,16 +72,16 @@ const RATIO_TOLERANCE = 0.02;
  * conversation, D-94) is checked once per conversation; a missing file there
  * only means the illustration is not drawn yet.
  * @param {Map<string, object>} slots
- * @param {string[]} [conversationIds] for pattern slots
+ * @param {Object<string, string[]>} [ids] values for pattern placeholders, e.g. { conversationId: [...], regionId: [...] }
  * @returns {Promise<Array<{slot: object, path: string, state: string, messages: string[], bytes?: number}>>}
  *   state: "ok" | "placeholder" | "missing" | "problem"
  */
-export async function checkAssets(slots, conversationIds = []) {
-  const targets = [...slots.values()].flatMap((slot) =>
-    slot.pattern
-      ? conversationIds.map((id) => ({ slot, path: slot.pattern.replace("{conversationId}", id), optional: true }))
-      : [{ slot, path: slot.path, optional: false }]
-  );
+export async function checkAssets(slots, ids = {}) {
+  const targets = [...slots.values()].flatMap((slot) => {
+    if (!slot.pattern) return [{ slot, path: slot.path, optional: Boolean(slot.optional) }];
+    const key = /\{(\w+)\}/.exec(slot.pattern)?.[1];
+    return (ids[key] ?? []).map((id) => ({ slot, path: slot.pattern.replace(`{${key}}`, id), optional: true }));
+  });
   return Promise.all(
     targets.map(async ({ slot, path, optional }) => {
       let response;
@@ -92,7 +92,7 @@ export async function checkAssets(slots, conversationIds = []) {
       }
       if (!response.ok) {
         return optional
-          ? { slot, path, state: "placeholder", messages: ["Belum digambar: aplikasi menampilkan kotak berisi deskripsi adegan."] }
+          ? { slot, path, state: "placeholder", messages: ["Belum digambar: aplikasi menampilkan pengganti sementara."] }
           : { slot, path, state: "missing", messages: [`Berkas tidak ada (HTTP ${response.status}).`] };
       }
       const buffer = await response.arrayBuffer();

@@ -22,14 +22,32 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 | Slot | Berkas (nama persis) | Format | Ukuran (piksel) | Rasio | Latar | Batas ukuran berkas | Muncul di |
 |---|---|---|---|---|---|---|---|
 | `peta` | `assets/map/peta.png` | PNG | 1200 × 1600 | 3 : 4 (tegak) | tidak transparan | 400 KB | Peta, layar utama: gambar latar seluruh wilayah |
+| `lokasi` | `assets/lokasi/<ID wilayah>.png`, satu per wilayah, misalnya `assets/lokasi/B06.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 40 KB | Peta: ikon lokasi (gedung, toko, stasiun, …) satu per wilayah |
+| `jalur` (opsional) | `assets/peta/jalur.png` | PNG | 64 × 64, ubin berulang | 1 : 1 | **transparan** | 10 KB | Peta: motif jalur antar lokasi |
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
 | `menu-kana` | `assets/ui/menu-kana.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Panduan kana |
 | `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Pengaturan |
-| `karakter-hana`, `karakter-kazu` | `assets/karakter/hana.png`, `assets/karakter/kazu.png` | PNG | 2160 × 2160 | 1 : 1 | **transparan** | 300 KB | Pemilihan karakter; potret pembicara di percakapan |
+| `karakter-hana`, `karakter-kazu` | `assets/karakter/hana.png`, `assets/karakter/kazu.png` | PNG | 1080 × 1080 | 1 : 1 | **transparan** | 150 KB | Pemilihan karakter; potret pembicara di percakapan |
 | potret (opsional) | `assets/karakter/<id>-potret.png`, misalnya `assets/karakter/hana-potret.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 60 KB | Menggantikan potongan otomatis di potret percakapan |
 | `adegan` | `assets/adegan/<ID percakapan>.png`, satu per percakapan, misalnya `assets/adegan/C-B01-01-pengantar.png` | PNG | 960 × 640 | 3 : 2 (mendatar) | tidak transparan | 150 KB | Di atas percakapan pengantar dan percakapan uji |
 
 Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan akan didaftarkan di tabel ini.
+
+## Yang digambar tim dan yang dibuat kode
+
+| Digambar tim (berkas gambar) | Dibuat kode (CSS, dengan palet dan garis tinta) |
+|---|---|
+| Karakter | Tombol, kartu, tab |
+| Latar peta | Lembar pengantar bab yang muncul dari bawah layar |
+| Ikon lokasi | Bilah progres, bilah level dan XP |
+| Motif jalur | Lencana persentase, lencana eksplorasi, gembok, tanda centang |
+| Ilustrasi adegan | Keadaan terkunci lokasi (dipucatkan dan diberi gembok) |
+| Ikon menu | Bilah menu di bawah layar |
+
+**Alasannya:** elemen antarmuka berbentuk gambar memberatkan ponsel kelas bawah, buram di ukuran layar tertentu, dan
+teks di dalamnya tidak bisa dibaca pembaca layar. Jadi jangan menggambar tombol, panel, atau bilah; cukup gambar yang
+ada di kolom kiri. Semua desain untuk **tampilan tegak 375 piksel**; gambar referensi tim yang mendatar hanya diambil
+strukturnya, bukan tata letaknya.
 
 ## Aturan umum
 
@@ -45,6 +63,24 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
 - **Jangan menaruh materi di gambar**, misalnya kanji atau kotoba yang diajarkan di sebuah wilayah. Peta dan menu
   tampil sebelum quest dimainkan, jadi gambar yang memuat materi membocorkan jawaban.
 
+## Lokasi di peta (`assets/lokasi/`)
+
+- **Satu ikon per wilayah**, nama berkasnya ID wilayah: bab 1 → `B01.png`, bab 6 → `B06.png`. Setiap wilayah adalah
+  satu tempat di kota: gedung, toko, stasiun, dan sejenisnya.
+- **Cukup satu gambar per lokasi.** Keadaan terkunci dibuat kode (dipucatkan dan diberi lencana gembok), persentase
+  progres dan nama bab ditulis kode di bawah ikon. Tidak perlu menggambar versi terkunci atau versi tuntas.
+- 256 × 256, transparan, maks 40 KB; tampil ±64 piksel. Bentuk yang jelas pada ukuran kecil lebih penting daripada detail.
+- Selama berkasnya belum ada, peta menampilkan lingkaran bertuliskan ID wilayah. Pemeriksa aset menandainya ⚠.
+- **Jangan menulis nama tempat, kanji, atau kotoba di dalam ikon.** Nama lokasi diambil dari judul wilayah di
+  spreadsheet, yang diperiksa supaya tidak membocorkan kotoba.
+
+## Jalur antar lokasi (`assets/peta/jalur.png`, opsional)
+
+- Satu **ubin motif** 64 × 64 transparan yang diulang sepanjang jalur antar lokasi (misalnya batu jalan atau rel).
+  Jalurnya sendiri digambar kode, mengikuti urutan wilayah.
+- Tanpa berkas ini, jalur tampil sebagai garis putus-putus tinta. Jalur juga boleh digambar langsung di latar peta;
+  dalam hal itu ubin ini tidak perlu dibuat.
+
 ## Peta (`assets/map/peta.png`)
 
 - **Satu gambar berisi semua wilayah**, termasuk batas-batas wilayahnya. Aplikasi tidak menggambar batas wilayah;
@@ -53,9 +89,9 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
 - **Pin wilayah ditaruh aplikasi di atas gambar.** Posisinya diisi tim konten di tab `wilayah` (kolom `pin_x` dan
   `pin_y`), dalam persen lebar dan tinggi gambar. Contoh: titik tengah gambar adalah `50` dan `50`.
   Setelah peta jadi, beri tim konten posisi tengah setiap wilayah.
-- **Setiap pin berupa tombol sekitar 48 piksel tinggi dan ±110 piksel lebar di layar**, yaitu kira-kira **30%
-  lebar** dan **10% tinggi** peta. Sisakan ruang itu di setiap wilayah supaya pin tidak saling menutupi. Dua
-  belas wilayah (bab 1–12) perlu muat.
+- **Setiap lokasi menempati sekitar 90 × 110 piksel di layar** (ikon, nama bab, dan persentase), yaitu kira-kira
+  **26% lebar** dan **24% tinggi** peta. Sisakan ruang itu di setiap tempat supaya lokasi tidak saling menutupi.
+  Dua belas wilayah (bab 1–12) perlu muat; gambar latar menampilkan kota dan jalan, lokasinya ditaruh di atasnya.
 - **Jika rasio gambar berbeda dari 3 : 4, pin bergeser** dari wilayahnya, karena posisi pin dihitung dari kotak
   3 : 4. Pemeriksa aset memberi tanda ✗ jika rasionya meleset lebih dari 2%.
 - Status wilayah (terkunci, terbuka, tuntas) ditunjukkan pin dengan ikon dan teks. Tidak perlu menggambar versi
@@ -78,7 +114,8 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
 
 **Standar karakter** (sama untuk setiap karakter, sekarang dan nanti):
 
-- Kanvas **persegi 2160 × 2160**, PNG dengan **latar transparan**.
+- Kanvas **persegi 1080 × 1080**, PNG dengan **latar transparan**. **Simpan berkas induk 2160 × 2160 di tim**; yang masuk
+  aplikasi adalah ekspor 1080 dari berkas induk itu, diperkecil tepat setengah tanpa dipotong atau digeser.
 - Sosok **di tengah kanvas**, dengan **skala yang sama** antar karakter: tinggi kepala, posisi mata, dan posisi kaki
   sejajar seperti Hana dan Kazu. Karena itu satu kotak potong cocok untuk semua karakter.
 - Garis luar tinta `#403C3C`, warna yang juga dipakai untuk semua teks dan garis di aplikasi.
@@ -92,9 +129,9 @@ berkas itu otomatis menggantikan potongan otomatis.
 **Menambah karakter pemain:** taruh gambarnya di `assets/karakter/<id>.png`, lalu tambahkan satu entri di bagian
 `players` di `data/characters.json` (id, nama, jalur gambar, dan kedua kotak potong). Kode tidak perlu diubah.
 
-**Ukuran berkas.** Hana 281 KB dan Kazu 233 KB, masih di bawah batas 300 KB. Di layar, gambar ini tampil paling besar
-±160 piksel lebar, jadi ekspor 1080 × 1080 dengan skala yang sama akan jauh lebih ringan untuk ponsel kelas bawah,
-tanpa perbedaan yang terlihat. Usul ini menunggu keputusan tim, karena standar kanvasnya 2160.
+**Ukuran berkas.** Sosok di kanvas 1080 tingginya sekitar 730 piksel, sedangkan tampilan terbesar di aplikasi ±160
+piksel CSS (±480 piksel di layar 3×), jadi 1080 cukup, termasuk untuk potret wajah. Batasnya 150 KB per karakter.
+Hana 143 KB dan Kazu 124 KB (diperkecil pengembang dari berkas induk 2160 tim).
 
 **Lawan bicara** (bagian `others` di `data/characters.json`) belum punya gambar; potretnya tampil sebagai lingkaran
 dengan huruf awal nama. Namanya masih penanda `«NAMA-…»` sampai tim mengisinya.

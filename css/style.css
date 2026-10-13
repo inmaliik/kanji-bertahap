@@ -1831,42 +1831,6 @@ mark.highlight {
   color: var(--muted);
 }
 
-/* Map menu: three doors (D-69) ------------------------------------------------------- */
-
-.menu {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.menu__door {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.125rem;
-  min-height: 72px;
-  padding: 0.375rem 0.25rem;
-  border: var(--line) solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 600;
-  font-size: 0.875rem;
-  text-decoration: none;
-  text-align: center;
-}
-
-.menu__door[aria-current="page"] {
-  border: 2px solid var(--primary);
-  color: var(--primary);
-}
-
-.menu__icon {
-  width: 40px;
-  height: 40px;
-}
-
 /* Map --------------------------------------------------------------------------------- */
 
 .map-screen__title {
@@ -1888,44 +1852,6 @@ mark.highlight {
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.map-pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: var(--tap);
-  min-width: var(--tap);
-  padding: 0.25rem 0.75rem;
-  border: 2px solid var(--primary);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--primary);
-  font-weight: 700;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  text-decoration: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.map-pin--locked {
-  border-color: var(--muted);
-  color: var(--muted);
-  background: var(--bg);
-}
-
-.map-pin--done {
-  border-color: var(--success);
-  color: var(--success);
-  background: var(--success-soft);
-}
-
-.map-pin--review {
-  border-color: var(--warning);
-  color: var(--warning);
-  background: var(--warning-soft);
 }
 
 .map-list__title {
@@ -2490,4 +2416,393 @@ mark.highlight {
   color: var(--muted);
   background: var(--surface);
   cursor: not-allowed;
+}
+
+/* Map as a town (D-103) ------------------------------------------------------------------ */
+
+.map-top {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.level-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.level-bar__level {
+  flex: none;
+  padding: 0.25rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: 999px;
+  background: var(--nav);
+  font-weight: 800;
+}
+
+.level-bar__track {
+  flex: 1;
+  display: grid;
+  gap: 0.125rem;
+}
+
+.level-bar__xp {
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.level-bar progress {
+  appearance: none;
+  width: 100%;
+  height: 0.875rem;
+  border: var(--line) solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.level-bar progress::-webkit-progress-bar {
+  background: var(--surface);
+}
+
+.level-bar progress::-webkit-progress-value {
+  background: var(--success-soft);
+}
+
+.level-bar progress::-moz-progress-bar {
+  background: var(--success-soft);
+}
+
+.map__paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.map__path,
+.map__path-motif {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map__path {
+  stroke: var(--ink);
+  stroke-width: 3px;
+  stroke-dasharray: 2 9;
+}
+
+.map__path-motif {
+  stroke-width: 16px;
+}
+
+.map__explored {
+  justify-self: start;
+  margin: 0;
+  padding: 0.25rem 0.625rem;
+  border: var(--line) solid var(--border);
+  border-radius: 999px;
+  background: var(--highlight);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.location {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.location__icon {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border: var(--line) solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.location__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.location__name {
+  padding: 0 0.375rem;
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.location__percent {
+  padding: 0 0.5rem;
+  border: var(--line) solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.location__badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: var(--line) solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 0.8125rem;
+}
+
+/* Locked: the same icon, faded by code (D-103). */
+.location--locked .location__icon {
+  opacity: 0.45;
+  filter: grayscale(1);
+  border-style: dashed;
+}
+
+.location--locked .location__percent {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.location--done .location__icon,
+.location--done .location__percent,
+.location--done .location__badge {
+  background: var(--success-soft);
+}
+
+.location--review .location__badge,
+.location--review .location__percent {
+  background: var(--warning-soft);
+}
+
+.location--available .location__badge,
+.location--in_progress .location__badge {
+  background: var(--nav);
+}
+
+/* Menu bar at the bottom of the screen (D-69) ----------------------------------------- */
+
+.menu {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 11rem));
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.375rem var(--gutter) calc(0.375rem + env(safe-area-inset-bottom, 0px));
+  border-top: var(--line) solid var(--border);
+  background: var(--surface);
+}
+
+#app.with-menu {
+  padding-bottom: 7rem;
+}
+
+.menu__door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 64px;
+  padding: 0.25rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+.menu__door[aria-current="page"] {
+  background: var(--nav);
+  border-width: 3px;
+}
+
+.menu__icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* Region sheet sliding up from the bottom (D-103) ---------------------------------------- */
+
+body.sheet-open {
+  overflow: hidden;
+}
+
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(64, 60, 60, 0.5);
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 40rem;
+  max-height: 88vh;
+  margin: 0 auto;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.875rem;
+  padding: 0.5rem var(--gutter) calc(1rem + env(safe-area-inset-bottom, 0px));
+  border: var(--line) solid var(--border);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  animation: sheet-up 0.25s ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation: none;
+  }
+}
+
+.sheet__grip {
+  justify-self: center;
+  width: 3rem;
+  height: 0;
+  border-top: 5px solid var(--ink);
+  border-radius: 999px;
+}
+
+.sheet__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sheet__head h1 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.sheet__close {
+  flex: none;
+  padding-inline: 0.75rem;
+}
+
+.sheet__actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 0.5rem;
+  background: var(--surface);
+}
+
+/* Exhibition mode and leaderboard (D-106) ------------------------------------------------ */
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: var(--tap);
+  padding: 0.25rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+}
+
+.ranking {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ranking__row {
+  display: grid;
+  grid-template-columns: 2rem auto 1fr auto;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ranking__row:nth-child(1) {
+  background: var(--highlight);
+}
+
+.ranking__row--own {
+  border-width: 3px;
+  background: var(--nav);
+}
+
+.ranking__place {
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.ranking__name {
+  font-weight: 800;
+}
+
+.ranking__own {
+  font-weight: 400;
+}
+
+.ranking__score {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Native checkboxes and radio buttons in ink, not the browser's own blue. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--ink);
 }

@@ -16,8 +16,8 @@ import { issueList } from "./screens/common.js";
 import { contentCheckScreen } from "./screens/content-check.js";
 import { questScreen, reviewScreen } from "./screens/quest.js";
 import { mapScreen } from "./screens/map.js";
-import { regionScreen } from "./screens/region.js";
 import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
+import { leaderboardScreen } from "./screens/leaderboard.js";
 import { kanaScreen, loadKana } from "./screens/kana.js";
 import { aboutScreen, welcomeScreen } from "./screens/about.js";
 import { characterScreen } from "./screens/character.js";
@@ -54,7 +54,8 @@ const app = {
 const ROUTES = [
   // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
   { pattern: /^#?\/?$/, screen: () => firstScreen() },
-  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => regionScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
+  { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
   { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/index$/, screen: () => indexScreen(app) },
@@ -113,6 +114,9 @@ function render() {
   const hash = location.hash;
   const route = ROUTES.find((r) => r.pattern.test(hash));
   root.replaceChildren(route ? route.screen(...hash.match(route.pattern).slice(1)) : notFoundScreen());
+  // Room at the bottom for the fixed menu bar (D-69), and no page scroll behind an open sheet.
+  root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
+  document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
 }
 
 function navigate() {
@@ -170,6 +174,10 @@ async function boot() {
   startTabGuard(document.getElementById("tab-warning"));
 
   window.addEventListener("hashchange", navigate);
+  // Escape closes the region sheet, like its close button.
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && root.querySelector(".sheet")) location.hash = "#/";
+  });
   navigate();
 }
 
