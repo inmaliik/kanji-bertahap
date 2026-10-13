@@ -5,8 +5,8 @@
 // Pure module: used by the validator (Node) and the UI.
 
 export const WORLDS = Object.freeze([
-  Object.freeze({ number: 1, id: "D1", book: "初級I", bookLabel: "bookTitle", from: 1, to: 25 }),
-  Object.freeze({ number: 2, id: "D2", book: "初級II", bookLabel: "bookTitle2", from: 26, to: 50 }),
+  Object.freeze({ number: 1, id: "D1", book: "Shokyu I", bookLabel: "bookTitle", from: 1, to: 25 }),
+  Object.freeze({ number: 2, id: "D2", book: "Shokyu II", bookLabel: "bookTitle2", from: 26, to: 50 }),
 ]);
 
 /** The world whose range holds `chapter`, or null outside every world. */

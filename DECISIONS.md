@@ -1324,8 +1324,9 @@ dari referensi. Keputusan yang diambil:
 - **Peta per dunia.** `data/map.json` menjadi `{ "worlds": [ { "world": 1, "segments": [...] } ] }`; nomor
   `pin_segment` dihitung di peta dunia wilayah itu. Satu nama potongan hanya untuk satu dunia. Dunia bermateri yang
   belum punya daftar potongan tampil dengan satu kotak keterangan, dan halaman pemeriksaan aset menyebutnya.
-- **Pilihan dunia** berupa dua tombol di atas peta, hanya jika materi punya lebih dari satu dunia; alamatnya
-  `#/dunia/N`. Dunia yang terakhir dilihat disimpan di progres (`progress.world`), sehingga `#/` dan semua tombol
+- **Pilihan dunia** berupa dua tombol di atas peta ("Dunia 1 · Shokyu I"), hanya jika materi punya lebih dari satu
+  dunia; alamatnya `#/dunia/N`. Nama buku di kode ditulis latin, karena teks Jepang hanya boleh ada di berkas data;
+  judul Jepangnya ada di `data/ui.json`. Dunia yang terakhir dilihat disimpan di progres (`progress.world`), sehingga `#/` dan semua tombol
   "kembali ke peta" kembali ke dunia itu tanpa mengubah setiap tautan. Reset progres melupakannya.
 - **Disclaimer dihitung dari materi:** buku dan bab per dunia ("みんなの日本語初級I bab 1–5"), dengan label baru
   `bookTitle2` di `data/ui.json` untuk 初級II.

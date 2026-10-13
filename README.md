@@ -1298,7 +1298,7 @@ di Chrome.
 **Peta (layar utama) sebagai kota** (D-103). Latar peta adalah **potongan-potongan gambar tegak yang disambung dari atas
 ke bawah** dan digulir (D-108): urutannya di `data/map.json`, berkasnya `assets/peta/<nama>.png`, dua atau tiga lokasi
 per potongan. **Setiap dunia punya petanya sendiri** (D-117). Jika materi punya lebih dari satu dunia, tombol
-"Dunia 1 · 初級I" dan "Dunia 2 · 初級II" di atas peta berpindah dunia (alamat `#/dunia/2`); `#/` dan semua tombol
+"Dunia 1 · Shokyu I" dan "Dunia 2 · Shokyu II" di atas peta berpindah dunia (alamat `#/dunia/2`); `#/` dan semua tombol
 "kembali ke peta" membuka dunia yang terakhir dilihat pemain. Dunia yang tamat diberi tanda ✓. Saat dibuka, peta menggulir sendiri ke lokasi yang sedang dikerjakan; potongan yang jauh dari layar
 baru diunduh saat didekati; bilah level dan lencana eksplorasi tetap terlihat saat menggulir. Potongan yang belum
 digambar tampil sebagai kotak keterangan (nama berkas, ukuran, lokasi, sambungan). Setiap wilayah

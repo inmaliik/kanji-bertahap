@@ -64,7 +64,7 @@ test("material is limited to the chapters of the worlds (1–50) and kotoba belo
   data.regions[0].chapter = 51;
   let { errors } = validateContent(data);
   assert.ok(errors.some((e) => e.code === "CHAPTER_OUT_OF_SCOPE" && e.prominent));
-  assert.match(errors.find((e) => e.code === "CHAPTER_OUT_OF_SCOPE").message, /Dunia 1 = 初級I bab 1–25, Dunia 2 = 初級II bab 26–50/);
+  assert.match(errors.find((e) => e.code === "CHAPTER_OUT_OF_SCOPE").message, /Dunia 1 = Shokyu I bab 1–25, Dunia 2 = Shokyu II bab 26–50/);
   // Chapter 13 was outside D-58's bab 1–12; it now belongs to Dunia 1 (D-117).
   const thirteen = sample();
   thirteen.regions[0].chapter = 13;
