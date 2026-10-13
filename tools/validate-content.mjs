@@ -32,7 +32,12 @@ const { errors, warnings, notes } = validateContent(data);
 console.log(`Memeriksa ${file}\n`);
 printIssues([...errors, ...warnings, ...notes]);
 if (!errors.length) {
-  console.log(`contentRevision: ${data.contentRevision} · ${data.levels.length} level`);
+  const quests = data.regions.flatMap((r) => r.quests);
+  const conversations = quests.reduce((n, q) => n + 1 + q.tests.length, 0);
+  console.log(
+    `contentRevision: ${data.contentRevision} · ${data.regions.length} wilayah · ${quests.length} quest · ` +
+      `${conversations} percakapan · ${data.kanji.length} kanji · ${data.kotoba.length} kotoba`
+  );
 }
 printSummary(errors, warnings);
 process.exit(errors.length ? 1 : 0);

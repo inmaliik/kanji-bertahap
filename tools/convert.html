@@ -23,15 +23,18 @@
     <p>Untuk tim konten. Tidak perlu memasang apa pun. File tidak diunggah ke mana pun: semua pemeriksaan berjalan di browser ini.</p>
 
     <ol class="converter__steps">
-      <li>Di Google Sheets: <strong>File → Download → Comma Separated Values (.csv)</strong>.</li>
-      <li>Pilih file CSV itu di bawah, isi nama revisi, lalu tekan <strong>Periksa</strong>.</li>
+      <li>Di Google Sheets, unduh <strong>kelima tab</strong> satu per satu, dengan urutan
+        <strong>wilayah, kanji, kotoba, quest, percakapan</strong>: buka tabnya, lalu
+        <strong>File → Download → Comma Separated Values (.csv)</strong>. Google Sheets hanya mengunduh tab yang sedang dibuka.</li>
+      <li>Pilih <strong>kelima file CSV sekaligus</strong> di bawah (tahan Ctrl, di Mac Cmd, sambil mengklik), isi nama revisi, lalu tekan <strong>Periksa</strong>.</li>
       <li>Perbaiki semua <strong>error</strong> di spreadsheet, unduh ulang CSV-nya, dan periksa lagi.</li>
       <li>Jika lolos, tekan <strong>Unduh content.json</strong> dan serahkan file itu ke pengelola aplikasi.</li>
     </ol>
 
     <form id="converter-form" class="card converter__form">
-      <label class="field-label" for="csv-file">File CSV</label>
-      <input id="csv-file" type="file" accept=".csv,text/csv" required>
+      <label class="field-label" for="csv-file">Lima file CSV (satu per tab)</label>
+      <input id="csv-file" type="file" accept=".csv,text/csv" multiple required>
+      <p class="field-help">Nama file tidak penting: jenis tab dikenali dari baris judulnya.</p>
 
       <label class="field-label" for="revision">Nama revisi</label>
       <input id="revision" class="text-input" type="text" value="draft-0" required autocomplete="off" spellcheck="false">
@@ -52,7 +55,7 @@
 
   <script type="module">
     // Same conversion and validation modules as tools/csv-to-json.mjs and the app.
-    import { convertCsvToContent, csvLocation, rowLabel } from "../js/csv-content.js";
+    import { convertCsvFilesToContent, csvLocation, rowLabel } from "../js/csv-content.js";
     import { validateContent } from "../js/validate.js";
     import { h } from "../js/dom.js";
     import { issueList } from "../js/screens/common.js";
@@ -88,33 +91,37 @@
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const file = fileInput.files[0];
+      const selected = [...fileInput.files];
       const revision = revisionInput.value.trim();
-      if (!file) return;
+      if (!selected.length) return;
 
-      let text;
+      let files;
       try {
-        text = await readText(file);
+        files = await Promise.all(selected.map(async (file) => ({ name: file.name, text: await readText(file) })));
       } catch (err) {
         show(h("p", { class: "notice notice--error" }, `✗ File tidak bisa dibaca: ${err.message}`));
         return;
       }
 
-      const { fatal, problems, content, rowMap } = convertCsvToContent(text, revision);
+      const { fatal, problems, recognized, content, rowMap } = convertCsvFilesToContent(files, revision);
       const heading = (ok, text) => h("h2", { tabindex: "-1", class: ok ? "converter__ok" : "converter__fail" }, text);
+      const recognizedList = recognized.length
+        ? h("ul", { class: "converter__files" }, recognized.map((r) => h("li", {}, `${r.name} → tab ${r.tab}`)))
+        : null;
 
       if (fatal) {
-        show(heading(false, "✗ File belum bisa diperiksa"), h("p", { class: "notice notice--error converter__fatal" }, fatal));
+        show(heading(false, "✗ File belum bisa diperiksa"), recognizedList, h("p", { class: "notice notice--error converter__fatal" }, fatal));
         return;
       }
 
       if (problems.length) {
         show(
           heading(false, `✗ Gagal: ${problems.length} masalah di CSV`),
+          recognizedList,
           h("p", {}, "Perbaiki baris-baris berikut di spreadsheet, unduh ulang CSV-nya, lalu periksa lagi."),
           issueList(
-            problems.map((p) => ({ severity: "error", code: "CSV", where: "Spreadsheet", path: "", message: p.message, rows: p.rows })),
-            (issue) => rowLabel(issue.rows)
+            problems.map((p) => ({ severity: "error", code: "CSV", where: "Spreadsheet", path: "", message: p.message, tab: p.tab, rows: p.rows })),
+            (issue) => rowLabel(issue)
           )
         );
         return;
@@ -127,9 +134,11 @@
         heading(
           ok,
           ok
-            ? `✓ Lolos: ${content.levels.length} level${warnings.length ? `, ${warnings.length} peringatan` : ", tanpa peringatan"}`
+            ? `✓ Lolos: ${content.regions.length} wilayah, ${content.regions.reduce((n, r) => n + r.quests.length, 0)} quest` +
+                (warnings.length ? `, ${warnings.length} peringatan` : ", tanpa peringatan")
             : `✗ Gagal: ${errors.length} error, ${warnings.length} peringatan`
         ),
+        recognizedList,
         ok
           ? [
               /^draft/i.test(revision)

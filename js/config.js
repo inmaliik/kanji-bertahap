@@ -1,9 +1,14 @@
 // App-wide configuration. Pass/fail thresholds live in state.js instead.
 
 export const APP_TITLE = "Kanji Bertahap";
-export const APP_VERSION = "0.5.0";
+export const APP_VERSION = "0.9.0"; // map version; the level version (tag v1-akhir) is 0.5.0
 export const CONTENT_URL = "data/content.json";
 export const CONSENT_URL = "data/consent.json";
+export const UI_LABELS_URL = "data/ui.json";
+export const ASSETS_URL = "data/assets.json";
+export const KANA_URL = "data/kana.json";
+export const CHARACTERS_URL = "data/characters.json";
+export const MAP_URL = "data/map.json";
 
 // Remote answer log: a Google Apps Script Web App (README "Pengiriman log").
 // Keep disabled until the endpoint has been deployed and tested.

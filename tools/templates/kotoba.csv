@@ -1,0 +1,3 @@
+kotoba_id,word,word_ruby,reading,reading_type,pos,meaning,chapter,note,reading_distractors,reading_distractors_cross
+tabemasu,食べます,[食|た]べます,たべます,kunyomi,verb,makan,6,,くべます;のべます;しらべます,しょくべます
+nomimasu,飲みます,[飲|の]みます,のみます,kunyomi,verb,minum,6,,たみます;くみます;よみます,いんみます

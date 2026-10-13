@@ -3,11 +3,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import vm from "node:vm";
-import { ROOT, loadSampleContent } from "./helpers.mjs";
+import { ROOT, jsModule, loadSampleContent } from "./helpers.mjs";
 
 const node = (args) => spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8" });
 
@@ -16,24 +16,45 @@ test("validate-content succeeds on the sample content", () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
-test("CSV template converts to the first sample level", () => {
+test("the five CSV templates convert to data/content.json", () => {
   const out = join(mkdtempSync(join(tmpdir(), "kanji-")), "content.json");
-  const result = node(["tools/csv-to-json.mjs", "tools/content-template.csv", "--revision", "draft-0", "--out", out]);
+  const result = node(["tools/csv-to-json.mjs", "tools/templates", "--revision", "draft-0", "--out", out]);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  const converted = JSON.parse(readFileSync(out, "utf8"));
-  assert.deepEqual(converted.levels[0], loadSampleContent().levels[0], "template matches data/content.json level L01");
+  assert.deepEqual(JSON.parse(readFileSync(out, "utf8")), loadSampleContent(), "templates match data/content.json");
 });
 
-test("the obsolete level_chapter column is rejected", () => {
+test("the converter rejects the old one-sheet CSV and names the tab and row of each problem", () => {
   const dir = mkdtempSync(join(tmpdir(), "kanji-"));
-  const template = readFileSync(join(ROOT, "tools/content-template.csv"), "utf8").split("\n");
-  template[0] = template[0].replace("jlpt_level,", "jlpt_level,level_chapter,");
-  for (let i = 1; i < template.length; i++) if (template[i]) template[i] = template[i].replace(",N5,", ",N5,6,");
-  const csv = join(dir, "old.csv");
-  writeFileSync(csv, template.join("\n"));
-  const result = node(["tools/csv-to-json.mjs", csv, "--revision", "x", "--out", join(dir, "never.json")]);
+  const templates = Object.fromEntries(
+    readdirSync(join(ROOT, "tools/templates")).map((name) => [name, readFileSync(join(ROOT, "tools/templates", name), "utf8")])
+  );
+
+  writeFileSync(join(dir, "lama.csv"), "level_id,kanji,word\nL01,x,y\n");
+  let result = node(["tools/csv-to-json.mjs", join(dir, "lama.csv"), "--revision", "x", "--out", join(dir, "never.json")]);
   assert.equal(result.status, 1);
-  assert.match(result.stderr + result.stdout, /level_chapter sudah tidak dipakai/);
+  assert.match(result.stderr, /struktur lama/);
+
+  // One tab missing.
+  const partial = mkdtempSync(join(tmpdir(), "kanji-"));
+  for (const [name, text] of Object.entries(templates)) if (name !== "quest.csv") writeFileSync(join(partial, name), text);
+  result = node(["tools/csv-to-json.mjs", partial, "--revision", "x", "--out", join(dir, "never.json")]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /belum dipilih: quest/);
+
+  // A conversation line that points to a missing quest conversation, and a kotoba error.
+  const broken = mkdtempSync(join(tmpdir(), "kanji-"));
+  for (const [name, text] of Object.entries(templates)) writeFileSync(join(broken, `Materi - ${name}`), text);
+  writeFileSync(join(broken, "Materi - kotoba.csv"), templates["kotoba.csv"].replace("[飲|の]みます", "[飲|い]みます"));
+  result = node(["tools/csv-to-json.mjs", broken, "--revision", "x", "--out", join(dir, "never.json")]);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /Tab kotoba, baris 3/);
+  assert.match(result.stdout, /RUBY_READING_MISMATCH/);
+
+  writeFileSync(join(broken, "Materi - quest.csv"), templates["quest.csv"].replace("C-nomimasu-uji-1,", "C-tidak-ada,"));
+  result = node(["tools/csv-to-json.mjs", broken, "--revision", "x", "--out", join(dir, "never.json")]);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /Tab quest, baris 3[\s\S]*C-tidak-ada/);
+  assert.match(result.stdout, /Tab percakapan, baris 5[\s\S]*tidak dipakai quest mana pun/);
 });
 
 test("Apps Script endpoint appends, deduplicates by rowId, adds columns, and neutralizes formulas", () => {
@@ -96,4 +117,16 @@ test("rows recorded under a placeholder consent text are never sendable", async 
   assert.deepEqual(validateConsentText({ ...text, isPlaceholder: false }), []);
   assert.ok(validateConsentText({ ...text, isPlaceholder: true }).length, "placeholder flag needs a placeholder version");
   assert.ok(validateConsentText({ ...text, version: "placeholder-1", isPlaceholder: false }).length, "final text cannot use a placeholder version");
+});
+
+test("the wilayah tab takes the pin as segment, x and y together (D-108)", async () => {
+  const { convertCsvFilesToContent } = await import(jsModule("csv-content.js"));
+  const dir = join(ROOT, "tools/templates");
+  const files = readdirSync(dir).map((name) => ({ name, text: readFileSync(join(dir, name), "utf8") }));
+  const withPin = (cells) => files.map((f) => (f.name === "wilayah.csv" ? { ...f, text: f.text.replace(/,,,\n$/, `,${cells}\n`) } : f));
+  const ok = convertCsvFilesToContent(withPin("2,40,62.5"), "draft-0");
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual(ok.content.regions[0].pin, { segment: 2, x: 40, y: 62.5 });
+  const half = convertCsvFilesToContent(withPin(",40,62.5"), "draft-0");
+  assert.match(half.problems[0].message, /pin_segment, pin_x, dan pin_y bersamaan/);
 });

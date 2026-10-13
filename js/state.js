@@ -1,9 +1,9 @@
 // Player progress in localStorage, and every rule that decides mastery,
-// passing, unlocking, and review levels.
+// passing, and unlocking.
 //
 // Only facts are stored (item streaks, "started", "passed", production
-// submitted). Whether a level is locked is always derived from level order,
-// so inserting a level during a content revision never corrupts progress.
+// submitted). Whether something is locked is always derived from content
+// order, so inserting a quest during a content revision never corrupts progress.
 
 import { readJson, usedChars, writeJson, writeRaw } from "./storage.js";
 import { shuffle } from "./random.js";
@@ -18,13 +18,27 @@ export const STREAK_TO_MASTER = 2;
 export const REQUEUE_GAP_MIN = 2;
 export const REQUEUE_GAP_MAX = 3;
 
-/** A review level is inserted after every N levels. */
-export const REVIEW_EVERY_N_LEVELS = 3;
-
-/** Number of items sampled into one review level. */
+/** Number of items sampled into one region review (復習). */
 export const REVIEW_ITEM_COUNT = 10;
 
-/** Choices shown in the reading and sentence stages (answer + distractors). */
+/** Share of a region review taken from the region itself; the rest comes from earlier regions (D-63). */
+export const REVIEW_CURRENT_SHARE = 0.7;
+
+/**
+ * Experience points (D-105). XP is derived from progress, never stored, so it
+ * cannot drift from what was learned and cannot be farmed by replaying:
+ * only mastered items, passed quests and passed reviews count. Trying,
+ * wrong answers, a first correct answer that is not mastery yet, and opening
+ * the index earn nothing, so guessing fast is never rewarded.
+ */
+export const XP_PER_MASTERED_ITEM = 10;
+export const XP_PER_QUEST = 20;
+export const XP_PER_REVIEW = 50;
+
+/** XP needed to reach level 1, 2, 3, … Levels unlock nothing (D-105). */
+export const LEVEL_THRESHOLDS = [0, 50, 120, 220, 350, 520, 740, 1000, 1300, 1650, 2050, 2500];
+
+/** Choices shown in the reading and context-test questions (answer + distractors). */
 export const OPTION_COUNT = 4;
 
 /**
@@ -40,12 +54,11 @@ export const STORAGE_WARNING_RATIO = 0.8;
 // ---------------------------------------------------------------------------
 // Storage format
 
-export const PROGRESS_KEY = "kanjiGame.progress.v1";
+// v2: the map version (schemaVersion 2). A new key, so that progress of the
+// level version on the main branch never mixes with quest progress.
+export const PROGRESS_KEY = "kanjiGame.progress.v2";
 
-// Device preferences. Not player progress, so a progress reset keeps them.
-export const PREFS_KEY = "kanjiGame.prefs.v1";
-
-export const LEVEL_STATUS = Object.freeze({
+export const STATUS = Object.freeze({
   // Stored
   IN_PROGRESS: "in_progress",
   PASSED: "passed",
@@ -71,6 +84,10 @@ export function createId() {
 
 export const CONSENT_CHOICE = Object.freeze({ AGREED: "agreed", DECLINED: "declined" });
 
+/** Furigana setting (D-65). Per player, so a progress reset restores the default. */
+export const FURIGANA_MODE = Object.freeze({ ALWAYS: "always", AFTER: "after", NEVER: "never" });
+export const DEFAULT_FURIGANA_MODE = FURIGANA_MODE.ALWAYS;
+
 export function createProgress(now = new Date()) {
   return {
     playerId: createId(),
@@ -78,18 +95,23 @@ export function createProgress(now = new Date()) {
     consent: null, // { choice, version, at } — asked again when the consent text version changes
     createdAt: now.toISOString(),
     lastPlayed: null,
-    levels: {},
+    settings: { furiganaMode: DEFAULT_FURIGANA_MODE },
+    welcomeSeen: false, // the welcome screen with the disclaimer was shown (D-71)
+    character: null, // id of the chosen player character (D-102)
+    items: {}, // item id → streak, shared by every quest and review (D-61)
+    quests: {}, // quest or review id → entry
   };
 }
 
-function createLevelEntry() {
+function createEntry() {
   return {
-    status: LEVEL_STATUS.IN_PROGRESS,
-    itemStreaks: {},
-    attempts: 0, // number of times the level was opened for play
-    learningDone: false, // first pass through stages 1–4 finished
+    status: STATUS.IN_PROGRESS,
+    attempts: 0, // number of times the quest was opened for play
+    introDone: false, // intro conversation read to the end
+    learningDone: false, // first pass through the practice and test items finished
     productionSubmitted: false,
-    reviewItemIds: null, // review levels only: the sampled items, kept across visits
+    reviewItemIds: null, // reviews only: the sampled items, kept across visits
+    streaks: null, // reviews only: streaks of the sampled items within this review
     startedAt: null,
     passedAt: null,
   };
@@ -98,7 +120,7 @@ function createLevelEntry() {
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
 function isValidProgress(value) {
-  return isPlainObject(value) && typeof value.playerId === "string" && isPlainObject(value.levels);
+  return isPlainObject(value) && typeof value.playerId === "string" && isPlainObject(value.quests);
 }
 
 // Fill fields added after a progress object was first written.
@@ -107,13 +129,14 @@ function normalizeProgress(progress) {
   progress.consent ??= null;
   progress.createdAt ??= null;
   progress.lastPlayed ??= null;
-  for (const [id, entry] of Object.entries(progress.levels)) {
-    if (!isPlainObject(entry)) {
-      delete progress.levels[id];
-      continue;
-    }
-    progress.levels[id] = { ...createLevelEntry(), ...entry };
-    if (!isPlainObject(progress.levels[id].itemStreaks)) progress.levels[id].itemStreaks = {};
+  progress.welcomeSeen ??= false;
+  progress.character ??= null;
+  if (!isPlainObject(progress.settings)) progress.settings = {};
+  if (!Object.values(FURIGANA_MODE).includes(progress.settings.furiganaMode)) progress.settings.furiganaMode = DEFAULT_FURIGANA_MODE;
+  if (!isPlainObject(progress.items)) progress.items = {};
+  for (const [id, entry] of Object.entries(progress.quests)) {
+    if (!isPlainObject(entry)) delete progress.quests[id];
+    else progress.quests[id] = { ...createEntry(), ...entry };
   }
   return progress;
 }
@@ -140,20 +163,20 @@ export function saveProgress(progress) {
   return writeJson(PROGRESS_KEY, progress);
 }
 
-/** New player: fresh playerId, no level progress. Answer logs are untouched. */
+/** New player: fresh playerId, no quest progress, default settings. Answer logs are untouched. */
 export function resetProgress() {
   const progress = createProgress();
   saveProgress(progress);
   return progress;
 }
 
-export function peekLevelEntry(progress, nodeId) {
-  return progress.levels[nodeId] ?? null;
+export function peekEntry(progress, id) {
+  return progress.quests[id] ?? null;
 }
 
-/** Called when a player opens a level for play. */
-export function beginAttempt(progress, nodeId, now = new Date()) {
-  const entry = progress.levels[nodeId] ?? (progress.levels[nodeId] = createLevelEntry());
+/** Called when a player opens a quest or review for play. */
+export function beginAttempt(progress, id, now = new Date()) {
+  const entry = progress.quests[id] ?? (progress.quests[id] = createEntry());
   entry.attempts += 1;
   entry.startedAt ??= now.toISOString();
   progress.lastPlayed = now.toISOString();
@@ -170,12 +193,13 @@ export function touch(progress, now = new Date()) {
 export const isMastered = (streak) => (streak ?? 0) >= STREAK_TO_MASTER;
 
 /**
- * @param {string[]} itemIds all scored items of the level (stages 1–4)
- * @param {object} entry level progress entry
- * @param {boolean} requiresProduction review levels have no production stage
+ * @param {string[]} itemIds all scored items of the quest or review
+ * @param {Object<string, number>} streaks progress.items
+ * @param {object} entry quest or review progress entry
+ * @param {boolean} requiresProduction reviews have no production
  */
-export function evaluateEntry(itemIds, entry, { requiresProduction }) {
-  const mastered = itemIds.filter((id) => isMastered(entry.itemStreaks[id])).length;
+export function evaluateEntry(itemIds, streaks, entry, { requiresProduction }) {
+  const mastered = itemIds.filter((id) => isMastered(streaks[id])).length;
   const allMastered = mastered === itemIds.length;
   return {
     mastered,
@@ -186,65 +210,45 @@ export function evaluateEntry(itemIds, entry, { requiresProduction }) {
 }
 
 export function markPassed(entry, now = new Date()) {
-  entry.status = LEVEL_STATUS.PASSED;
+  entry.status = STATUS.PASSED;
   entry.passedAt ??= now.toISOString();
 }
 
 // ---------------------------------------------------------------------------
-// Progression: level order, review levels, and derived lock state
-
-export const reviewId = (n) => `R${String(n).padStart(2, "0")}`;
+// Derived lock state
 
 /**
- * Full play order: content levels in array order, with a review node after
- * every REVIEW_EVERY_N_LEVELS levels.
- * @returns {Array<{type: "level", id: string, level: object} |
- *                 {type: "review", id: string, coveredLevelIds: string[]}>}
- */
-export function buildProgression(levels) {
-  const nodes = [];
-  levels.forEach((level, i) => {
-    nodes.push({ type: "level", id: level.id, level });
-    if ((i + 1) % REVIEW_EVERY_N_LEVELS === 0) {
-      nodes.push({
-        type: "review",
-        id: reviewId((i + 1) / REVIEW_EVERY_N_LEVELS),
-        coveredLevelIds: levels.slice(0, i + 1).map((l) => l.id),
-      });
-    }
-  });
-  return nodes;
-}
-
-/**
- * Derive each node's status.
- * - A node with stored progress keeps it (started or passed), so a level
- *   inserted later never re-locks a level the player already started.
+ * Derive each node's status from the play order.
+ * - A node with stored progress keeps it (started or passed), so a node
+ *   inserted later never re-locks one the player already started.
  * - Otherwise the first node is available, and every other node is available
  *   only when the node right before it has passed.
- * @returns {Map<string, string>} node id → LEVEL_STATUS value
+ * The map (step 3) builds its region order on this.
+ * @param {Array<{id: string}>} nodes in play order
+ * @param {(id: string) => string|undefined} storedStatus
+ * @returns {Map<string, string>} node id → STATUS value
  */
-export function computeStatuses(nodes, progress) {
+export function computeStatuses(nodes, storedStatus) {
   const statuses = new Map();
   nodes.forEach((node, i) => {
-    const stored = progress.levels[node.id]?.status;
-    if (stored === LEVEL_STATUS.PASSED || stored === LEVEL_STATUS.IN_PROGRESS) {
+    const stored = storedStatus(node.id);
+    if (stored === STATUS.PASSED || stored === STATUS.IN_PROGRESS) {
       statuses.set(node.id, stored);
       return;
     }
-    const unlocked = i === 0 || statuses.get(nodes[i - 1].id) === LEVEL_STATUS.PASSED;
-    statuses.set(node.id, unlocked ? LEVEL_STATUS.AVAILABLE : LEVEL_STATUS.LOCKED);
+    const unlocked = i === 0 || statuses.get(nodes[i - 1].id) === STATUS.PASSED;
+    statuses.set(node.id, unlocked ? STATUS.AVAILABLE : STATUS.LOCKED);
   });
   return statuses;
 }
 
 // ---------------------------------------------------------------------------
-// Review levels
+// Reviews
 
 /**
- * Sample review items evenly across levels: each level's items are shuffled,
- * then picked round-robin, so no passed level is left out of a review.
- * @param {Array<object[]>} itemsPerLevel scored items of each passed level
+ * Sample review items evenly across groups (quests): each group's items are
+ * shuffled, then picked round-robin, so no group is left out of a review.
+ * @param {Array<object[]>} itemsPerLevel scored items of each group
  * @returns {object[]} at most REVIEW_ITEM_COUNT items
  */
 export function sampleReviewItems(itemsPerLevel, random = Math.random, count = REVIEW_ITEM_COUNT) {
@@ -267,19 +271,6 @@ export function storageUsage() {
   const used = usedChars("kanjiGame.");
   const ratio = used / STORAGE_BUDGET_CHARS;
   return { used, budget: STORAGE_BUDGET_CHARS, ratio, warning: ratio >= STORAGE_WARNING_RATIO };
-}
-
-// ---------------------------------------------------------------------------
-// Device preferences
-
-/** @returns {{chapterLimit: number|null}} chapterLimit: last Minna chapter the class has studied */
-export function loadPrefs() {
-  const { value } = readJson(PREFS_KEY);
-  return { chapterLimit: Number.isInteger(value?.chapterLimit) ? value.chapterLimit : null };
-}
-
-export function savePrefs(prefs) {
-  return writeJson(PREFS_KEY, prefs);
 }
 
 // ---------------------------------------------------------------------------

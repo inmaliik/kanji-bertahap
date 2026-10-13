@@ -1,8 +1,7 @@
-// Loads data/content.json, validates it, and exposes helpers that turn a
-// level into playable items. Only loadContent() touches the network.
+// Loads data/content.json and validates it. Only loadContent() touches the
+// network.
 
-import { validateContent, itemId, JLPT_LEVELS } from "./validate.js";
-import { parseRuby } from "./ruby.js";
+import { validateContent } from "./validate.js";
 
 /**
  * Translate a JSON.parse error into an Indonesian message with line/column.
@@ -63,51 +62,4 @@ export async function loadContent(url) {
 
   const { errors, warnings, notes } = validateContent(data);
   return { content: errors.length ? null : data, errors, warnings, notes };
-}
-
-/**
- * Group levels by JLPT level for the level list. Array order is kept inside
- * each group: it is the teaching order of the Hyouki course (D-39).
- * @returns {Array<{jlptLevel: string, levels: object[]}>}
- */
-export function groupLevels(levels) {
-  return JLPT_LEVELS.map((jlptLevel) => ({ jlptLevel, levels: levels.filter((l) => l.jlptLevel === jlptLevel) })).filter(
-    (group) => group.levels.length
-  );
-}
-
-export function jlptLevelsPresent(levels) {
-  return JLPT_LEVELS.filter((j) => levels.some((l) => l.jlptLevel === j));
-}
-
-/**
- * Derive the items of stages 1–4 for one level. Stage 5 (production) has no
- * scored items.
- */
-export function buildLevelItems(level) {
-  const shape = [{ id: itemId.shape(level.id), stage: "shape", levelId: level.id }];
-
-  const readingItems = (type) =>
-    level.kotoba
-      .filter((k) => k.readingType === type)
-      .map((k) => ({ id: itemId.reading(level.id, k.word), stage: type, levelId: level.id, kotoba: k }));
-
-  const sentence = level.kotoba.flatMap((k) =>
-    k.examples.map((example) => {
-      const parsed = parseRuby(example.ja);
-      const start = parsed.plain.indexOf(example.blank);
-      return {
-        id: itemId.sentence(level.id, parsed.plain),
-        stage: "sentence",
-        levelId: level.id,
-        kotoba: k,
-        example,
-        segments: parsed.segments,
-        plain: parsed.plain,
-        blankRange: { start, end: start + example.blank.length },
-      };
-    })
-  );
-
-  return { shape, kunyomi: readingItems("kunyomi"), onyomi: readingItems("onyomi"), sentence };
 }

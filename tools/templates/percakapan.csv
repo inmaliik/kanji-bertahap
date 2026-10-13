@@ -1,0 +1,5 @@
+conversation_id,line_no,speaker,ja,translation,highlight,blank,distractors,sentence_chapter,scene,placeholder
+C-tabemasu-pengantar,1,pemain,[毎朝|まいあさ]パンを[食|た]べます。,Setiap pagi saya makan roti.,食べます,,,6,"Sementara: satu kalimat contoh lama, belum berupa percakapan",ya
+C-tabemasu-uji-1,1,pemain,レストランで[晩|ばん]ごはんを[食|た]べます。,Saya makan malam di restoran.,,食べます,飲みます;読みます;書きます,8,"Sementara: satu kalimat contoh lama, belum berupa percakapan",ya
+C-nomimasu-pengantar,1,pemain,[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。,Setiap malam saya minum teh.,飲みます,,,6,"Sementara: satu kalimat contoh lama, belum berupa percakapan",ya
+C-nomimasu-uji-1,1,pemain,[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。,Pagi hari saya minum susu.,,飲みます,食べます;読みます;聞きます,6,"Sementara: satu kalimat contoh lama, belum berupa percakapan",ya

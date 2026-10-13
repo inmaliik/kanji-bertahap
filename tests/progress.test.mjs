@@ -1,25 +1,30 @@
-// Game rules: level session, unlocking, review sampling.
+// Game rules: quest session, resuming, global kanji mastery, furigana, lock
+// state, review sampling, consent. The Japanese strings are test fixtures.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { clone, jsModule, loadSampleContent, seededRandom } from "./helpers.mjs";
 
-const { buildLevelItems } = await import(jsModule("content.js"));
-const { createLevelSession, PHASE, STAGE_ORDER } = await import(jsModule("session.js"));
+const { buildModel, buildQuestItems } = await import(jsModule("model.js"));
+const { createSession, PHASE, STAGE_ORDER } = await import(jsModule("session.js"));
+const { visibleSegments, containsAny } = await import(jsModule("furigana.js"));
+const { parseRuby } = await import(jsModule("ruby.js"));
 const S = await import(jsModule("state.js"));
 
-const content = loadSampleContent();
-const L01 = content.levels[0];
-const fresh = () => ({ status: "in_progress", itemStreaks: {}, attempts: 1, learningDone: false, productionSubmitted: false });
+const model = buildModel(loadSampleContent());
+// 飲 has a separate bushu (飠), so its quest has all three stages; 食 is its own bushu (D-90).
+const QUEST = model.quests.get("Q-nomimasu");
+const questItems = buildQuestItems(model, QUEST);
+const freshEntry = () => ({ status: "in_progress", attempts: 1, introDone: true, learningDone: false, productionSubmitted: false });
 
 /** Play a session; `decide(step)` returns whether the answer is correct. */
-function play({ items = buildLevelItems(L01), entry = fresh(), decide = () => true, options = {}, stopAfter = Infinity }) {
-  const session = createLevelSession({ items, entry, random: seededRandom(), ...options });
+function play({ items = questItems, streaks = {}, entry = freshEntry(), decide = () => true, options = {}, stopAfter = Infinity }) {
+  const session = createSession({ items, streaks, entry, random: seededRandom(), ...options });
   const trace = [];
   for (let guard = 0; guard < 500; guard++) {
-    if (trace.length >= stopAfter) return { trace, entry };
+    if (trace.length >= stopAfter) return { trace, entry, streaks };
     const step = session.next();
-    if (step.kind === "done") return { trace, entry, done: step };
+    if (step.kind === "done") return { trace, entry, streaks, done: step };
     if (step.kind === "production") {
       trace.push({ kind: "production" });
       session.submitProduction();
@@ -32,15 +37,25 @@ function play({ items = buildLevelItems(L01), entry = fresh(), decide = () => tr
   throw new Error("session did not finish");
 }
 
-const itemCount = STAGE_ORDER.reduce((n, s) => n + buildLevelItems(L01)[s].length, 0);
+test("quest items: shape per target kanji, one reading, one test per test conversation", () => {
+  assert.deepEqual(questItems.map((i) => i.id), ["K:飲:shape", "W:nomimasu:reading", "C:C-nomimasu-uji-1:test"]);
+  const testItem = questItems[2];
+  assert.equal(testItem.plain.slice(testItem.blankRange.start, testItem.blankRange.end), "飲みます");
+  // 食 is its own bushu: an unscored introduction card replaces the shape question (D-90).
+  assert.deepEqual(buildQuestItems(model, model.quests.get("Q-tabemasu")).map((i) => i.id), ["W:tabemasu:reading", "C:C-tabemasu-uji-1:test"]);
+  // Draft content may lack test conversations (D-92): the quest has no test items then.
+  const draft = clone(loadSampleContent());
+  draft.regions[0].quests[1].tests = [];
+  const m = buildModel(draft);
+  assert.deepEqual(buildQuestItems(m, m.quests.get("Q-nomimasu")).map((i) => i.stage), ["shape", "reading"]);
+});
 
-test("all correct: learning pass in stage order, production, consolidation, passed", () => {
+test("all correct: practice and test in stage order, production, consolidation, passed", () => {
   const { trace, done, entry } = play({});
   const learning = trace.filter((t) => t.phase === PHASE.LEARNING);
-  assert.equal(learning.length, itemCount);
-  const stageIndex = learning.map((t) => STAGE_ORDER.indexOf(t.stage));
-  assert.deepEqual(stageIndex, [...stageIndex].sort((a, b) => a - b), "learning follows stage order");
-  assert.equal(trace[itemCount].kind, "production");
+  assert.deepEqual(learning.map((t) => t.stage), STAGE_ORDER, "shape → reading → test");
+  assert.equal(trace[learning.length].kind, "production");
+  assert.ok(trace.slice(learning.length + 1).every((t) => t.phase === PHASE.CONSOLIDATION));
   assert.equal(done.passed, true);
   assert.equal(entry.status, "passed");
 });
@@ -64,51 +79,87 @@ test("consolidation never repeats an item back to back, with a spacer when neede
 
 test("a wrong answer in the learning pass returns within the same stage", () => {
   let missed = false;
-  const { trace } = play({ decide: (step) => (step.item.stage === "sentence" && !missed ? ((missed = true), false) : true) });
-  const learning = trace.filter((t) => t.phase === PHASE.LEARNING);
-  const firstSentence = learning.findIndex((t) => t.stage === "sentence");
-  assert.ok(learning.slice(firstSentence).every((t) => t.stage === "sentence"));
+  const { trace } = play({ decide: (step) => (step.item.stage === "reading" && !missed ? ((missed = true), false) : true) });
+  const learning = trace.filter((t) => t.phase === PHASE.LEARNING).map((t) => t.stage);
+  assert.deepEqual(learning, ["shape", "reading", "reading", "test"]);
 });
 
-test("a session resumes from stored progress", () => {
-  const { entry } = play({ stopAfter: itemCount + 2 });
-  const stored = clone(entry);
-  assert.equal(stored.learningDone, true);
-  assert.equal(stored.productionSubmitted, true);
-  const { done } = play({ entry: stored });
-  assert.equal(done.passed, true);
+test("leaving mid-quest keeps progress, and reopening continues where the player left off", () => {
+  // Left after the first practice item.
+  const first = play({ stopAfter: 1 });
+  const stored = clone({ streaks: first.streaks, entry: first.entry });
+  let again = play({ ...stored, stopAfter: 1 });
+  assert.equal(again.trace[0].id, "W:nomimasu:reading", "the answered item is not asked again");
+
+  // Left during consolidation.
+  const mid = play({ stopAfter: 5 });
+  assert.equal(mid.entry.learningDone, true);
+  assert.equal(mid.entry.productionSubmitted, true);
+  again = play(clone({ streaks: mid.streaks, entry: mid.entry }));
+  assert.ok(again.trace.every((t) => t.phase === PHASE.CONSOLIDATION), "no second learning pass or production");
+  assert.equal(again.done.passed, true);
 });
 
-test("lock state is derived and survives a level inserted during revision", () => {
+test("a kanji shape mastered in one quest is not asked again in another quest", () => {
+  const content = clone(loadSampleContent());
+  content.kotoba.push({ ...content.kotoba[1], id: "nomimono", word: "飲み物", ruby: "[飲|の]み[物|もの]", reading: "のみもの", pos: "noun" });
+  const quest = clone(content.regions[0].quests[1]);
+  Object.assign(quest, { id: "Q-nomimono", kotoba: "nomimono" });
+  quest.tests[0].id = "C-other";
+  content.regions[0].quests.push(quest);
+  const m = buildModel(content);
+
+  const streaks = {};
+  play({ items: buildQuestItems(m, m.quests.get("Q-nomimasu")), streaks });
+  assert.equal(streaks["K:飲:shape"], S.STREAK_TO_MASTER);
+
+  const { trace, done } = play({ items: buildQuestItems(m, m.quests.get("Q-nomimono")), streaks });
+  assert.ok(!trace.some((t) => t.id === "K:飲:shape"), "shape of 飲 is skipped");
+  assert.equal(done.total, 3, "it still counts as a mastered item of the quest");
+});
+
+test("furigana: the setting applies, the intro may show target readings, and anti-leak always wins", () => {
+  const { segments } = parseRuby("[毎朝|まいあさ]パンを[食|た]べます。");
+  const rubies = (segs) => segs.filter((s) => s.ruby).map((s) => s.text);
+  const leaks = containsAny(["食"]);
+  const { ALWAYS, AFTER, NEVER } = S.FURIGANA_MODE;
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: ALWAYS, leaks })), ["毎朝"], "D-29 wins over 'always'");
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: ALWAYS })), ["毎朝", "食"]);
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: AFTER, answered: false })), []);
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: AFTER, answered: true, leaks })), ["毎朝"]);
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: NEVER, answered: true })), []);
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: AFTER, intro: true })), ["毎朝", "食"], "intro: teaching moment, 'after' acts as 'always'");
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: ALWAYS, intro: true })), ["毎朝", "食"], "the intro shows every reading (D-100)");
+  assert.deepEqual(rubies(visibleSegments(segments, { mode: NEVER, intro: true })), [], "'never' holds in the intro too");
+
   const progress = S.createProgress();
-  const lv = (id) => ({ id });
-  let nodes = S.buildProgression([lv("L01"), lv("L02"), lv("L03"), lv("L04")]);
-  assert.deepEqual(nodes.map((n) => n.id), ["L01", "L02", "L03", "R01", "L04"]);
-  const statuses = () => Object.fromEntries(S.computeStatuses(nodes, progress));
-  assert.deepEqual(statuses(), { L01: "available", L02: "locked", L03: "locked", R01: "locked", L04: "locked" });
-  for (const id of ["L01", "L02", "L03", "R01"]) progress.levels[id] = { status: "passed" };
-  progress.levels.L04 = { status: "in_progress" };
-  nodes = S.buildProgression([lv("L01"), lv("LX"), lv("L02"), lv("L03"), lv("L04")]);
-  assert.equal(statuses().LX, "available");
-  assert.equal(statuses().L04, "in_progress");
+  assert.equal(progress.settings.furiganaMode, ALWAYS, "default is always");
+  assert.equal(S.PROGRESS_KEY, "kanjiGame.progress.v2", "never mixes with level progress of the main branch");
 });
 
-test("review sampling is balanced across levels and review sessions pass without production", () => {
-  const pool = content.levels.map((level) => STAGE_ORDER.flatMap((s) => buildLevelItems(level)[s]));
+test("lock state is derived and survives a node inserted during revision", () => {
+  const stored = {};
+  const status = (id) => stored[id];
+  let nodes = ["B01", "B02", "B03"].map((id) => ({ id }));
+  const statuses = () => Object.fromEntries(S.computeStatuses(nodes, status));
+  assert.deepEqual(statuses(), { B01: "available", B02: "locked", B03: "locked" });
+  stored.B01 = "passed";
+  stored.B03 = "in_progress";
+  nodes = ["B01", "BX", "B02", "B03"].map((id) => ({ id }));
+  assert.equal(statuses().BX, "available");
+  assert.equal(statuses().B02, "locked");
+  assert.equal(statuses().B03, "in_progress", "a started node never locks again");
+});
+
+test("review sampling is balanced across quests and review sessions pass without production", () => {
+  const pool = [...model.quests.values()].map((q) => buildQuestItems(model, q));
   const random = seededRandom(3);
-  for (let i = 0; i < 30; i++) {
-    const sample = S.sampleReviewItems(pool, random);
-    assert.equal(sample.length, S.REVIEW_ITEM_COUNT);
-    assert.equal(new Set(sample.map((it) => it.id)).size, sample.length);
-    for (const [index, level] of content.levels.entries()) {
-      const taken = sample.filter((it) => it.levelId === level.id).length;
-      assert.ok(taken >= Math.min(3, pool[index].length), `level ${level.id} under-represented`);
-    }
-  }
-  const sample = S.sampleReviewItems(pool, random);
-  const items = Object.fromEntries(STAGE_ORDER.map((s) => [s, sample.filter((it) => it.stage === s)]));
+  const sample = S.sampleReviewItems(pool, random, 4);
+  assert.equal(new Set(sample.map((it) => it.id)).size, 4);
+  for (const quest of model.quests.keys()) assert.equal(sample.filter((it) => it.questId === quest).length, 2);
+
   let n = 0;
-  const { trace, done } = play({ items, decide: () => n++ >= 4, options: { hasProduction: false, skipLearning: true } });
+  const { trace, done } = play({ items: sample, decide: () => n++ >= 2, options: { hasProduction: false, skipLearning: true } });
   assert.ok(trace.every((t) => t.kind === "item" && t.phase === PHASE.CONSOLIDATION));
   assert.equal(done.passed, true);
 });
@@ -139,5 +190,4 @@ test("recording requires agreeing to the current consent text version", async ()
   assert.equal(S.isRecordingAllowed(progress, "v1"), true);
   assert.equal(S.consentStatus(progress, "v2"), "undecided", "a new text version asks again");
   assert.equal(S.isRecordingAllowed(progress, null), false, "no recording when the text failed to load");
-  assert.equal(S.createProgress().consent, null, "a reset clears consent");
 });

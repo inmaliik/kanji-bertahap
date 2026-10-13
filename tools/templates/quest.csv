@@ -1,0 +1,3 @@
+quest_id,chapter,kotoba_id,target_kanji,intro_conversation,test_conversations,production_prompt
+Q-tabemasu,6,tabemasu,食,C-tabemasu-pengantar,C-tabemasu-uji-1,Buat satu kalimat memakai kotoba ini.
+Q-nomimasu,6,nomimasu,飲,C-nomimasu-pengantar,C-nomimasu-uji-1,Buat satu kalimat memakai kotoba ini.

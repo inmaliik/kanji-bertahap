@@ -1,18 +1,29 @@
 // App bootstrap and hash routing.
 
-import { CONSENT_URL, CONTENT_URL } from "./config.js";
+import { ASSETS_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
-import { loadPrefs, loadProgress } from "./state.js";
+import { buildModel } from "./model.js";
+import { loadUiLabels } from "./ui-labels.js";
+import { loadAssetManifest } from "./assets.js";
+import { loadMapLayout } from "./map-layout.js";
+import { loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
 import { startTabGuard } from "./tab-guard.js";
 import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
-import { levelListScreen } from "./screens/level-list.js";
-import { playScreen } from "./screens/play.js";
-import { previewScreen, contentCheckScreen } from "./screens/preview.js";
+import { contentCheckScreen } from "./screens/content-check.js";
+import { previewScreen } from "./screens/preview.js";
+import { questScreen, reviewScreen } from "./screens/quest.js";
+import { mapScreen } from "./screens/map.js";
+import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
+import { leaderboardScreen } from "./screens/leaderboard.js";
+import { kanaScreen, loadKana } from "./screens/kana.js";
+import { aboutScreen, welcomeScreen } from "./screens/about.js";
+import { characterScreen } from "./screens/character.js";
+import { loadCharacters } from "./cast.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
 
@@ -23,22 +34,41 @@ const root = document.getElementById("app");
 /** Shared state passed to every screen. */
 const app = {
   content: null,
+  model: null, // lookup tables built from content (js/model.js)
   warnings: [],
   notes: [], // content notes (information only)
   progress: null,
-  prefs: null,
   consentText: null, // data/consent.json, or null if it could not be loaded
   consentError: null,
-  notices: [], // { kind, text } shown on the level list
-  jlptFilter: "all",
+  uiLabels: {}, // data/ui.json labels by key (D-76)
+  uiProblems: [],
+  assets: new Map(), // data/assets.json slots by id (D-70)
+  assetProblems: [],
+  kana: null, // data/kana.json
+  characters: null, // data/characters.json (D-102)
+  characterProblems: [],
+  mapLayout: { segments: ["potongan-01"] }, // data/map.json (D-108)
+  mapProblems: [],
+  kanaError: null,
+  notices: [], // { kind, text } shown on the home screen
   render,
 };
 
 const ROUTES = [
-  { pattern: /^#?\/?$/, screen: () => levelListScreen(app) },
-  { pattern: /^#\/play\/([^/]+)$/, screen: (id) => playScreen(app, decodeURIComponent(id)) },
-  { pattern: /^#\/preview\/([^/]+)$/, screen: (id) => previewScreen(app, decodeURIComponent(id)) },
+  // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
+  { pattern: /^#?\/?$/, screen: () => firstScreen() },
+  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
+  { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
+  { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
+  { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
+  { pattern: /^#\/index$/, screen: () => indexScreen(app) },
+  { pattern: /^#\/index\/kanji\/([^/]+)$/, screen: (ch) => kanjiScreen(app, decodeURIComponent(ch)) },
+  { pattern: /^#\/index\/kanji\/([^/]+)\/detail$/, screen: (ch) => kanjiDetailScreen(app, decodeURIComponent(ch)) },
+  { pattern: /^#\/index\/kotoba\/(\d+)$/, screen: (n) => kotobaScreen(app, n) },
+  { pattern: /^#\/about$/, screen: () => aboutScreen(app) },
+  { pattern: /^#\/kana$/, screen: () => kanaScreen(app) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
+  { pattern: /^#\/preview\/([^/]+)$/, screen: (id) => previewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
   {
     pattern: /^#\/consent$/,
@@ -46,13 +76,19 @@ const ROUTES = [
   },
 ];
 
+function firstScreen() {
+  if (!app.progress.welcomeSeen) return welcomeScreen(app, navigate);
+  if (!app.progress.character && app.characters?.players?.length) return characterScreen(app, navigate);
+  return mapScreen(app);
+}
+
 function notFoundScreen() {
   return h(
     "div",
     { class: "screen" },
-    h("a", { class: "back-link", href: "#/" }, "‹ Daftar level"),
+    h("a", { class: "back-link", href: "#/" }, "‹ Peta"),
     h("h1", { tabindex: "-1" }, "Halaman tidak ditemukan"),
-    h("p", {}, "Halaman yang dicari tidak ada.")
+    h("p", {}, "Halaman yang dicari tidak ada, atau belum dibangun ulang di versi peta.")
   );
 }
 
@@ -82,27 +118,50 @@ function render() {
   const hash = location.hash;
   const route = ROUTES.find((r) => r.pattern.test(hash));
   root.replaceChildren(route ? route.screen(...hash.match(route.pattern).slice(1)) : notFoundScreen());
+  // Room at the bottom for the fixed menu bar (D-69), and no page scroll behind an open sheet.
+  root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
+  document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
 }
 
 function navigate() {
   render();
   window.scrollTo(0, 0);
   root.querySelector("h1[tabindex], h2[tabindex]")?.focus({ preventScroll: true });
+  // The map scrolls to the location the player is working on (D-108).
+  root.querySelector("[data-scroll-target]")?.scrollIntoView({ block: "center", behavior: "instant" });
 }
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent] = await Promise.all([loadContent(CONTENT_URL), loadConsentText(CONSENT_URL)]);
+  const [result, consent, ui, assets, kana, characters, map] = await Promise.all([
+    loadContent(CONTENT_URL),
+    loadConsentText(CONSENT_URL),
+    loadUiLabels(UI_LABELS_URL),
+    loadAssetManifest(ASSETS_URL),
+    loadKana(KANA_URL),
+    loadCharacters(CHARACTERS_URL),
+    loadMapLayout(MAP_URL),
+  ]);
+  app.mapLayout = map.layout;
+  app.mapProblems = map.problems;
+  app.characters = characters.characters;
+  app.characterProblems = characters.problems;
+  app.kana = kana.kana;
+  app.kanaError = kana.error;
   app.consentText = consent.text;
   app.consentError = consent.error;
+  app.uiLabels = ui.labels;
+  app.uiProblems = ui.problems;
+  app.assets = assets.slots;
+  app.assetProblems = assets.problems;
   if (!result.content) {
     root.replaceChildren(contentErrorScreen(result));
     return;
   }
   app.content = result.content;
+  app.model = buildModel(result.content);
   app.warnings = result.warnings;
   app.notes = result.notes;
-  app.prefs = loadPrefs();
 
   const { progress, recovered } = loadProgress();
   app.progress = progress;
@@ -124,6 +183,10 @@ async function boot() {
   startTabGuard(document.getElementById("tab-warning"));
 
   window.addEventListener("hashchange", navigate);
+  // Escape closes the region sheet, like its close button.
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && root.querySelector(".sheet")) location.hash = "#/";
+  });
   navigate();
 }
 

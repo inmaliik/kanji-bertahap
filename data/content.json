@@ -1,319 +1,141 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "contentRevision": "draft-0",
-  "levels": [
+  "regions": [
     {
-      "id": "L01",
-      "kanji": "食",
+      "chapter": 6,
+      "title": "Wilayah Bab 6",
+      "intro": {
+        "summary": "Ringkasan bab 6 belum ditulis tim konten.",
+        "points": []
+      },
+      "pin": null,
+      "quests": [
+        {
+          "id": "Q-tabemasu",
+          "kotoba": "tabemasu",
+          "targetKanji": ["食"],
+          "productionPrompt": "Buat satu kalimat memakai kotoba ini.",
+          "intro": {
+            "id": "C-tabemasu-pengantar",
+            "scene": "Sementara: satu kalimat contoh lama, belum berupa percakapan",
+            "sentenceChapter": 6,
+            "isPlaceholder": true,
+            "lines": [
+              {
+                "speaker": "player",
+                "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
+                "translation": "Setiap pagi saya makan roti.",
+                "highlight": "食べます"
+              }
+            ]
+          },
+          "tests": [
+            {
+              "id": "C-tabemasu-uji-1",
+              "scene": "Sementara: satu kalimat contoh lama, belum berupa percakapan",
+              "sentenceChapter": 8,
+              "isPlaceholder": true,
+              "lines": [
+                {
+                  "speaker": "player",
+                  "ja": "レストランで[晩|ばん]ごはんを[食|た]べます。",
+                  "translation": "Saya makan malam di restoran.",
+                  "blank": "食べます",
+                  "distractors": ["飲みます", "読みます", "書きます"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "Q-nomimasu",
+          "kotoba": "nomimasu",
+          "targetKanji": ["飲"],
+          "productionPrompt": "Buat satu kalimat memakai kotoba ini.",
+          "intro": {
+            "id": "C-nomimasu-pengantar",
+            "scene": "Sementara: satu kalimat contoh lama, belum berupa percakapan",
+            "sentenceChapter": 6,
+            "isPlaceholder": true,
+            "lines": [
+              {
+                "speaker": "player",
+                "ja": "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。",
+                "translation": "Setiap malam saya minum teh.",
+                "highlight": "飲みます"
+              }
+            ]
+          },
+          "tests": [
+            {
+              "id": "C-nomimasu-uji-1",
+              "scene": "Sementara: satu kalimat contoh lama, belum berupa percakapan",
+              "sentenceChapter": 6,
+              "isPlaceholder": true,
+              "lines": [
+                {
+                  "speaker": "player",
+                  "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
+                  "translation": "Pagi hari saya minum susu.",
+                  "blank": "飲みます",
+                  "distractors": ["食べます", "読みます", "聞きます"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "kanji": [
+    {
+      "char": "食",
       "meaning": "makan",
       "jlptLevel": "N5",
-      "bushu": {
-        "char": "食",
-        "name": "shoku",
-        "meaning": "makan / makanan",
-        "variants": [
-          "飠"
-        ]
-      },
-      "bushuOptions": [
-        "食",
-        "人",
-        "米",
-        "皿"
-      ],
-      "readings": {
-        "kunyomi": [
-          "た(べる)",
-          "く(う)"
-        ],
-        "onyomi": [
-          "ショク"
-        ]
-      },
-      "kotoba": [
-        {
-          "word": "食べます",
-          "reading": "たべます",
-          "readingType": "kunyomi",
-          "pos": "verb",
-          "meaning": "makan",
-          "chapter": 6,
-          "note": "",
-          "readingDistractors": [
-            "くべます",
-            "のべます",
-            "しらべます"
-          ],
-          "readingDistractorsCross": [
-            "しょくべます"
-          ],
-          "examples": [
-            {
-              "ja": "[毎朝|まいあさ]パンを[食|た]べます。",
-              "blank": "食べます",
-              "translation": "Setiap pagi saya makan roti.",
-              "sentenceChapter": 6,
-              "distractors": [
-                "飲みます",
-                "読みます",
-                "聞きます"
-              ]
-            },
-            {
-              "ja": "レストランで[晩|ばん]ごはんを[食|た]べます。",
-              "blank": "食べます",
-              "translation": "Saya makan malam di restoran.",
-              "sentenceChapter": 8,
-              "distractors": [
-                "飲みます",
-                "読みます",
-                "書きます"
-              ]
-            }
-          ]
-        },
-        {
-          "word": "食堂",
-          "reading": "しょくどう",
-          "readingType": "onyomi",
-          "pos": "noun",
-          "meaning": "kantin / ruang makan",
-          "chapter": 3,
-          "note": "",
-          "readingDistractors": [
-            "じきどう",
-            "いんどう",
-            "きどう"
-          ],
-          "readingDistractorsCross": [],
-          "examples": [
-            {
-              "ja": "[食堂|しょくどう]で[昼|ひる]ごはんを[食|た]べます。",
-              "blank": "食堂",
-              "translation": "Saya makan siang di kantin.",
-              "sentenceChapter": 6,
-              "distractors": [
-                "天気",
-                "新聞",
-                "手紙"
-              ]
-            }
-          ]
-        },
-        {
-          "word": "食事",
-          "reading": "しょくじ",
-          "readingType": "onyomi",
-          "pos": "noun",
-          "meaning": "makan / bersantap",
-          "chapter": 13,
-          "note": "",
-          "readingDistractors": [
-            "じきじ",
-            "いんじ",
-            "きじ"
-          ],
-          "readingDistractorsCross": [],
-          "examples": [
-            {
-              "ja": "[家族|かぞく]と[食事|しょくじ]をします。",
-              "blank": "食事",
-              "translation": "Saya bersantap bersama keluarga.",
-              "sentenceChapter": 13,
-              "distractors": [
-                "天気",
-                "手紙",
-                "新聞"
-              ]
-            }
-          ]
-        }
-      ],
-      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+      "strokeCount": 9,
+      "bushu": { "char": "食", "name": "shoku", "meaning": "makan / makanan", "variants": ["飠"] },
+      "bushuOptions": ["食", "人", "米", "皿"],
+      "readings": { "kunyomi": ["た(べる)", "く(う)"], "onyomi": ["ショク"] },
+      "strokes": null
     },
     {
-      "id": "L02",
-      "kanji": "飲",
+      "char": "飲",
       "meaning": "minum",
       "jlptLevel": "N5",
-      "bushu": {
-        "char": "飠",
-        "name": "shokuhen",
-        "meaning": "makan / makanan",
-        "variants": [
-          "食"
-        ]
-      },
-      "bushuOptions": [
-        "飠",
-        "欠",
-        "氵",
-        "口"
-      ],
-      "readings": {
-        "kunyomi": [
-          "の(む)"
-        ],
-        "onyomi": [
-          "イン"
-        ]
-      },
-      "kotoba": [
-        {
-          "word": "飲みます",
-          "reading": "のみます",
-          "readingType": "kunyomi",
-          "pos": "verb",
-          "meaning": "minum",
-          "chapter": 6,
-          "note": "",
-          "readingDistractors": [
-            "たみます",
-            "くみます",
-            "よみます"
-          ],
-          "readingDistractorsCross": [
-            "いんみます"
-          ],
-          "examples": [
-            {
-              "ja": "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。",
-              "blank": "飲みます",
-              "translation": "Setiap malam saya minum teh.",
-              "sentenceChapter": 6,
-              "distractors": [
-                "食べます",
-                "読みます",
-                "書きます"
-              ]
-            },
-            {
-              "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
-              "blank": "飲みます",
-              "translation": "Pagi hari saya minum susu.",
-              "sentenceChapter": 6,
-              "distractors": [
-                "食べます",
-                "読みます",
-                "聞きます"
-              ]
-            }
-          ]
-        }
-      ],
-      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+      "strokeCount": 12,
+      "bushu": { "char": "飠", "name": "shokuhen", "meaning": "makan / makanan", "variants": ["食"] },
+      "bushuOptions": ["飠", "欠", "氵", "口"],
+      "readings": { "kunyomi": ["の(む)"], "onyomi": ["イン"] },
+      "strokes": null
+    }
+  ],
+  "kotoba": [
+    {
+      "id": "tabemasu",
+      "word": "食べます",
+      "ruby": "[食|た]べます",
+      "reading": "たべます",
+      "readingType": "kunyomi",
+      "pos": "verb",
+      "meaning": "makan",
+      "chapter": 6,
+      "note": "",
+      "readingDistractors": ["くべます", "のべます", "しらべます"],
+      "readingDistractorsCross": ["しょくべます"]
     },
     {
-      "id": "L03",
-      "kanji": "気",
-      "meaning": "semangat / udara / perasaan",
-      "jlptLevel": "N5",
-      "bushu": {
-        "char": "气",
-        "name": "kigamae",
-        "meaning": "uap / udara",
-        "variants": []
-      },
-      "bushuOptions": [
-        "气",
-        "厂",
-        "乙",
-        "人"
-      ],
-      "readings": {
-        "kunyomi": [],
-        "onyomi": [
-          "キ",
-          "ケ"
-        ]
-      },
-      "kotoba": [
-        {
-          "word": "電気",
-          "reading": "でんき",
-          "readingType": "onyomi",
-          "pos": "noun",
-          "meaning": "listrik / lampu",
-          "chapter": 1,
-          "note": "",
-          "readingDistractors": [
-            "でんけ",
-            "でんしょく",
-            "でんいん"
-          ],
-          "readingDistractorsCross": [],
-          "examples": [
-            {
-              "ja": "[電気|でんき]をつけます。",
-              "blank": "電気",
-              "translation": "Saya menyalakan lampu.",
-              "sentenceChapter": 14,
-              "distractors": [
-                "天気",
-                "雨",
-                "朝"
-              ]
-            }
-          ]
-        },
-        {
-          "word": "元気",
-          "reading": "げんき",
-          "readingType": "onyomi",
-          "pos": "na-adj",
-          "meaning": "sehat / bersemangat",
-          "chapter": 8,
-          "note": "",
-          "readingDistractors": [
-            "げんけ",
-            "げんしょく",
-            "げんいん"
-          ],
-          "readingDistractorsCross": [],
-          "examples": [
-            {
-              "ja": "お[元気|げんき]ですか。",
-              "blank": "元気",
-              "translation": "Apa kabar? (Apakah Anda sehat?)",
-              "sentenceChapter": 8,
-              "distractors": [
-                "有名",
-                "便利",
-                "大切"
-              ]
-            }
-          ]
-        },
-        {
-          "word": "天気",
-          "reading": "てんき",
-          "readingType": "onyomi",
-          "pos": "noun",
-          "meaning": "cuaca",
-          "chapter": 12,
-          "note": "",
-          "readingDistractors": [
-            "てんけ",
-            "てんしょく",
-            "てんいん"
-          ],
-          "readingDistractorsCross": [],
-          "examples": [
-            {
-              "ja": "あしたの[天気|てんき]は[雨|あめ]です。",
-              "blank": "天気",
-              "translation": "Cuaca besok hujan.",
-              "sentenceChapter": 12,
-              "distractors": [
-                "食事",
-                "手紙",
-                "新聞"
-              ]
-            }
-          ]
-        }
-      ],
-      "productionPrompt": "Buat satu kalimat memakai salah satu kotoba di level ini."
+      "id": "nomimasu",
+      "word": "飲みます",
+      "ruby": "[飲|の]みます",
+      "reading": "のみます",
+      "readingType": "kunyomi",
+      "pos": "verb",
+      "meaning": "minum",
+      "chapter": 6,
+      "note": "",
+      "readingDistractors": ["たみます", "くみます", "よみます"],
+      "readingDistractorsCross": ["いんみます"]
     }
   ]
 }
