@@ -1135,7 +1135,7 @@ menunjuk potongan di luar daftar; potongan seperti itu tetap digambar sebagai ko
 karakter (D-107) dan cukup untuk ±343 px CSS di layar 3×; tinggi 1440 (±457 px CSS di ponsel 375 px) memberi ruang
 dua atau tiga lokasi berukuran ±90×110 px; satu layar memuat ±2 potongan, jadi 2×150 KB tetap di bawah anggaran
 ±500 KB layar pertama. Daftar awal berisi empat potongan (usulan untuk bab 1–12, tiga lokasi per potongan); tim
-boleh mengubahnya. Panduan sambungan di `ASSETS.md`: gambar di satu kanvas panjang lalu potong per 1440 px; jalan
+boleh mengubahnya. *Diubah oleh D-110: dua potongan.* Panduan sambungan di `ASSETS.md`: gambar di satu kanvas panjang lalu potong per 1440 px; jalan
 dan latar menyentuh tepi bawah potongan *n* dan tepi atas potongan *n*+1 di posisi piksel yang sama (usulan baku:
 jalan utama di x 460–620); tidak ada benda terbelah sambungan; tanpa bingkai di tepi.
 
@@ -1172,6 +1172,24 @@ diganti ダミー１… di salinan sementara supaya materi bisa dimuat; 64 halam
 mencegah validator menilai bagian yang memang belum ditulis tim. **Alternatif ditolak:** Tabel bacaan besar seperti
 di layar index (memakan ±1/6 halaman per kanji); daftar peringatan dalam bentuk kartu seperti halaman pemeriksaan
 (halaman cetak menjadi 74); semua peringatan dikumpulkan di akhir dokumen (validator harus bolak-balik halaman).
+
+### D-110 · Peta dimulai dengan dua potongan
+**Tanggal:** 2026-10-13. **Keputusan:** `data/map.json` berisi dua potongan (`potongan-01`, `potongan-02`), bukan
+empat. Potongan berikutnya ditambahkan bersama bab yang menempatinya. Jalan utama di sambungan tetap di x 460–620
+(usulan D-108 disetujui). **Alasan:** Materi yang ada baru bab 1–5, dan dua potongan dengan tiga lokasi masing-masing
+sudah menampungnya. Peta dibuat per potongan justru supaya bisa tumbuh bersama materi; menggambar potongan untuk
+bab yang belum ditulis berisiko digambar ulang ketika babnya jadi. **Alternatif ditolak:** Empat potongan untuk bab
+1–12 sejak awal (usulan D-108).
+
+### D-111 · `APP_VERSION` menjadi 1.0.0 saat materi keluar dari draf
+**Tanggal:** 2026-10-13. **Keputusan:** `APP_VERSION` tetap `0.9.0` selama `contentRevision` diawali `draft`. Pada
+konversi pertama yang mengeluarkan `contentRevision` dari draf (misalnya menjadi `rev-1`), `APP_VERSION` di
+`js/config.js` dinaikkan ke `1.0.0` dalam commit yang sama. Uji otomatis di `tests/logging.test.mjs` gagal jika
+keduanya tidak sejalan (materi draf dengan versi 1.x, atau materi non-draf dengan versi 0.x). **Alasan:** Setiap
+baris log mencatat `appVersion`; dengan aturan ini, versi 0.x menandai data pengembangan dan 1.x data penelitian,
+sehingga batasnya terbaca dari kolom log tanpa perlu mencocokkan tanggal. **Alternatif ditolak:** Menaikkan versi
+sekarang (data dari materi draf akan tercatat dengan versi yang sama dengan data penelitian); hanya mengandalkan
+`contentRevision` (versi aplikasi tetap perlu menandai perubahan kode di antara revisi materi).
 
 ---
 

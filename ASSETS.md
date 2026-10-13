@@ -93,11 +93,11 @@ tidak perlu digambar ulang.
   jadi dua potongan × 150 KB tetap di bawah anggaran ±500 KB layar pertama. Potongan yang jauh dari layar baru
   diunduh ketika pemain menggulir mendekatinya.
 - **Urutan potongan ada di `data/map.json`**, dari atas ke bawah:
-  `{ "segments": ["potongan-01", "potongan-02", "potongan-03", "potongan-04"] }`. Nama di daftar adalah nama berkas
-  tanpa `.png`. Empat potongan di daftar sekarang adalah usulan untuk bab 1–12 (tiga lokasi per potongan); ubah
-  daftarnya kalau tim memutuskan lain.
-- **Menambah potongan:** gambar potongan baru, simpan sebagai `assets/peta/potongan-05.png`, lalu tambahkan
-  `"potongan-05"` di akhir daftar `data/map.json`.
+  `{ "segments": ["potongan-01", "potongan-02"] }`. Nama di daftar adalah nama berkas tanpa `.png`. Dua potongan
+  di daftar sekarang menampung bab 1–5, satu-satunya materi yang sudah ada (tiga lokasi per potongan, D-110).
+  **Potongan berikutnya digambar bersama babnya**, bukan sebelumnya.
+- **Menambah potongan:** gambar potongan baru, simpan sebagai `assets/peta/potongan-03.png`, lalu tambahkan
+  `"potongan-03"` di akhir daftar `data/map.json`.
 - **Posisi lokasi diisi tim konten di tab `wilayah`**, tiga kolom sekaligus: `pin_segment` (nomor potongan, 1 untuk
   yang paling atas), `pin_x` dan `pin_y` (persen lebar dan tinggi **potongan itu**, bukan seluruh peta). Contoh:
   titik tengah potongan 2 adalah `2`, `50`, `50`. Setelah potongan jadi, beri tim konten posisi setiap lokasi.

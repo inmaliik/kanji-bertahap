@@ -100,6 +100,16 @@ tidak ada materi bahasa Jepang di kode; teks persetujuan ada di `data/consent.js
 `node --test tests/*.test.mjs` sebelum setiap commit, dan periksa hasilnya di layar ponsel, bukan hanya lewat uji
 otomatis.
 
+## Mencadangkan pekerjaan
+
+Salinan cadangan proyek ini disimpan di GitHub, di repo **privat** `inmaliik/kanji-bertahap`. Setiap selesai sesi
+kerja, cukup minta ke Claude:
+
+> **Cadangkan pekerjaan hari ini ke GitHub: jalankan uji, commit perubahan, lalu kirim semua cabang dan tag.**
+
+Claude akan melaporkan apa yang terkirim. Folder `sumber/`, `tmp/`, dan file ekspor log tidak pernah ikut (diatur di
+`.gitignore`), dan repo-nya tetap privat.
+
 ## Yang sedang menghalangi
 
 Ringkasan dari [`BLOCKERS.md`](BLOCKERS.md), yang memuat daftar lengkapnya.

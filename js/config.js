@@ -1,7 +1,7 @@
 // App-wide configuration. Pass/fail thresholds live in state.js instead.
 
 export const APP_TITLE = "Kanji Bertahap";
-export const APP_VERSION = "0.9.0"; // map version; the level version (tag v1-akhir) is 0.5.0
+export const APP_VERSION = "0.9.0"; // map version; the level version (tag v1-akhir) is 0.5.0. Becomes 1.0.0 when contentRevision first leaves draft (D-111).
 export const CONTENT_URL = "data/content.json";
 export const CONSENT_URL = "data/consent.json";
 export const UI_LABELS_URL = "data/ui.json";

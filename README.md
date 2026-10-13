@@ -1430,6 +1430,9 @@ Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dik
 - [ ] Keputusan yang menunggu dosen (daftar di awal `DECISIONS.md`) sudah dibahas, atau diputuskan untuk
       dibiarkan sementara.
 - [ ] `contentRevision` **sudah dinaikkan** dari `draft-0` (misalnya menjadi `rev-1`) saat konversi CSV.
+- [ ] Pada kali pertama `contentRevision` keluar dari draf, `APP_VERSION` di `js/config.js` **dinaikkan ke `1.0.0`**
+      dalam commit yang sama (DECISIONS D-111). Versi 0.x di log menandai data pengembangan, 1.x data penelitian.
+      Uji otomatis gagal jika langkah ini terlewat.
 - [ ] Pratinjau dibuka ulang: spanduk dan label **DRAF sudah tidak muncul**, dan revisi yang tertulis sesuai.
 - [ ] Pengujian tim nomor 1 (cetak di Safari dan Firefox) sudah lolos.
 - [ ] PDF pratinjau untuk validator dibuat dari browser yang lolos, dan nama filenya memuat nama revisi.

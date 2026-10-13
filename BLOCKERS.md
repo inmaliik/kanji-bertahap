@@ -70,7 +70,7 @@ Lihat daftar "Menunggu keputusan dosen" di awal `DECISIONS.md`:
 ### 6. Gambar belum diserahkan — **Sebagian**
 Karakter Hana dan Kazu sudah ada (1080×1080, D-107). Yang masih placeholder atau belum ada, dengan spesifikasi di
 `ASSETS.md`:
-- **potongan peta** `assets/peta/potongan-01.png` … (1080×1440, maks 150 KB; empat potongan diusulkan untuk bab 1–12;
+- **potongan peta** `assets/peta/potongan-01.png` … (1080×1440, maks 150 KB; dua potongan untuk bab 1–5, D-110;
   panduan sambungan antarpotongan, D-108);
 - ikon lokasi per wilayah (`assets/lokasi/B01.png` …);
 - ikon menu (tiga);

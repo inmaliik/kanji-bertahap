@@ -2,7 +2,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { jsModule, MemoryStorage } from "./helpers.mjs";
+import { jsModule, loadSampleContent, MemoryStorage } from "./helpers.mjs";
 
 const { setStorageBackend } = await import(jsModule("storage.js"));
 let instance = 0;
@@ -99,4 +99,15 @@ test("deleting a player's rows keeps unsent and exported markers correct", async
   assert.equal(logger.getLogStatus().unsentRows, 75, "a batch taken before the deletion marks nothing");
   const next = logger.getUnsentBatch(1);
   assert.equal(next.rows[0][col("responseMs")], 101, "sending resumes at the first unsent kept row");
+});
+
+test("the app version marks development data apart from research data (D-111)", async () => {
+  const { APP_VERSION } = await import(jsModule("config.js"));
+  const { contentRevision } = loadSampleContent();
+  const major = Number(APP_VERSION.split(".")[0]);
+  if (contentRevision.startsWith("draft")) {
+    assert.equal(major, 0, `draft content (${contentRevision}) must log under a 0.x version`);
+  } else {
+    assert.ok(major >= 1, `contentRevision ${contentRevision} left draft: raise APP_VERSION to 1.0.0 in js/config.js`);
+  }
 });
