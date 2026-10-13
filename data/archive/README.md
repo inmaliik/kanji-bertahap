@@ -1,12 +1,12 @@
 # Arsip materi
 
 Folder ini **tidak dibaca aplikasi**. Isinya materi yang keluar dari data aktif ketika struktur berpindah ke
-versi peta (schemaVersion 2, cabang `desain-peta`). Disimpan supaya tidak hilang tanpa jejak (DECISIONS D-58).
+versi peta (schemaVersion 2). Disimpan supaya tidak hilang tanpa jejak (DECISIONS D-58).
 
 ## `content-v1.json`
 
 Materi contoh struktur lama (schemaVersion 1): tiga level 食, 飲, 気. Isinya sama persis dengan
-`data/content.json` di cabang `main` pada commit `612fb77`. Selain sebagai arsip, berkas ini dipakai uji
+`data/content.json` versi level (tag git `v1-akhir`, commit `612fb77`). Selain sebagai arsip, berkas ini dipakai uji
 otomatis aturan sesi v1 sampai mesin quest menggantikannya di langkah 2.
 
 ## Yang dipindahkan ke `data/content.json` (wilayah B06)

@@ -9,12 +9,12 @@ Web game penunjang untuk belajar kanji dan kotoba N5–N4, bagi mahasiswa semest
 - Seluruh materi ada di `data/content.json`. Tidak ada teks materi bahasa Jepang di file JS.
 - Progres pemain disimpan di `localStorage` browser.
 
-> **Cabang `desain-peta` — versi peta dalam pengerjaan (langkah 4 dari 5 selesai: struktur data, quest, peta, index).**
-> Materi tersusun sebagai wilayah, quest, dan percakapan (schemaVersion 2). Peta, jendela bab, 復習, penguncian
-> wilayah, menu tiga pintu, index tiga tingkat, panduan kana, dan disclaimer sudah jalan, dengan aset placeholder
-> (lihat [`ASSETS.md`](ASSETS.md)). Karakter dan pratinjau cetak menyusul di langkah 5. Bagian README tentang
-> pratinjau dan prosedur pameran masih menjelaskan versi lama.
-> Versi yang bisa dimainkan, dan menjadi cadangan untuk validasi ahli, ada di cabang `main`.
+> **Versi peta** (schemaVersion 2). Materi tersusun sebagai wilayah per bab, quest per kotoba, dan percakapan.
+> Peta kota bersambung, jendela bab, 復習, karakter pemain, level dan XP, index, panduan kana, papan peringkat mode
+> pameran, dan pratinjau cetak untuk validator sudah jalan; aset yang belum dari tim tampil sebagai placeholder
+> (lihat [`ASSETS.md`](ASSETS.md)). Pengerjaan fitur berhenti di sini: pekerjaan berikutnya datang bersama materi
+> lengkap dan aset dari tim (lihat [`BLOCKERS.md`](BLOCKERS.md)).
+> Versi lama berbasis level (v1) disimpan di tag git **`v1-akhir`**: `git checkout v1-akhir` untuk membukanya.
 >
 > Alasan di balik setiap keputusan desain dicatat di [`DECISIONS.md`](DECISIONS.md).
 
@@ -56,16 +56,17 @@ dan bisa sedikit berbeda.
 
 Buat folder baru, misalnya `kanji-bertahap-situs`, lalu **salin** isi berikut dari folder proyek ke dalamnya:
 
-| Salin | Jangan salin |
+| Salin (enam butir, semuanya wajib) | Jangan salin |
 |---|---|
-| `index.html` | `.git` (folder tersembunyi) |
+| `index.html` | `.git` (folder tersembunyi), `.vscode/` |
 | `css/` | `tests/` |
-| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` (memuat alamat halaman tim) |
-| `data/` | file CSV ekspor log jawaban |
-| `tools/` (berisi pemeriksa materi untuk tim konten) | `ASSETS.md` |
-| `assets/` (gambar peta dan ikon; **wajib**, tanpa folder ini peta tampil kosong) | |
+| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` (memuat alamat halaman tim), `ASSETS.md` |
+| `data/` (materi, daftar potongan peta, karakter, label) | `sumber/` (dokumen sumber dan impor tim; tidak ada di git) |
+| `assets/` (potongan peta, ikon, karakter, ilustrasi; tanpa folder ini peta dan karakter tidak tampil) | `tmp/` (tangkapan layar pengembang; tidak ada di git) |
+| `tools/` (berisi pemeriksa materi untuk tim konten) | file CSV ekspor log jawaban |
 
 Dokumen internal tidak disalin karena semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya.
+Hasilnya, folder unggahan berisi tepat: `index.html`, `css/`, `js/`, `data/`, `assets/`, `tools/`.
 
 Sebelum menyalin, pastikan:
 - `data/content.json` adalah versi materi yang ingin ditampilkan (periksa revisinya);
@@ -87,10 +88,12 @@ Sebelum menyalin, pastikan:
 
 ### 4. Periksa hasilnya
 
-- [ ] Tautan utama membuka daftar level di ponsel.
+- [ ] Tautan utama membuka layar sambutan di ponsel, lalu pemilihan karakter dan peta.
+- [ ] Peta menampilkan karakter, ikon menu, dan potongan peta (atau kotak keterangan potongan yang belum digambar),
+      bukan tanda ✗ berkas hilang.
 - [ ] `https://nama-situs.netlify.app/tools/convert.html` membuka pemeriksa materi.
-- [ ] ⚙ Pengaturan → **Pratinjau semua materi** menampilkan materi dengan revisi yang benar.
-- [ ] Satu level bisa dimainkan sampai layar persetujuan dan soal pertama.
+- [ ] Alamat pratinjau (`#/preview/all`, dicatat di `MULAI-DI-SINI.md`) menampilkan materi dengan revisi yang benar.
+- [ ] Satu quest bisa dimainkan sampai layar persetujuan dan percakapan pengantar.
 
 ### 5. Memperbarui situs
 
@@ -127,7 +130,8 @@ data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復�
 data/kana.json              tabel hiragana dan katakana untuk panduan kana
 data/characters.json        karakter pemain dan lawan bicara, dengan kotak potong potret
 data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
-assets/                     gambar: peta, ikon menu (PLACEHOLDER), karakter Hana dan Kazu, ilustrasi adegan; lihat ASSETS.md
+data/map.json               urutan potongan peta dari atas ke bawah (D-108)
+assets/                     gambar: potongan peta, ikon lokasi dan menu (PLACEHOLDER), karakter Hana dan Kazu, ilustrasi adegan; lihat ASSETS.md
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
@@ -138,6 +142,7 @@ js/reveal.js                materi apa yang boleh tampil di luar quest-nya (D-79
 js/progression.js           urutan dan kunci wilayah, persentase, sampel 復習
 js/ui-labels.js             label antarmuka berbahasa Jepang dari data/ui.json
 js/assets.js                slot aset: gambar yang dipaskan ke wadahnya, pemeriksa aset
+js/map-layout.js            potongan peta: daftar, posisi lokasi per potongan, posisi sementara
 js/event-log.js             baris log peristiwa (pembukaan index)
 js/cast.js                  karakter: nama dan potret pembicara, data karakter
 js/xp.js                    level, XP, dan eksplorasi, dihitung dari progres
@@ -168,7 +173,7 @@ js/stages/production.js     Produksi
 
 js/screens/common.js        komponen bersama (tabel bacaan, daftar error, label)
 js/screens/quest.js         layar quest dan 復習: menjalankan sesi, mencatat log
-js/screens/map.js           peta: gambar, pin wilayah, daftar wilayah
+js/screens/map.js           peta: potongan bersambung, lokasi, jalur, bilah level, daftar wilayah
 js/screens/region.js        jendela bab: ringkasan, daftar quest, 復習
 js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
 js/screens/kana.js          panduan kana (data/kana.json)
@@ -176,7 +181,8 @@ js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan di
 js/screens/menu.js          menu tiga pintu di luar quest
 js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
-js/screens/content-check.js daftar peringatan konten
+js/screens/content-check.js pemeriksaan konten, karakter, potongan peta, dan aset (halaman tim)
+js/screens/preview.js       pratinjau dan cetak materi untuk validator (halaman tim)
 js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
 
@@ -751,9 +757,9 @@ tidak menghalangi peserta yang sudah lebih jauh.
 ## Kemajuan pemain dan reset
 
 Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v2`. Key ini berbeda dari versi level di
-cabang `main` (`kanjiGame.progress.v1`), sehingga progres kedua versi tidak pernah tercampur. **Reset progres**
-(Pengaturan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, dan mengembalikan
-setelan furigana ke bawaan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
+tag `v1-akhir` (`kanjiGame.progress.v1`), sehingga progres kedua versi tidak pernah tercampur. **Reset progres**
+(Pengaturan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, pilihan persetujuan, dan
+karakter, dan mengembalikan setelan furigana ke bawaan. Pemain berikutnya mulai dari layar sambutan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
 
 Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v2.corrupt.<waktu>`
 dan memulai progres baru.
@@ -865,11 +871,13 @@ Dibuka dari menu **Pengaturan** di peta dan layar lain di luar quest.
 | Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. |
 | Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
+| Mode pameran | Sakelar **Tampilkan papan peringkat di perangkat ini** dan tombol **Kosongkan papan peringkat** (D-106). Setelan perangkat, tidak ikut direset. |
 | Materi | Revisi materi, tanda DRAF, dan tautan **Tentang aplikasi**. Halaman tim (pemeriksaan konten, pratinjau) sengaja tidak ditautkan. |
 
 **Pemeriksaan konten dan aset** (untuk tim, dibuka lewat alamatnya yang dicatat di `MULAI-DI-SINI.md`, jangan dibuka di depan peserta karena memuat isi materi): daftar
-peringatan konten, masalah di `data/ui.json`, dan **pemeriksa aset** yang menandai setiap slot gambar: ✓ sudah
-diganti, ⚠ masih placeholder, ✗ berkas hilang, terlalu besar, atau rasionya salah.
+peringatan konten, masalah di `data/ui.json` dan `data/characters.json`, pemeriksaan `data/map.json`, tautan ke
+pratinjau, dan **pemeriksa aset** yang menandai setiap slot gambar: ✓ sudah diganti, ⚠ masih placeholder, ✗ berkas
+hilang, terlalu besar, atau rasionya salah.
 
 Peringatan kapasitas juga muncul di peta, supaya penjaga stan melihatnya tanpa membuka Pengaturan.
 Persentasenya adalah **perkiraan**: browser tidak memberi tahu batas pastinya.
@@ -1089,37 +1097,51 @@ menjalankannya sebagai rumus.
 
 ## Prosedur pameran (untuk penjaga stan)
 
-Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi.
+Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi. Bagian ini sebaiknya dicetak dan ditaruh di meja stan.
+
+**Pameran dan uji coba penelitian berbeda.** Di pameran, **mode pameran** dinyalakan supaya pengunjung bisa melihat
+papan peringkat. Dalam uji coba penelitian (kelas, sesi peserta), mode pameran **harus mati**: persaingan adalah
+perlakuan tersendiri yang mencampuri hasil (D-106).
 
 ### Seminggu sebelum pameran (koordinator data)
 
 1. Pastikan pengiriman log sudah aktif dan sudah diuji dari ponsel yang akan dipakai
    (bagian [Pengiriman log](#pengiriman-log-ke-google-apps-script), langkah 4).
 2. Di setiap perangkat pameran, buka aplikasi dari tautan Netlify di **satu tab saja**.
-3. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
+3. Di setiap perangkat: **Pengaturan → Mode pameran** → nyalakan **Tampilkan papan peringkat di perangkat ini**.
+   Setelan ini milik perangkat dan tidak hilang saat reset progres.
+4. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
 
 ### Pagi hari sebelum stan dibuka
 
 1. Nyalakan perangkat dan pastikan terhubung ke internet.
-2. Buka aplikasi → **⚙ Pengaturan** → bagian **Riwayat jawaban**.
+2. Buka aplikasi → **Pengaturan** (menu di bawah layar) → bagian **Riwayat jawaban**.
 3. Periksa tiga hal:
    - **Pengiriman ke server** tidak menampilkan pesan merah.
    - **Penyimpanan terpakai** di bawah 80%. Jika sudah 80% atau lebih, jalankan langkah
      *Jika muncul peringatan kapasitas* di bawah sebelum mulai.
    - Tidak ada tulisan "jawaban tidak bisa disimpan".
-4. Tekan **Reset progres** → **Ya, reset progres**.
+4. Bagian **Mode pameran**: pastikan sakelar menyala. Jika papan peringkat dibuat per hari, tekan
+   **Kosongkan papan peringkat** → **Ya, kosongkan** (nomor pemain mulai lagi dari 01). Jika papan dibiarkan
+   berlanjut dari kemarin, lewati langkah ini.
+5. Bagian **Pemain berikutnya**: tekan **Reset progres** → **Ya, reset progres**.
 
 ### Setiap kali pengunjung berganti
 
-1. Pengaturan → **Reset progres** → **Ya, reset progres**.
+1. Pengaturan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus.
 2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**
    (bentuknya huruf lalu angka, misalnya `K4-01`), lalu **Simpan kode**. Jangan pernah mengisi nama atau NIM.
-3. Tekan **‹ Daftar level**, serahkan perangkat ke pengunjung.
-4. Saat pengunjung membuka level pertama, **layar persetujuan** muncul:
+3. Tekan **‹ Peta**. Layar **sambutan** muncul (berisi penafian materi); serahkan perangkat ke pengunjung.
+4. Pengunjung menekan tombol lanjut, **memilih karakter** (Hana atau Kazu), lalu sampai di peta. Peta menggulir
+   sendiri ke lokasi yang sedang dikerjakan.
+5. Saat pengunjung membuka quest pertama, **layar persetujuan** muncul:
    - **Pengunjung umum** (bukan peserta penelitian): minta mereka memilih **Main tanpa merekam**.
    - **Peserta penelitian**: minta mereka membaca teksnya sampai selesai, lalu memilih sendiri. Jangan memilihkan.
+6. Setelah bermain, pengunjung bisa membuka **🏆 Papan peringkat** dari peta. Baris mereka ditandai **(kamu)**,
+   dengan nomor pemain seperti "Pemain 07". Papan hanya memuat potret karakter, nomor, level, dan XP, tanpa nama.
 
-Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim.
+Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim. XP pengunjung
+sebelumnya tetap di papan dengan nomornya.
 
 ### Jika muncul spanduk kuning "Aplikasi ini juga terbuka di tab lain"
 
@@ -1127,7 +1149,7 @@ Artinya aplikasi terbuka dua kali di perangkat yang sama, dan progres bisa salin
 
 1. Tutup semua tab aplikasi kecuali satu (di ponsel: buka daftar tab browser, geser tab yang berlebih).
 2. Jika spanduk meminta **Muat ulang halaman ini**, tekan tombol itu.
-3. Jika pengunjung sedang bermain, progres level yang sedang dimainkan mungkin perlu diulang. Jawaban
+3. Jika pengunjung sedang bermain, progres quest yang sedang dimainkan mungkin perlu diulang. Jawaban
    yang sudah tercatat di log tidak hilang.
 
 ### Setiap satu jam atau saat istirahat
@@ -1141,7 +1163,7 @@ Artinya aplikasi terbuka dua kali di perangkat yang sama, dan progres bisa salin
 
 ### Jika muncul peringatan kapasitas
 
-Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di daftar level dan di Pengaturan.
+Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di peta dan di Pengaturan.
 
 1. Buka Pengaturan → Riwayat jawaban.
 2. Pastikan tertulis **✓ Semua jawaban sudah terkirim**. Jika belum, tekan **Kirim sekarang** dan tunggu.
@@ -1158,26 +1180,39 @@ pengunjung berikutnya bermain.
 2. **Ekspor CSV** sebagai cadangan harian, beri nama file sesuai tanggal jika perlu, serahkan ke
    koordinator data.
 3. Jangan menghapus log sebelum koordinator memastikan data di spreadsheet dan file CSV lengkap.
+4. Papan peringkat boleh dibiarkan (berlanjut besok) atau dikosongkan besok pagi (langkah pagi nomor 4).
+5. Setelah pameran selesai, **matikan mode pameran** di setiap perangkat sebelum perangkat dipakai untuk uji coba
+   penelitian, dan kosongkan papannya.
 
 ## Pratinjau dan cetak untuk validator ahli
 
-Pengaturan → Materi → **Pratinjau semua materi (bisa dicetak)** membuka `#/preview/all`:
+Alamat `#/preview/all` (dicatat di `MULAI-DI-SINI.md`; juga ditautkan dari halaman pemeriksaan konten, tidak dari
+alur pemain, karena memuat jawaban) membuka seluruh materi dalam bentuk yang bisa dicetak (D-109):
 
-- ringkasan seluruh level (nomor, ID, kanji, arti, JLPT, bab, jumlah kotoba dan kalimat);
-- setiap level lengkap: bushu dan pilihannya, tabel cara baca beserta notasi data mentah, kotoba,
-  pengecoh (sejenis, lintas jenis, dan kalimat), contoh kalimat dengan bagian kosong ditandai,
-  instruksi Produksi;
-- revisi materi dan tanggal dicetak di bagian atas.
+- halaman pertama: revisi materi dan tanggal, spanduk DRAF, penafian, dan **tabel ringkasan per bab** (jumlah
+  quest, kanji target, jumlah percakapan uji, jumlah catatan pemeriksaan otomatis);
+- **setiap bab** di halaman baru: judul, ringkasan, posisi di peta;
+- **setiap quest**: kanji target (arti, JLPT, jumlah guratan, bushu, pilihan soal Bentuk dengan jawabannya, bacaan
+  kun'yomi dan on'yomi), kotoba (furigana, jenis bacaan, kelas kata, bab, pengecoh cara baca sejenis dan lintas
+  jenis), **percakapan pengantar dan percakapan uji** sebagai naskah (pembicara, kalimat dengan seluruh furigana,
+  terjemahan; kata yang ditandai digaris bawahi; jawaban dan pengecoh percakapan uji ditulis), **ilustrasi adegan**
+  dengan keterangan situasinya, bab yang dibutuhkan percakapan, perintah Produksi, lalu **kotak catatan validator**;
+- kanji yang muncul lagi di quest berikutnya cukup dirujuk ("lihat Bab 1 Quest 4");
+- **catatan pemeriksaan otomatis** ditaruh di dekat bagian yang dimaksud, supaya validator tahu bagian mana yang
+  memang belum ditulis tim (penanda «BELUM DIISI», terjemahan kosong, percakapan uji belum ada, dan sebagainya);
+- di akhir: kotoba yang hanya muncul di index.
 
-Tekan **Cetak / simpan PDF**. Pada hasil cetak, setiap level dimulai di halaman baru dan diakhiri
-**kotak catatan validator**. Jika revisi materi diawali `draft`, materi ditandai DRAF dengan tiga cara:
+Satu bab saja: `#/preview/B03`. Tekan **Cetak / simpan PDF**. Ilustrasi yang belum digambar tercetak sebagai kotak
+bergaris putus-putus berisi nama berkasnya. Satu percakapan tidak dipotong antarhalaman. Jika revisi materi diawali
+`draft`, materi ditandai DRAF dengan tiga cara:
 
 1. spanduk **DRAF — BELUM DIVERIFIKASI** di halaman pertama;
 2. tanda air **DRAF** di setiap halaman (bergantung pada dukungan cetak browser);
-3. label **DRAF — BELUM DIVERIFIKASI · revisi …** di awal setiap level dan di kotak catatan validator. Label
-   ini bagian dari isi halaman, sehingga tetap tercetak walaupun browser tidak mencetak tanda air.
+3. label **DRAF — BELUM DIVERIFIKASI · revisi …** di awal setiap bab. Label ini bagian dari isi halaman, sehingga
+   tetap tercetak walaupun browser tidak mencetak tanda air.
 
-Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeriksaan teknis.
+Sebagai gambaran ukuran: materi impor tim saat ini (5 bab, 40 quest, tanpa percakapan uji) menjadi ±64 halaman A4
+di Chrome.
 
 ## Peta, jendela bab, dan index
 
@@ -1315,10 +1350,11 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini memeriksa aturan konten (furigana, validator, bab, pengecoh), aturan permainan (sesi, penyela,
-kunci level, level ulangan), log (penyimpanan penuh, migrasi kolom, antrean pengiriman, CSV), alat
-baris perintah, skrip Apps Script (dengan tiruan layanan Google), dan bahwa tidak ada materi bahasa
-Jepang yang ditulis langsung di kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di
+Uji ini (55 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+(sesi quest, pemantapan, kunci wilayah, 復習), materi yang tidak boleh tampil sebelum diperkenalkan, peta
+(potongan, posisi lokasi), XP dan papan peringkat, kontras palet warna, kontrak aset, log (penyimpanan penuh,
+kolom, antrean pengiriman, CSV), alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), dan bahwa
+tidak ada materi bahasa Jepang yang ditulis langsung di kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di
 sini; periksa manual di ponsel.
 
 ---
@@ -1336,15 +1372,16 @@ yang sadar.
 
 Lakukan di **Safari** (Mac atau iPhone) dan **Firefox**:
 
-1. Buka aplikasi dari tautan Netlify → ⚙ Pengaturan → **Pratinjau semua materi (bisa dicetak)**.
+1. Buka alamat pratinjau dari tautan Netlify (`…netlify.app/#/preview/all`, lihat `MULAI-DI-SINI.md`).
 2. Tekan **Cetak / simpan PDF** → pilih **Simpan sebagai PDF**.
 3. Buka PDF-nya dan periksa setiap halaman:
-   - [ ] Halaman pertama berisi spanduk **DRAF — BELUM DIVERIFIKASI**.
-   - [ ] Setiap level dimulai di halaman baru dengan label **DRAF — BELUM DIVERIFIKASI · revisi …**.
+   - [ ] Halaman pertama berisi spanduk **DRAF — BELUM DIVERIFIKASI** dan tabel ringkasan yang tidak terpotong.
+   - [ ] Setiap bab dimulai di halaman baru dengan label **DRAF — BELUM DIVERIFIKASI · revisi …**.
    - [ ] Tanda air besar **DRAF** terlihat di setiap halaman. *(Jika tidak ada, catat nama browsernya.
-         Label di awal level tetap menandai dokumen sebagai draf, tetapi beri tahu pengembang.)*
+         Label di awal bab tetap menandai dokumen sebagai draf, tetapi beri tahu pengembang.)*
    - [ ] Huruf Jepang dan furigana terbaca, tidak berubah menjadi kotak.
-   - [ ] Setiap level diakhiri kotak **Catatan validator**.
+   - [ ] Ilustrasi adegan (atau kotak "Ilustrasi belum ada") ada di samping naskah percakapannya, tidak terpisah halaman.
+   - [ ] Setiap quest diakhiri kotak **Catatan validator**.
 4. Jika ada yang gagal, **jangan kirim PDF dari browser tersebut**. Pakai PDF dari browser yang lolos.
 
 ### 2. Endpoint Apps Script di akun Google sungguhan — jauh sebelum pameran
@@ -1380,14 +1417,15 @@ Android dan komputer, dan belum pernah dicoba.
 
 Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dikirim ke validator.
 
-- [ ] Urutan kanji dari mata kuliah Hyouki sudah diterima, dan urutan level di spreadsheet mengikutinya.
-- [ ] Semua level sudah ditulis di spreadsheet, dikonversi, dan pemeriksa konten menyatakan **lolos tanpa
-      error**. Peringatan yang tersisa sudah dibaca dan diputuskan.
+- [ ] Semua bab sudah ditulis di spreadsheet, dikonversi, dan pemeriksa konten menyatakan **lolos tanpa
+      error**. Tidak ada lagi penanda «NAMA-…», «BELUM DIISI», «PERIKSA», «TULIS ULANG», atau tanda `?`.
+      Peringatan yang tersisa sudah dibaca dan diputuskan.
+- [ ] Setiap quest punya **percakapan uji** tulisan tim, dan percakapan sementara (placeholder) sudah diganti.
 - [ ] **Seluruh nomor bab** di [Yang harus diverifikasi terhadap buku](#yang-harus-diverifikasi-terhadap-buku)
       sudah dicentang setelah dicek langsung di buku.
-- [ ] **Pengecoh manual lengkap di semua level**: setiap contoh kalimat punya minimal 3 pengecoh, dan setiap
-      pengecoh sudah diperiksa dengan cara di [Menulis kalimat uji yang tidak ambigu](#menulis-kalimat-uji-yang-tidak-ambigu).
-- [ ] Minimal satu anggota tim lain sudah mengerjakan seluruh soal tanpa melihat jawaban, dan tidak menemukan
+- [ ] **Pengecoh manual lengkap**: setiap percakapan uji punya minimal 3 pengecoh, dan setiap pengecoh sudah
+      diperiksa dengan cara di [Menulis kalimat uji yang tidak ambigu](#menulis-kalimat-uji-yang-tidak-ambigu).
+- [ ] Minimal satu anggota tim lain sudah mengerjakan seluruh quest tanpa melihat jawaban, dan tidak menemukan
       soal dengan dua jawaban benar.
 - [ ] Keputusan yang menunggu dosen (daftar di awal `DECISIONS.md`) sudah dibahas, atau diputuskan untuk
       dibiarkan sementara.
@@ -1404,12 +1442,15 @@ Dijalankan oleh koordinator data dan penjaga stan.
 - [ ] Pengujian tim nomor 2 (endpoint Apps Script) sudah lolos, dan `LOG_REMOTE_ENABLED` aktif di versi
       yang di-deploy.
 - [ ] Pengujian tim nomor 3 (CSV di iPhone) sudah lolos.
-- [ ] Setiap perangkat pameran sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, satu level
-      dimainkan sampai lulus, dan Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
+- [ ] Aset dari tim sudah diganti dan halaman pemeriksaan aset tidak menunjukkan ✗ (potongan peta, ikon lokasi,
+      ikon menu, karakter); nama tokoh lawan bicara di `data/characters.json` sudah diisi tim.
+- [ ] Setiap perangkat pameran sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, satu quest
+      dimainkan sampai tuntas, dan Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
+- [ ] **Mode pameran** sudah dinyalakan di setiap perangkat stan, dan papan peringkat dari uji coba sudah dikosongkan.
 - [ ] Setiap perangkat sudah di-**Reset progres** dan log uji coba sudah dihapus setelah diekspor.
 - [ ] Bagian [Prosedur pameran](#prosedur-pameran-untuk-penjaga-stan) sudah **dicetak** dan ada di meja stan.
-- [ ] Penjaga stan sudah berlatih: reset, mengisi kode peserta, membaca status pengiriman, ekspor CSV, dan
-      menangani spanduk tab ganda.
+- [ ] Penjaga stan sudah berlatih: reset, mengisi kode peserta, membaca status pengiriman, ekspor CSV, membuka
+      dan mengosongkan papan peringkat, dan menangani spanduk tab ganda.
 - [ ] Teks persetujuan di `data/consent.json` sudah diganti dengan redaksi yang disetujui dosen pembimbing,
       `isPlaceholder` bernilai `false`, dan `version` sudah diganti. Layar persetujuan dibuka ulang dan spanduk
       **TEKS SEMENTARA** sudah tidak muncul.
