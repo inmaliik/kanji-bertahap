@@ -13,7 +13,7 @@
 import { SCHEMA_VERSION, PLAYER_SPEAKER, UNKNOWN_VALUE } from "./validate.js";
 
 export const TABS = Object.freeze({
-  wilayah: ["chapter", "title", "intro_summary", "intro_points", "pin_x", "pin_y"],
+  wilayah: ["chapter", "title", "intro_summary", "intro_points", "pin_segment", "pin_x", "pin_y"],
   kanji: [
     "kanji", "meaning", "jlpt_level", "stroke_count",
     "bushu_char", "bushu_name", "bushu_meaning", "bushu_variants", "bushu_options", "kunyomi", "onyomi",
@@ -353,13 +353,15 @@ function buildRegions(wilayahRows, questRows, conversations, problems, rowMap) {
       continue;
     }
     let pin = null;
-    if (cells.pin_x !== "" || cells.pin_y !== "") {
-      if (cells.pin_x === "" || cells.pin_y === "") {
-        problems.add("wilayah", [row], "Isi pin_x dan pin_y bersamaan, atau kosongkan keduanya.");
+    const pinCells = [cells.pin_segment, cells.pin_x, cells.pin_y];
+    if (pinCells.some((c) => c !== "")) {
+      if (pinCells.some((c) => c === "")) {
+        problems.add("wilayah", [row], "Isi pin_segment, pin_x, dan pin_y bersamaan, atau kosongkan ketiganya.");
       } else {
+        const segment = parseInteger(cells.pin_segment, "pin_segment", "wilayah", [row], problems, { allowDash: false });
         const x = parseNumber(cells.pin_x, "pin_x", "wilayah", [row], problems);
         const y = parseNumber(cells.pin_y, "pin_y", "wilayah", [row], problems);
-        if (x !== undefined && y !== undefined) pin = { x, y };
+        if (segment !== undefined && x !== undefined && y !== undefined) pin = { segment, x, y };
       }
     }
     regions.set(chapter, {

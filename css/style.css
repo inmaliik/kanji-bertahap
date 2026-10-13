@@ -1837,21 +1837,80 @@ mark.highlight {
   margin: 0;
 }
 
+/* A column of image segments (D-108); pins and paths lie on one layer over all of them. */
 .map {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
 }
 
-.map__image {
-  position: absolute;
-  inset: 0;
+.map-segment {
+  display: block;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Segments meet edge to edge: no gap, so the team's paths join across the seam. */
+.map-segment .asset__img {
+  display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+}
+
+.map-segment__placeholder {
+  height: 100%;
+  padding: 0.5rem;
+  border-bottom: 2px dashed var(--muted);
+  background: var(--bg);
+}
+
+/* The brief lies over the paths but under the locations. */
+.map-segment__brief {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px dashed var(--muted);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.map-segment:last-child .map-segment__placeholder {
+  border-bottom: none;
+}
+
+.map-segment__title {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.map__layer {
+  position: absolute;
+  inset: 0;
+}
+
+.map {
+  isolation: isolate;
+}
+
+.map__paths {
+  z-index: 1;
+}
+
+.map .location {
+  z-index: 3;
 }
 
 .map-list__title {
@@ -2420,9 +2479,17 @@ mark.highlight {
 
 /* Map as a town (D-103) ------------------------------------------------------------------ */
 
+/* Level bar and exploration badge stay in view while the map scrolls (D-108). */
 .map-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: grid;
   gap: 0.5rem;
+  margin-inline: calc(-1 * var(--gutter));
+  padding: 0.5rem var(--gutter);
+  border-bottom: var(--line) solid var(--border);
+  background: var(--bg);
 }
 
 .level-bar {

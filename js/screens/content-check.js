@@ -4,6 +4,7 @@
 import { h } from "../dom.js";
 import { checkAssets } from "../assets.js";
 import { unknownSpeakers } from "../cast.js";
+import { unlistedSegments } from "../map-layout.js";
 import { backLink, issueList } from "./common.js";
 
 const ASSET_STATE = {
@@ -17,7 +18,10 @@ function assetSection(app) {
   const list = h("ul", { class: "asset-checks", "aria-live": "polite" }, h("li", { class: "muted" }, "Memeriksa aset…"));
   const summary = h("p", {});
   if (app.assets.size) {
-    const ids = app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {};
+    const ids = {
+      segment: app.mapLayout.segments,
+      ...(app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {}),
+    };
     checkAssets(app.assets, ids).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;
       summary.textContent =
@@ -70,6 +74,22 @@ function charactersSection(app) {
   );
 }
 
+function mapSection(app) {
+  const unlisted = app.model ? unlistedSegments(app.model.regions, app.mapLayout) : [];
+  const problems = [
+    ...app.mapProblems,
+    ...unlisted.map(({ region, segment }) => `${region.id} memakai potongan ${segment}, tetapi data/map.json hanya mendaftar ${app.mapLayout.segments.length} potongan.`),
+  ];
+  return h(
+    "section",
+    { class: "card", "aria-labelledby": "map-title" },
+    h("h2", { id: "map-title" }, "Potongan peta (data/map.json)"),
+    problems.length
+      ? problems.map((p) => h("p", { class: "notice notice--warning" }, `⚠ ${p}`))
+      : h("p", {}, `✓ ${app.mapLayout.segments.length} potongan terdaftar, semua lokasi ada di potongan yang terdaftar.`)
+  );
+}
+
 export function contentCheckScreen(app) {
   return h(
     "div",
@@ -99,6 +119,7 @@ export function contentCheckScreen(app) {
         : h("p", {}, "✓ Semua label lengkap dan berfurigana.")
     ),
     charactersSection(app),
+    mapSection(app),
     assetSection(app)
   );
 }

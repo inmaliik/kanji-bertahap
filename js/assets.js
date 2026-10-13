@@ -114,7 +114,7 @@ export async function checkAssets(slots, ids = {}) {
           state = "problem";
           messages.push(
             `Ukuran ${size.width}×${size.height}, rasionya berbeda dari ${slot.width}×${slot.height}. Tampilan tidak rusak, ` +
-              "tetapi gambar akan diberi ruang kosong di tepinya" + (slot.id === "peta" ? " dan pin wilayah bisa bergeser." : ".")
+              "tetapi gambar akan diberi ruang kosong di tepinya" + (slot.id === "potongan-peta" ? " dan lokasi di peta bisa bergeser." : ".")
           );
         } else {
           messages.push(`Ukuran ${size.width}×${size.height}, bukan ${slot.width}×${slot.height}, tetapi rasionya sama. Boleh dipakai.`);

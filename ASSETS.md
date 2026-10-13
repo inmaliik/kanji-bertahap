@@ -21,7 +21,7 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 
 | Slot | Berkas (nama persis) | Format | Ukuran (piksel) | Rasio | Latar | Batas ukuran berkas | Muncul di |
 |---|---|---|---|---|---|---|---|
-| `peta` | `assets/map/peta.png` | PNG | 1200 × 1600 | 3 : 4 (tegak) | tidak transparan | 400 KB | Peta, layar utama: gambar latar seluruh wilayah |
+| `potongan-peta` | `assets/peta/<nama potongan>.png`, satu per potongan, nama sesuai daftar di `data/map.json`, misalnya `assets/peta/potongan-01.png` | PNG | 1080 × 1440 | 3 : 4 (tegak) | tidak transparan | 150 KB per potongan | Peta, layar utama: potongan-potongan latar yang disambung dari atas ke bawah |
 | `lokasi` | `assets/lokasi/<ID wilayah>.png`, satu per wilayah, misalnya `assets/lokasi/B06.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 40 KB | Peta: ikon lokasi (gedung, toko, stasiun, …) satu per wilayah |
 | `jalur` (opsional) | `assets/peta/jalur.png` | PNG | 64 × 64, ubin berulang | 1 : 1 | **transparan** | 10 KB | Peta: motif jalur antar lokasi |
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
@@ -38,7 +38,7 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
 | Digambar tim (berkas gambar) | Dibuat kode (CSS, dengan palet dan garis tinta) |
 |---|---|
 | Karakter | Tombol, kartu, tab |
-| Latar peta | Lembar pengantar bab yang muncul dari bawah layar |
+| Potongan latar peta | Lembar pengantar bab yang muncul dari bawah layar |
 | Ikon lokasi | Bilah progres, bilah level dan XP |
 | Motif jalur | Lencana persentase, lencana eksplorasi, gembok, tanda centang |
 | Ilustrasi adegan | Keadaan terkunci lokasi (dipucatkan dan diberi gembok) |
@@ -52,7 +52,7 @@ strukturnya, bukan tata letaknya.
 ## Aturan umum
 
 - **Gambar dipaskan ke kotaknya.** Kalau ukuran atau rasionya sedikit keliru, tampilan tidak rusak: gambar
-  diperkecil sampai muat, dan sisanya dibiarkan kosong. Tetapi usahakan persis, terutama rasio peta (lihat di bawah).
+  diperkecil sampai muat, dan sisanya dibiarkan kosong. Tetapi usahakan persis, terutama rasio potongan peta (lihat di bawah).
 - **Batas ukuran berkas itu penting.** Aplikasi akan dibuka di ponsel Android kelas bawah lewat jaringan pameran
   yang dipakai banyak orang sekaligus. Seluruh gambar di layar pertama sebaiknya di bawah ±500 KB. Jika berkas
   terlalu besar, kompres dengan alat seperti Squoosh (situs `squoosh.app`, pilih OxiPNG atau kurangi jumlah warna).
@@ -81,20 +81,52 @@ strukturnya, bukan tata letaknya.
 - Tanpa berkas ini, jalur tampil sebagai garis putus-putus tinta. Jalur juga boleh digambar langsung di latar peta;
   dalam hal itu ubin ini tidak perlu dibuat.
 
-## Peta (`assets/map/peta.png`)
+## Peta (`assets/peta/potongan-*.png` dan `data/map.json`)
 
-- **Satu gambar berisi semua wilayah**, termasuk batas-batas wilayahnya. Aplikasi tidak menggambar batas wilayah;
-  semuanya ada di gambar ini.
-- **Tegak, 1200 × 1600 (3 : 4).** Di ponsel selebar 375 piksel, peta tampil ±343 piksel lebarnya.
-- **Pin wilayah ditaruh aplikasi di atas gambar.** Posisinya diisi tim konten di tab `wilayah` (kolom `pin_x` dan
-  `pin_y`), dalam persen lebar dan tinggi gambar. Contoh: titik tengah gambar adalah `50` dan `50`.
-  Setelah peta jadi, beri tim konten posisi tengah setiap wilayah.
+Peta adalah **susunan potongan gambar tegak yang disambung dari atas ke bawah** dan digulir ke bawah di ponsel. Setiap
+potongan memuat dua atau tiga lokasi. Menambah bab berarti menambah satu potongan di bawah; potongan yang sudah ada
+tidak perlu digambar ulang.
+
+- **Ukuran setiap potongan sama: 1080 × 1440 (3 : 4), tidak transparan, maks 150 KB.** Lebar 1080 mengikuti standar
+  karakter: di ponsel 375 piksel peta tampil ±343 piksel lebarnya, dan 1080 cukup tajam untuk layar berkerapatan 3×.
+  Tinggi 1440 memberi tempat untuk dua atau tiga lokasi. Satu layar ponsel memperlihatkan kira-kira dua potongan,
+  jadi dua potongan × 150 KB tetap di bawah anggaran ±500 KB layar pertama. Potongan yang jauh dari layar baru
+  diunduh ketika pemain menggulir mendekatinya.
+- **Urutan potongan ada di `data/map.json`**, dari atas ke bawah:
+  `{ "segments": ["potongan-01", "potongan-02", "potongan-03", "potongan-04"] }`. Nama di daftar adalah nama berkas
+  tanpa `.png`. Empat potongan di daftar sekarang adalah usulan untuk bab 1–12 (tiga lokasi per potongan); ubah
+  daftarnya kalau tim memutuskan lain.
+- **Menambah potongan:** gambar potongan baru, simpan sebagai `assets/peta/potongan-05.png`, lalu tambahkan
+  `"potongan-05"` di akhir daftar `data/map.json`.
+- **Posisi lokasi diisi tim konten di tab `wilayah`**, tiga kolom sekaligus: `pin_segment` (nomor potongan, 1 untuk
+  yang paling atas), `pin_x` dan `pin_y` (persen lebar dan tinggi **potongan itu**, bukan seluruh peta). Contoh:
+  titik tengah potongan 2 adalah `2`, `50`, `50`. Setelah potongan jadi, beri tim konten posisi setiap lokasi.
+  Usahakan `pin_y` di antara 15 dan 85 supaya lokasi tidak terbelah sambungan.
 - **Setiap lokasi menempati sekitar 90 × 110 piksel di layar** (ikon, nama bab, dan persentase), yaitu kira-kira
-  **26% lebar** dan **24% tinggi** peta. Sisakan ruang itu di setiap tempat supaya lokasi tidak saling menutupi.
-  Dua belas wilayah (bab 1–12) perlu muat; gambar latar menampilkan kota dan jalan, lokasinya ditaruh di atasnya.
-- **Jika rasio gambar berbeda dari 3 : 4, pin bergeser** dari wilayahnya, karena posisi pin dihitung dari kotak
-  3 : 4. Pemeriksa aset memberi tanda ✗ jika rasionya meleset lebih dari 2%.
-- Status wilayah (terkunci, terbuka, tuntas) ditunjukkan pin dengan ikon dan teks. Tidak perlu menggambar versi
+  **26% lebar** dan **24% tinggi** satu potongan. Sisakan ruang itu di setiap tempat supaya lokasi tidak saling menutupi.
+- **Aplikasi tidak menggambar batas wilayah;** kota, jalan, dan batas semuanya ada di gambar.
+- **Jika rasio potongan berbeda dari 3 : 4, lokasi bergeser** dan sambungan tidak bertemu. Pemeriksa aset memberi
+  tanda ✗ jika rasionya meleset lebih dari 2%.
+- Selama potongan belum ada, aplikasi menampilkan kotak keterangan di tempatnya: nama berkas, ukuran, lokasi yang
+  ada di potongan itu, dan potongan yang harus disambungnya. Itulah brief untuk pembuat aset.
+
+### Sambungan antarpotongan
+
+Potongan ditampilkan rapat tanpa celah. Supaya sambungannya tidak terlihat:
+
+1. **Gambar seluruh peta di satu kanvas panjang** (1080 × 1440 × jumlah potongan), lalu potong tepat di setiap
+   kelipatan 1440 piksel. Dengan cara ini tepi bawah potongan *n* dan tepi atas potongan *n* + 1 pasti cocok.
+2. **Jalan, sungai, dan latar yang melewati sambungan harus menyentuh tepi bawah potongan *n* dan tepi atas
+   potongan *n* + 1 di posisi piksel yang sama** (sama x-nya, sama lebarnya, sama warnanya). Usulan baku: jalan utama
+   menyeberangi setiap sambungan di tengah (x 460–620) dan warna latar di kedua tepi polos, sehingga potongan baru
+   selalu bisa disambung.
+3. **Jangan ada benda yang terbelah sambungan:** gedung, pohon, papan, dan lokasi diletakkan utuh di dalam satu potongan.
+4. **Tanpa bingkai, bayangan, atau gradasi** di tepi atas dan bawah potongan.
+5. **Saat menambah potongan nanti**, salin baris paling bawah potongan terakhir (±40 piksel) sebagai awal tepi atas
+   potongan baru, lalu lanjutkan menggambar ke bawah.
+6. Tepi atas potongan pertama dan tepi bawah potongan terakhir adalah ujung peta; tidak perlu disambung ke mana pun.
+
+- Status wilayah (terkunci, terbuka, tuntas) ditunjukkan lokasi dengan ikon dan teks. Tidak perlu menggambar versi
   peta per status.
 
 ## Ilustrasi adegan (`assets/adegan/`)

@@ -57,7 +57,7 @@ const STROKES_PATH = /^[A-Za-z0-9_./-]+\.(svg|png|webp)$/;
 const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba"];
 const REGION_KEYS = ["chapter", "title", "intro", "pin", "quests"];
 const REGION_INTRO_KEYS = ["summary", "points"];
-const PIN_KEYS = ["x", "y"];
+const PIN_KEYS = ["segment", "x", "y"];
 const QUEST_KEYS = ["id", "kotoba", "targetKanji", "productionPrompt", "intro", "tests"];
 const CONVERSATION_KEYS = ["id", "scene", "sentenceChapter", "isPlaceholder", "lines"];
 const LINE_KEYS = ["speaker", "ja", "translation", "highlight", "blank", "distractors"];
@@ -656,21 +656,25 @@ function checkRegionText(region, tables, ctx, report) {
 function validatePin(region, ctx, report) {
   const pctx = ctx.field("pin");
   if (region.pin === null) {
-    report.warn(pctx, "PIN_MISSING", "Posisi pin di peta belum diisi (kolom pin_x dan pin_y). Pin akan ditaruh di posisi sementara.");
+    report.warn(pctx, "PIN_MISSING", "Posisi lokasi di peta belum diisi (kolom pin_segment, pin_x, pin_y). Lokasi ditaruh di posisi sementara.");
     return;
   }
   if (!isPlainObject(region.pin)) {
-    report.error(pctx, "INVALID_PIN", `Harus berupa objek { "x", "y" } atau null, ditemukan ${show(region.pin)}.`);
+    report.error(pctx, "INVALID_PIN", `Harus berupa objek { "segment", "x", "y" } atau null, ditemukan ${show(region.pin)}.`);
     return;
   }
   checkKeys(region.pin, PIN_KEYS, pctx, report);
-  for (const axis of PIN_KEYS) {
+  // The map is a column of image segments (D-108); the pin names its segment.
+  if (!Number.isInteger(region.pin.segment) || region.pin.segment < 1) {
+    report.error(pctx.field("segment"), "INVALID_PIN", `Harus nomor potongan peta, 1 untuk potongan paling atas. Ditemukan ${show(region.pin.segment)}.`);
+  }
+  for (const axis of ["x", "y"]) {
     const v = region.pin[axis];
     if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 100) {
       report.error(
         pctx.field(axis),
         "INVALID_PIN",
-        `Harus angka 0–100: posisi pin dalam persen lebar (x) atau tinggi (y) gambar peta. Ditemukan ${show(v)}.`
+        `Harus angka 0–100: posisi lokasi dalam persen lebar (x) atau tinggi (y) potongan peta. Ditemukan ${show(v)}.`
       );
     }
   }

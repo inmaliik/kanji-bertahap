@@ -1,11 +1,12 @@
 // App bootstrap and hash routing.
 
-import { ASSETS_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, UI_LABELS_URL } from "./config.js";
+import { ASSETS_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
 import { loadUiLabels } from "./ui-labels.js";
 import { loadAssetManifest } from "./assets.js";
+import { loadMapLayout } from "./map-layout.js";
 import { loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
@@ -45,6 +46,8 @@ const app = {
   kana: null, // data/kana.json
   characters: null, // data/characters.json (D-102)
   characterProblems: [],
+  mapLayout: { segments: ["potongan-01"] }, // data/map.json (D-108)
+  mapProblems: [],
   kanaError: null,
   notices: [], // { kind, text } shown on the home screen
   render,
@@ -123,18 +126,23 @@ function navigate() {
   render();
   window.scrollTo(0, 0);
   root.querySelector("h1[tabindex], h2[tabindex]")?.focus({ preventScroll: true });
+  // The map scrolls to the location the player is working on (D-108).
+  root.querySelector("[data-scroll-target]")?.scrollIntoView({ block: "center", behavior: "instant" });
 }
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent, ui, assets, kana, characters] = await Promise.all([
+  const [result, consent, ui, assets, kana, characters, map] = await Promise.all([
     loadContent(CONTENT_URL),
     loadConsentText(CONSENT_URL),
     loadUiLabels(UI_LABELS_URL),
     loadAssetManifest(ASSETS_URL),
     loadKana(KANA_URL),
     loadCharacters(CHARACTERS_URL),
+    loadMapLayout(MAP_URL),
   ]);
+  app.mapLayout = map.layout;
+  app.mapProblems = map.problems;
   app.characters = characters.characters;
   app.characterProblems = characters.problems;
   app.kana = kana.kana;

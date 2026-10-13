@@ -1,8 +1,13 @@
 // The map (home screen) as places in a town (D-103): the team's map image,
 // one location per region with its own icon, the progress percentage under
 // it, paths between the locations in play order, and an exploration badge
-// for the whole map. A level and XP bar sits on top (D-105); the menu is the
-// bar at the bottom of the screen (D-69).
+// for the whole map. A level and XP bar sits on top (D-105) and stays in view
+// while scrolling; the menu is the bar at the bottom of the screen (D-69).
+//
+// The image is a column of segments scrolled vertically (D-108,
+// js/map-layout.js). A segment's image is fetched only when it comes within
+// one screen of the view; a segment the team has not drawn yet shows its own
+// brief.
 //
 // Region shapes and the town are part of the image; code never draws borders.
 // Locked locations are drawn by code (faded, with a lock badge), so the team
@@ -15,7 +20,7 @@
 
 import { h } from "../dom.js";
 import { APP_TITLE } from "../config.js";
-import { assetImage } from "../assets.js";
+import { columnPoint, placeLocations } from "../map-layout.js";
 import { nodeStatuses, regionSummary } from "../progression.js";
 import { storageUsage } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
@@ -33,11 +38,53 @@ const STATE = {
   done: { icon: "✓", text: "Tuntas" },
 };
 
-/** Pin position in percent. Regions without a pin get a temporary one, zigzagging down by chapter. */
-function pinPosition(region, index, count) {
-  if (region.pin) return region.pin;
-  const step = count > 1 ? 76 / (count - 1) : 0;
-  return { x: index % 2 ? 68 : 32, y: 12 + index * step };
+/** The location to scroll to: the open sheet's, else the one the player is working on. */
+function scrollTarget(summaries, sheetRegion) {
+  if (sheetRegion) return summaries.find((s) => s.region.id === sheetRegion) ?? null;
+  for (const state of ["in_progress", "review", "available"]) {
+    const found = summaries.find((s) => s.state === state);
+    if (found) return found;
+  }
+  return summaries.at(-1) ?? null;
+}
+
+/**
+ * One segment of the map image. Until the file exists, the segment shows
+ * its brief: file name, size, the locations it holds and its neighbours,
+ * whose edges it must meet (ASSETS.md).
+ */
+function segmentBox(app, { name, n, count, chapters, temporary, observer }) {
+  const slot = app.assets?.get("potongan-peta");
+  const path = name && slot?.pattern ? slot.pattern.replace("{segment}", name) : null;
+  const box = h("div", { class: "map-segment", style: slot ? `aspect-ratio: ${slot.width} / ${slot.height}` : "aspect-ratio: 3 / 4" });
+  const placeholder = () =>
+    box.replaceChildren(
+      h(
+        "div",
+        { class: "map-segment__placeholder" },
+        h(
+          "span",
+          { class: "map-segment__brief" },
+          h("span", { class: "map-segment__title" }, `Potongan peta ${n} dari ${count}`),
+        h("span", {}, path ?? "belum terdaftar di data/map.json"),
+        slot ? h("span", {}, `${slot.width} × ${slot.height} ${slot.format}, tidak transparan, maks ${slot.maxKB} KB`) : null,
+        h("span", {}, chapters.length ? `Lokasi: ${chapters.map((c) => `Bab ${c}`).join(", ")}${temporary ? " (posisi sementara)" : ""}` : "Belum ada lokasi"),
+        h("span", {}, `Tepi atas: ${n === 1 ? "ujung atas peta" : `menyambung potongan ${n - 1}`}`),
+          h("span", {}, `Tepi bawah: ${n === count ? "ujung bawah peta" : `menyambung potongan ${n + 1}`}`)
+        )
+      )
+    );
+  if (!path) {
+    placeholder();
+    return box;
+  }
+  const img = h("img", { class: "asset__img", alt: "", decoding: "async" });
+  img.addEventListener("error", placeholder, { once: true });
+  box.append(img);
+  box.load = () => img.setAttribute("src", path);
+  if (observer) observer.observe(box);
+  else box.load();
+  return box;
 }
 
 /** Icon of a location: assets/lokasi/<region id>.png, or a drawn disc until the team supplies it. */
@@ -113,7 +160,34 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
   const { xp } = xpOf(model, progress);
   recordScore({ playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
 
-  const points = summaries.map((s, i) => pinPosition(s.region, i, summaries.length));
+  const { places, segmentCount } = placeLocations(model.regions, app.mapLayout);
+  const points = places.map((p) => columnPoint(p, segmentCount));
+  const target = scrollTarget(summaries, sheetRegion);
+  // Segments more than one screen away from the view load later (D-108).
+  const observer =
+    typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              observer.unobserve(entry.target);
+              entry.target.load();
+            }
+          },
+          { rootMargin: "100% 0px" }
+        )
+      : null;
+  const segments = Array.from({ length: segmentCount }, (_, i) => {
+    const here = summaries.filter((s, j) => places[j].segment === i + 1);
+    return segmentBox(app, {
+      name: app.mapLayout.segments[i],
+      n: i + 1,
+      count: segmentCount,
+      chapters: here.map((s) => s.region.chapter),
+      temporary: here.some((s) => places[summaries.indexOf(s)].temporary),
+      observer,
+    });
+  });
   const pins = summaries.map((s, i) => {
     const { x, y } = points[i];
     const state = STATE[s.state];
@@ -123,6 +197,7 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
         class: `location location--${s.state}`,
         href: regionHref(s.region),
         style: `left: ${x}%; top: ${y}%`,
+        "data-scroll-target": s === target ? "" : null,
         "aria-label": `Bab ${s.region.chapter}, ${s.region.title}, ${state.text}, ${s.percent} persen`,
       },
       h("span", { class: "location__badge", "aria-hidden": "true" }, state.icon),
@@ -135,10 +210,10 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
   return h(
     "div",
     { class: "screen map-screen" },
+    h("h1", { tabindex: sheetRegion ? null : "-1", class: "map-screen__title" }, APP_TITLE),
     h(
       "div",
       { class: "map-top" },
-      h("h1", { tabindex: sheetRegion ? null : "-1", class: "map-screen__title" }, APP_TITLE),
       levelBar(app),
       h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), `Eksplorasi seluruh peta: ${explored}%`)
     ),
@@ -149,9 +224,8 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
     h(
       "div",
       { class: "map", role: "group", "aria-label": "Peta wilayah" },
-      assetImage(app, "peta", { className: "map__image" }),
-      paths(app, points),
-      pins
+      segments,
+      h("div", { class: "map__layer" }, paths(app, points), pins)
     ),
     device.exhibitionMode ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
     h("h2", { class: "map-list__title" }, "Wilayah"),

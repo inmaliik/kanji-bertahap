@@ -302,3 +302,31 @@ test("exhibition leaderboard: off by default, per device, numbered players, surv
     delete globalThis.localStorage;
   }
 });
+
+test("map segments (D-108): the list in data/map.json, pins per segment, temporary places", async () => {
+  const L = await import(jsModule("map-layout.js"));
+  const layout = JSON.parse(readFileSync(join(ROOT, "data/map.json"), "utf8"));
+  assert.deepEqual(L.validateMapLayout(layout), [], "data/map.json is valid");
+  assert.equal(L.validateMapLayout({ segments: [] }).length, 1, "empty list");
+  assert.equal(L.validateMapLayout({ segments: ["potongan-01", "potongan-01"] }).length, 1, "duplicate");
+  assert.equal(L.validateMapLayout({ segments: ["Potongan 1.png"] }).length, 1, "file name without spaces or extension");
+
+  const regions = [1, 2, 3, 4, 5].map((chapter) => ({ id: `B0${chapter}`, chapter, pin: null }));
+  regions[4].pin = { segment: 6, x: 50, y: 50 };
+  const { places, segmentCount } = L.placeLocations(regions, { segments: ["a", "b"] });
+  assert.deepEqual(places.slice(0, 4).map((p) => p.segment), [1, 1, 1, 2], "three temporary places per segment");
+  assert.ok(places.slice(0, 4).every((p) => p.temporary));
+  assert.equal(segmentCount, 6, "a pin below the list still gets a (placeholder) segment");
+  assert.deepEqual(L.columnPoint({ segment: 2, x: 40, y: 50 }, 4), { x: 40, y: 37.5 }, "half of segment 2 of 4");
+  assert.deepEqual(L.unlistedSegments(regions, { segments: ["a", "b"] }).map((u) => u.segment), [6]);
+});
+
+test("a pin names its segment (D-108)", () => {
+  const content = clone(loadSampleContent());
+  content.regions[0].pin = { segment: 1, x: 40, y: 60 };
+  assert.ok(!codes(validateContent(content).errors).includes("INVALID_PIN"));
+  for (const pin of [{ x: 40, y: 60 }, { segment: 0, x: 40, y: 60 }, { segment: 1.5, x: 40, y: 60 }, { segment: 1, x: 140, y: 60 }]) {
+    content.regions[0].pin = pin;
+    assert.ok(validateContent(content).errors.length, `rejects ${JSON.stringify(pin)}`);
+  }
+});

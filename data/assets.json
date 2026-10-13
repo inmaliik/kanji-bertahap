@@ -1,15 +1,15 @@
 {
   "slots": [
     {
-      "id": "peta",
-      "path": "assets/map/peta.png",
+      "id": "potongan-peta",
+      "pattern": "assets/peta/{segment}.png",
       "format": "PNG",
-      "width": 1200,
-      "height": 1600,
+      "width": 1080,
+      "height": 1440,
       "transparent": false,
-      "maxKB": 400,
-      "screen": "Peta (layar utama): gambar latar seluruh wilayah",
-      "placeholderSha256": "64d15f4925d9341f5b7180a8146b31aca8a40cd89842d1fbff62797f5d9a8057"
+      "maxKB": 150,
+      "screen": "Peta: satu potongan tegak dari peta bersambung, berisi dua atau tiga lokasi. Urutan potongan didaftar di data/map.json",
+      "optional": true
     },
     {
       "id": "lokasi",

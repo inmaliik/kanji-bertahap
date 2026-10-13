@@ -7,7 +7,7 @@ import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import vm from "node:vm";
-import { ROOT, loadSampleContent } from "./helpers.mjs";
+import { ROOT, jsModule, loadSampleContent } from "./helpers.mjs";
 
 const node = (args) => spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8" });
 
@@ -117,4 +117,16 @@ test("rows recorded under a placeholder consent text are never sendable", async 
   assert.deepEqual(validateConsentText({ ...text, isPlaceholder: false }), []);
   assert.ok(validateConsentText({ ...text, isPlaceholder: true }).length, "placeholder flag needs a placeholder version");
   assert.ok(validateConsentText({ ...text, version: "placeholder-1", isPlaceholder: false }).length, "final text cannot use a placeholder version");
+});
+
+test("the wilayah tab takes the pin as segment, x and y together (D-108)", async () => {
+  const { convertCsvFilesToContent } = await import(jsModule("csv-content.js"));
+  const dir = join(ROOT, "tools/templates");
+  const files = readdirSync(dir).map((name) => ({ name, text: readFileSync(join(dir, name), "utf8") }));
+  const withPin = (cells) => files.map((f) => (f.name === "wilayah.csv" ? { ...f, text: f.text.replace(/,,,\n$/, `,${cells}\n`) } : f));
+  const ok = convertCsvFilesToContent(withPin("2,40,62.5"), "draft-0");
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual(ok.content.regions[0].pin, { segment: 2, x: 40, y: 62.5 });
+  const half = convertCsvFilesToContent(withPin(",40,62.5"), "draft-0");
+  assert.match(half.problems[0].message, /pin_segment, pin_x, dan pin_y bersamaan/);
 });

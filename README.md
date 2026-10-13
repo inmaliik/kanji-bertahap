@@ -259,7 +259,7 @@ Satu baris = satu bab = satu wilayah di peta. Wilayah selalu diurutkan menurut n
 | `title` | Nama wilayah yang tampil di peta | `Wilayah Bab 6` |
 | `intro_summary` | Ringkasan bab untuk jendela pengantar: apa yang dipelajari di bab ini (bahasa Indonesia) | |
 | `intro_points` | *Daftar, boleh kosong.* Poin-poin tambahan jendela pengantar | |
-| `pin_x`, `pin_y` | *Boleh kosong.* Posisi pin wilayah di gambar peta, dalam **persen** lebar dan tinggi gambar (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah gambar peta jadi; selama kosong, pin ditaruh di posisi sementara. | `42,5` · `30` |
+| `pin_segment`, `pin_x`, `pin_y` | *Boleh kosong, tetapi diisi bertiga.* Posisi lokasi di peta: nomor **potongan peta** (1 = paling atas, urutan di `data/map.json`), lalu posisi dalam **persen** lebar dan tinggi potongan itu (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah potongan peta jadi; selama kosong, lokasi ditaruh di posisi sementara, tiga per potongan. | `2` · `42,5` · `30` |
 
 ### Tab `kanji`
 
@@ -1181,14 +1181,18 @@ Pratinjau per level (`#/preview/L01`) juga menampilkan ID item soal untuk pemeri
 
 ## Peta, jendela bab, dan index
 
-**Peta (layar utama) sebagai kota** (D-103). Gambar latar dari tim (`assets/map/peta.png`), dan setiap wilayah
+**Peta (layar utama) sebagai kota** (D-103). Latar peta adalah **potongan-potongan gambar tegak yang disambung dari atas
+ke bawah** dan digulir (D-108): urutannya di `data/map.json`, berkasnya `assets/peta/<nama>.png`, dua atau tiga lokasi
+per potongan. Saat dibuka, peta menggulir sendiri ke lokasi yang sedang dikerjakan; potongan yang jauh dari layar
+baru diunduh saat didekati; bilah level dan lencana eksplorasi tetap terlihat saat menggulir. Potongan yang belum
+digambar tampil sebagai kotak keterangan (nama berkas, ukuran, lokasi, sambungan). Setiap wilayah
 adalah **satu lokasi** dengan ikonnya sendiri (`assets/lokasi/<ID wilayah>.png`). Di bawah ikon tertulis bab dan
 **persentase progres**; lencana kecil menunjukkan status (🔒 terkunci, ▶ terbuka, ★ menunggu ulangan, ✓ tuntas),
 tidak dengan warna saja. Lokasi terkunci dipucatkan oleh kode, jadi tim cukup menggambar satu ikon per lokasi.
 Lokasi dihubungkan **jalur** sesuai urutan wilayah (garis putus-putus tinta, atau motif `assets/peta/jalur.png` jika
 ada). Di atas peta ada **bilah level dan XP** dan lencana **eksplorasi seluruh peta**. Di bawahnya ada daftar wilayah
 yang sama, untuk pembaca layar dan layar kecil. Batas wilayah ada di dalam gambar, bukan digambar kode. Posisi lokasi
-diisi di kolom `pin_x`/`pin_y` tab wilayah; selama kosong, lokasi diletakkan zigzag dari atas ke bawah.
+diisi di kolom `pin_segment`/`pin_x`/`pin_y` tab wilayah; selama kosong, lokasi diletakkan zigzag, tiga per potongan.
 
 **Urutan dan kunci.** Wilayah, lalu 復習 wilayah itu, lalu wilayah berikutnya. Wilayah pertama selalu terbuka.
 復習 terbuka setelah semua quest di wilayahnya tuntas; wilayah berikutnya terbuka setelah 復習 itu tuntas.

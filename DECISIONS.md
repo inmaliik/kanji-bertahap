@@ -1115,6 +1115,41 @@ karena skalanya identik. **Alasan:** Sosok setinggi ±730 px di kanvas 1080 cuku
 (±480 px di layar 3×). **Temuan saat pemeriksaan ulang:** kotak `figure` dari Bagian B memotong kaki (berakhir di 73%
 tinggi, sosok sampai ±78%); diperbaiki menjadi 6–82% (T-18).
 
+### D-108 · Peta sebagai potongan tegak yang disambung dan digulir
+**Tanggal:** 2026-10-13. **Keputusan:** Satu gambar peta (`assets/map/peta.png`, 1200×1600) diganti susunan
+potongan tegak yang disambung dari atas ke bawah dan digulir vertikal. `data/map.json` mendaftar potongan secara
+berurutan (`{ "segments": ["potongan-01", …] }`; berkasnya `assets/peta/<nama>.png`, slot `potongan-peta`). Pin
+wilayah menjadi `{ segment, x, y }`: nomor potongan (1 = paling atas) dan persen di dalam potongan itu; di tab
+`wilayah` kolomnya `pin_segment`, `pin_x`, `pin_y`, diisi bertiga atau dikosongkan bertiga. Wilayah tanpa pin diberi
+posisi sementara, tiga per potongan menurut urutan main. Lokasi dan jalur digambar kode di satu lapisan di atas
+seluruh kolom, jadi jalur menyeberangi sambungan. Saat peta dibuka, halaman menggulir sendiri ke lokasi yang
+sedang dikerjakan (lembar wilayah yang terbuka, lalu wilayah berstatus sedang dikerjakan, menunggu ulangan,
+terbuka, berurutan; jika semua tuntas, wilayah terakhir). Gambar potongan baru diunduh ketika potongan berjarak
+kurang dari satu layar dari tampilan (IntersectionObserver, margin 100%). Bilah level dan lencana eksplorasi
+menempel di atas layar saat menggulir; judul aplikasi ikut tergulir supaya bagian yang menempel tetap pendek.
+Potongan yang belum ada menampilkan keterangannya sendiri: nomor, nama berkas, ukuran, lokasi di dalamnya, dan
+potongan yang harus disambungnya. Halaman pemeriksaan memberi tanda jika `data/map.json` rusak atau ada pin yang
+menunjuk potongan di luar daftar; potongan seperti itu tetap digambar sebagai kotak keterangan.
+
+**Ukuran yang diusulkan:** 1080×1440 (3:4), tidak transparan, maks 150 KB per potongan. Lebar 1080 mengikuti standar
+karakter (D-107) dan cukup untuk ±343 px CSS di layar 3×; tinggi 1440 (±457 px CSS di ponsel 375 px) memberi ruang
+dua atau tiga lokasi berukuran ±90×110 px; satu layar memuat ±2 potongan, jadi 2×150 KB tetap di bawah anggaran
+±500 KB layar pertama. Daftar awal berisi empat potongan (usulan untuk bab 1–12, tiga lokasi per potongan); tim
+boleh mengubahnya. Panduan sambungan di `ASSETS.md`: gambar di satu kanvas panjang lalu potong per 1440 px; jalan
+dan latar menyentuh tepi bawah potongan *n* dan tepi atas potongan *n*+1 di posisi piksel yang sama (usulan baku:
+jalan utama di x 460–620); tidak ada benda terbelah sambungan; tanpa bingkai di tepi.
+
+**Alasan:** Menambah bab cukup dengan menambah satu potongan di bawah, tanpa menggambar ulang peta atau memindah
+posisi pin yang sudah ada (posisi dihitung per potongan). Gambar tunggal setinggi dua belas lokasi akan terlalu
+besar untuk ponsel kelas bawah, atau terlalu padat jika dipaksakan ke rasio 3:4.
+
+**Alternatif ditolak:** *Pin dalam persen seluruh peta* (semua posisi bergeser setiap kali potongan ditambah);
+*`loading="lazy"` bawaan browser* (dicoba lebih dulu; Chrome baru menunda gambar yang berjarak ±1250 px atau lebih, sehingga
+pada peta empat potongan semuanya terunduh sekaligus; jarak dengan IntersectionObserver bisa ditentukan sendiri);
+*jumlah potongan dihitung dari berkas yang ada* (aplikasi statis tidak bisa membaca isi folder; daftar eksplisit juga
+menetapkan urutan); *pola nama berkas tetap tanpa daftar* (daftar memungkinkan menyisipkan atau menamai ulang
+potongan tanpa mengubah kode).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
