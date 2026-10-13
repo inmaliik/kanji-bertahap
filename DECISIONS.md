@@ -1249,6 +1249,16 @@ riwayat pada 2026-10-13 (gambar asli karakter dari `sumber/` di commit Bagian B)
 sehingga tidak ada salinan yang terdampak. **Alternatif ditolak:** Mengizinkan push paksa untuk perbaikan kecil
 (manfaatnya kecil, risikonya kehilangan cadangan).
 
+### D-114 · Konteks: penggunaan AI disetujui dosen pengampu, dan pembagian peran
+**Tanggal:** 2026-10-13. **Konteks:** Dosen pengampu sudah menyetujui penggunaan AI dalam proyek ini. Pembagian peran:
+**tim** menentukan konsep, cerita, pedagogi, dan materi, serta membuat ilustrasi dan suara; **antarmuka seluruhnya
+dibuat kode oleh AI (Claude)** berdasarkan referensi visual dari tim. Keputusan teknis dan antarmuka disampaikan oleh
+pemilik proyek; keputusan yang menyangkut isi (materi, naskah, nama tokoh dan kucing, teks hadiah, teks persetujuan)
+tetap milik tim. Karena itu AI tidak menulis isi: di tempat isi belum ada, AI memasang placeholder bertanda yang
+ditolak atau diperingatkan validator. Referensi visual dari pihak lain dipakai sebagai acuan tata letak dan suasana
+saja; bentuk, ornamen, ikon, dan asetnya tidak ditiru, dan berkas referensinya tidak masuk repo (`sumber/` ada di
+`.gitignore`).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
