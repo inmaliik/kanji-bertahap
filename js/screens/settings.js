@@ -394,7 +394,7 @@ export function settingsScreen(app) {
       notice = h(
         "p",
         { class: "notice notice--warning" },
-        "⚠ Penyimpanan hampir penuh. Pastikan semua log terkirim atau ekspor CSV, lalu hapus log (lihat README, "Jika muncul peringatan kapasitas")."
+        "⚠ Penyimpanan hampir penuh. Pastikan semua log terkirim atau ekspor CSV, lalu hapus log (lihat README, bagian “Jika muncul peringatan kapasitas”)."
       );
     }
 
