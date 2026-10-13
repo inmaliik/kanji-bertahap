@@ -1150,6 +1150,29 @@ pada peta empat potongan semuanya terunduh sekaligus; jarak dengan IntersectionO
 menetapkan urutan); *pola nama berkas tetap tanpa daftar* (daftar memungkinkan menyisipkan atau menamai ulang
 potongan tanpa mengubah kode).
 
+### D-109 · Pratinjau dan cetak versi peta untuk validator
+**Tanggal:** 2026-10-13. **Keputusan:** Pratinjau dibangun ulang untuk skema v2 di `#/preview/all` (seluruh materi)
+dan `#/preview/B06` (satu bab). Seperti halaman pemeriksaan, tidak ditautkan dari alur pemain (D-86); halaman
+pemeriksaan menautkannya. Isinya per bab: judul, ringkasan, posisi di peta; per quest: kanji target (arti, JLPT,
+jumlah guratan, bushu, pilihan soal Bentuk dengan jawaban, bacaan kun/on dalam satu baris), kotoba (furigana, jenis
+bacaan, kelas kata, bab, pengecoh sejenis dan lintas jenis), percakapan pengantar dan percakapan uji sebagai naskah
+(pembicara, kalimat dengan seluruh furigana, terjemahan; bagian yang ditandai digaris bawahi; pada percakapan uji
+jawaban dan pengecohnya ditulis), ilustrasi adegan dengan keterangan situasinya, bab yang dibutuhkan percakapan,
+perintah Produksi, lalu kotak catatan validator. Kanji yang muncul lagi di quest lain cukup dirujuk ("lihat Bab 1
+Quest 4"). Kotoba yang hanya ada di index mendapat bagian sendiri di akhir. Peringatan validator ditaruh di dekat
+bagian yang dimaksud (wilayah, kanji, kotoba, quest), satu baris per peringatan, tanpa kalimat baku "Boleh selama
+revisi masih draf" karena spanduk DRAF sudah menyatakannya. Halaman pertama berisi spanduk DRAF, penafian, dan tabel
+ringkasan per bab. Saat dicetak: setiap bab mulai di halaman baru dengan label DRAF di alur teks; tanda air DRAF
+tampil di setiap halaman (latar kartu dibuat transparan); satu percakapan tidak dipotong antarhalaman; ilustrasi
+adegan selebar 55 mm di samping naskahnya; ilustrasi yang belum ada tercetak sebagai kotak bergaris putus-putus
+berisi nama berkas dan ukurannya. **Verifikasi:** dicetak ke PDF dari materi impor tim (5 bab, 40 quest; penanda nama
+diganti ダミー１… di salinan sementara supaya materi bisa dimuat; 64 halaman A4) dan dari materi contoh di repo
+(percakapan uji dengan jawaban dan pengecoh; 5 halaman). **Alasan:** Validator menilai quest sebagai satu kesatuan
+(kanji, kotoba, dan konteks percakapannya), jadi semuanya diletakkan berdekatan; catatan otomatis di tempatnya
+mencegah validator menilai bagian yang memang belum ditulis tim. **Alternatif ditolak:** Tabel bacaan besar seperti
+di layar index (memakan ±1/6 halaman per kanji); daftar peringatan dalam bentuk kartu seperti halaman pemeriksaan
+(halaman cetak menjadi 74); semua peringatan dikumpulkan di akhir dokumen (validator harus bolak-balik halaman).
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

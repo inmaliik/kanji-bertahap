@@ -101,6 +101,14 @@ export function contentCheckScreen(app) {
       { class: "notice notice--warning", role: "note" },
       "⚠ Untuk tim pengembang. Halaman ini memuat isi materi, jadi jangan dibuka di depan peserta."
     ),
+    h(
+      "p",
+      {},
+      h("a", { href: "#/preview/all" }, "Pratinjau dan cetak seluruh materi"),
+      " (untuk validator; satu bab: ",
+      h("code", {}, "#/preview/B06"),
+      ")"
+    ),
     app.warnings.length
       ? [
           h("p", {}, `Materi bisa dimuat, tetapi ada ${app.warnings.length} peringatan yang sebaiknya diperiksa tim konten.`),

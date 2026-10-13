@@ -1421,6 +1421,181 @@ rt {
   display: none;
 }
 
+/* Preview of the map version (D-109) */
+
+.preview-region {
+  margin-top: 2rem;
+}
+
+.preview-region > * + * {
+  margin-top: 1rem;
+}
+
+.preview-region__head h2 {
+  margin: 0.25rem 0;
+}
+
+.preview-region__number {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.preview-quest {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.preview-quest > * + * {
+  margin-top: 0.625rem;
+}
+
+.preview-quest h5 {
+  margin-bottom: 0;
+  font-size: 0.9375rem;
+}
+
+.preview-quest__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.preview-kanji {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.preview-kanji__char {
+  flex: none;
+  margin: 0;
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.preview-kanji__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-kanji__body p,
+.preview-kotoba p {
+  margin: 0.125rem 0;
+}
+
+.preview-kotoba__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.preview-kotoba__word {
+  font-size: 1.5rem;
+}
+
+.preview-readings {
+  font-size: 1.125rem;
+}
+
+.option-chip {
+  display: inline-block;
+  margin: 0 0.25rem 0.25rem 0;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.option-chip--correct {
+  border-width: 2px;
+  background: var(--success-soft);
+  font-weight: 700;
+}
+
+.preview-flags {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--warning-soft);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.preview-flags__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.preview-flags ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.125rem;
+}
+
+.preview-flags__where {
+  font-weight: 700;
+}
+
+.preview-summary .summary-table th,
+.preview-summary .summary-table td {
+  white-space: normal;
+}
+
+.script {
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+}
+
+.script__title {
+  margin: 0 0 0.5rem;
+}
+
+.script__flag {
+  font-weight: 800;
+}
+
+.preview .scene {
+  max-width: 20rem;
+}
+
+.script__lines {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.script__line {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.script__speaker {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.script__ja {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 2;
+}
+
+.script__translation,
+.script__answer {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.script__translation {
+  color: var(--muted);
+}
+
 @media print {
   @page {
     size: A4;
@@ -1540,6 +1715,77 @@ rt {
 
   .table-scroll {
     overflow: visible;
+  }
+
+  .preview-region {
+    break-before: page;
+    margin-top: 0;
+  }
+
+  .preview-quest {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    margin-top: 8mm;
+    background: none;
+  }
+
+  .preview-quest + .preview-quest {
+    padding-top: 6mm;
+    border-top: 2px solid #000;
+  }
+
+  .preview-kanji,
+  .preview-kotoba,
+  .script,
+  .script__line,
+  .scene,
+  .preview-quest__title,
+  .preview-region__head {
+    break-inside: avoid;
+  }
+
+  /* The scene sits beside its dialogue, so a quest takes about one page. */
+  .preview .scene {
+    float: left;
+    width: 55mm;
+    margin: 0 5mm 2mm 0;
+  }
+
+  .script::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+
+  .script__title,
+  .preview-quest h5 {
+    break-after: avoid;
+  }
+
+
+  .preview-kanji__char {
+    font-size: 30pt;
+  }
+
+  .scene__placeholder {
+    border-color: #555;
+    background: none;
+    color: #333;
+  }
+
+  .option-chip--correct,
+  .preview-flags {
+    background: none;
+    border-color: #000;
+  }
+
+  .script {
+    border-top-color: #888;
+  }
+
+  .preview-quest .validator-notes {
+    min-height: 30mm;
   }
 }
 

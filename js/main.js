@@ -15,6 +15,7 @@ import { isStorageAvailable } from "./storage.js";
 import { h } from "./dom.js";
 import { issueList } from "./screens/common.js";
 import { contentCheckScreen } from "./screens/content-check.js";
+import { previewScreen } from "./screens/preview.js";
 import { questScreen, reviewScreen } from "./screens/quest.js";
 import { mapScreen } from "./screens/map.js";
 import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
@@ -53,7 +54,6 @@ const app = {
   render,
 };
 
-// desain-peta branch: the printable preview returns in step 5.
 const ROUTES = [
   // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
   { pattern: /^#?\/?$/, screen: () => firstScreen() },
@@ -68,6 +68,7 @@ const ROUTES = [
   { pattern: /^#\/about$/, screen: () => aboutScreen(app) },
   { pattern: /^#\/kana$/, screen: () => kanaScreen(app) },
   { pattern: /^#\/content-check$/, screen: () => contentCheckScreen(app) },
+  { pattern: /^#\/preview\/([^/]+)$/, screen: (id) => previewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/settings$/, screen: () => settingsScreen(app) },
   {
     pattern: /^#\/consent$/,
