@@ -86,15 +86,17 @@ Tempat untuk urutan guratan sudah disiapkan, tetapi **tidak ada data guratan di 
 ## Penelitian (bukan pekerjaan kode, tetapi menentukan)
 
 ### 8. Persetujuan peserta — **Sebagian**
-Layar persetujuan, pilihan "Main tanpa merekam", penarikan persetujuan dengan penghapusan data (D-53), dan
-pengaman yang mematikan pengiriman selama teks masih placeholder (D-52) sudah dibangun. Yang belum: **redaksi teks
+Layar persetujuan, pilihan "Main tanpa merekam", penarikan persetujuan dengan penghapusan data (D-53),
+pengaman yang mematikan pengiriman selama teks masih placeholder (D-52), dan tiga mode sesi dengan tautan penelitian
+yang mewajibkan persetujuan dan kode peserta (D-112) sudah dibangun. Yang belum: **redaksi teks
 persetujuan yang disetujui dosen pembimbing** (saat ini placeholder). Selama itu belum ada, tidak ada data yang
 dapat terkirim ke spreadsheet.
 
 ### 9. Instrumen penelitian — **Terbuka**
 Pretest dan posttest, lembar validasi ahli (pratinjau cetak sudah menyediakan kotak catatan per quest, D-109),
 daftar kode peserta anonim yang disimpan terpisah dari daftar nama, dan rencana analisis log. Kolom log sudah
-terdefinisi (README bagian "Log jawaban"), tetapi belum ada skrip analisisnya.
+terdefinisi (README bagian "Log jawaban"; data penelitian disaring dengan `sessionMode` = `research`), tetapi belum
+ada skrip analisisnya.
 
 ### 10. Durasi sesi belum diukur — **Terbuka**
 Jadwal uji coba perlu tahu berapa menit dibutuhkan per quest dan per 復習. Ukur dari kolom `timestamp` dan
@@ -117,8 +119,8 @@ halaman tidak dimuat ulang. Dikendalikan lewat prosedur pagi hari di README.
 ### 13. Pengujian yang belum bisa dilakukan pengembang — **Terbuka**
 Sesuai urutan prioritas di README bagian "Pengujian yang wajib dijalankan tim":
 1. cetak pratinjau di Safari dan Firefox (sebelum validasi ahli; baru diuji di Chrome);
-2. endpoint Apps Script di akun Google sungguhan (jauh sebelum pameran);
-3. unduhan CSV di iPhone (sebelum pameran).
+2. endpoint Apps Script di akun Google sungguhan (jauh sebelum uji coba penelitian);
+3. unduhan CSV di iPhone (sebelum uji coba penelitian).
 
 Ditambah: uji di perangkat nyata (Android kelas bawah, iPhone), termasuk menggulir peta bersambung dan
 pemuatan potongan; tampilan karakter bushu seperti 飠 dan 丨 di font bawaan Android; dan uji keterbacaan dengan

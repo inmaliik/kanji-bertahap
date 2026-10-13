@@ -10,11 +10,19 @@ import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
 import { menuBar } from "./menu.js";
 import { clearBoard, loadDevice, ranking, saveDevice } from "../leaderboard.js";
+import { currentMode } from "../event-log.js";
+import {
+  asksConsent,
+  exhibitionSwitchAvailable,
+  MODE_LABELS,
+  participantCodeProblem,
+  participantCodeRequired,
+  PARTICIPANT_CODE_EXAMPLE,
+  RESEARCH_LINK_HASH,
+  SESSION_MODE,
+} from "../session-mode.js";
 
 const DELETE_CONFIRM_WORD = "HAPUS";
-const PARTICIPANT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
-const LOOKS_LIKE_NIM = /^\d{8,}$/;
-const PARTICIPANT_CODE_EXAMPLE = "K4-01"; // suggested shape: letters, then numbers
 const STORAGE_CRITICAL_RATIO = 0.95;
 
 const formatTime = (iso) =>
@@ -103,6 +111,45 @@ export function settingsScreen(app) {
     render();
   }
 
+  // --- Session mode (D-112) -----------------------------------------------------
+
+  const MODE_HELP = {
+    [SESSION_MODE.GENERAL]: [
+      "Jawaban direkam hanya jika pemain menyetujuinya; kode peserta opsional.",
+      "Papan peringkat mati.",
+    ],
+    [SESSION_MODE.EXHIBITION]: [
+      "Tidak ada jawaban yang direkam atau dikirim, dan layar persetujuan dilewati.",
+      "Papan peringkat tampil di peta.",
+    ],
+    [SESSION_MODE.RESEARCH]: [
+      "Persetujuan dan kode peserta wajib sebelum bermain. Jika pemain tidak setuju, perangkat keluar dari mode penelitian.",
+      "Papan peringkat dan mode pameran tidak tersedia.",
+      "Mode ini bertahan setelah halaman dimuat ulang; reset progres mengembalikannya ke mode umum.",
+    ],
+  };
+
+  function modeCard(mode) {
+    return h(
+      "section",
+      { class: `card mode-card mode-card--${mode}`, "aria-labelledby": "mode-title" },
+      h("h2", { id: "mode-title" }, "Mode sesi"),
+      h("p", { class: "mode-card__current" }, "Mode saat ini: ", h("strong", {}, MODE_LABELS[mode])),
+      mode === SESSION_MODE.RESEARCH
+        ? h("p", {}, "Kode peserta: ", h("strong", {}, app.progress.participantCode ?? "belum diisi"))
+        : null,
+      h("ul", {}, MODE_HELP[mode].map((line) => h("li", {}, line))),
+      h(
+        "p",
+        { class: "muted" },
+        mode === SESSION_MODE.RESEARCH ? "" : "Mode pameran dinyalakan di bawah. ",
+        "Mode penelitian dimasuki lewat tautan khusus dari peneliti (alamat aplikasi diakhiri ",
+        h("code", {}, RESEARCH_LINK_HASH),
+        ")."
+      )
+    );
+  }
+
   // --- Next visitor -------------------------------------------------------------
 
   function resetCard() {
@@ -119,11 +166,13 @@ export function settingsScreen(app) {
         details: [
           "Semua progres quest dihapus, termasuk quest yang sudah tuntas.",
           "Pemain berikutnya mendapat ID pemain baru; kode peserta, pilihan persetujuan, dan karakter dikosongkan, dan setelan furigana kembali ke bawaan.",
+          "Mode penelitian berakhir: pemain berikutnya mulai di mode umum, atau mode pameran jika menyala.",
           "Riwayat jawaban (log) tidak dihapus.",
         ],
         confirmLabel: "Ya, reset progres",
         onConfirm: () => {
           app.progress = resetProgress();
+          app.refreshBadge();
           setMessage("reset", "success", "✓ Progres direset. Perangkat siap untuk pemain berikutnya.");
         },
       })
@@ -179,7 +228,15 @@ export function settingsScreen(app) {
 
   // --- Exhibition mode (D-106) ------------------------------------------------
 
-  function exhibitionCard() {
+  function exhibitionCard(mode) {
+    if (!exhibitionSwitchAvailable(mode)) {
+      return h(
+        "section",
+        { class: "card", "aria-labelledby": "exhibition-title" },
+        h("h2", { id: "exhibition-title" }, "Mode pameran"),
+        h("p", {}, "Tidak tersedia di mode penelitian, supaya kondisi semua peserta sama. Papan peringkat terkunci mati.")
+      );
+    }
     const device = loadDevice();
     const count = ranking().length;
     return h(
@@ -195,16 +252,23 @@ export function settingsScreen(app) {
           checked: device.exhibitionMode,
           onChange: (event) => {
             saveDevice({ ...device, exhibitionMode: event.target.checked });
-            setMessage("exhibition", "success", event.target.checked ? "✓ Mode pameran menyala: papan peringkat tampil di peta." : "✓ Mode pameran mati.");
+            setMessage(
+              "exhibition",
+              "success",
+              event.target.checked
+                ? "✓ Mode pameran menyala: tidak ada yang direkam, dan papan peringkat tampil di peta."
+                : "✓ Mode pameran mati. Perangkat kembali ke mode umum."
+            );
           },
         }),
-        h("span", {}, "Tampilkan papan peringkat di perangkat ini")
+        h("span", {}, "Mode pameran di perangkat ini")
       ),
       h(
         "p",
         { class: "muted" },
-        "Untuk stan pameran. Papan hanya berisi pemain di perangkat ini, dengan potret karakter dan nomor pemain, tanpa nama atau kode peserta. ",
-        "Tidak dikirim ke mana pun dan tidak masuk log penelitian. Papan tidak ikut terhapus saat reset progres."
+        "Untuk stan pameran. Selama menyala, tidak ada jawaban yang direkam atau dikirim, layar persetujuan dilewati, dan ",
+        "papan peringkat tampil. Papan hanya berisi pemain di perangkat ini, dengan potret karakter dan nomor pemain, tanpa ",
+        "nama atau kode peserta. Setelan dan papan tidak ikut terhapus saat reset progres."
       ),
       h("p", {}, `Pemain di papan: ${count}`),
       count
@@ -236,7 +300,8 @@ export function settingsScreen(app) {
     );
   }
 
-  function participantCard() {
+  function participantCard(mode) {
+    const required = participantCodeRequired(mode);
     const current = app.progress.participantCode;
     const input = h("input", {
       type: "text",
@@ -253,28 +318,14 @@ export function settingsScreen(app) {
 
     const save = () => {
       const code = input.value.trim();
-      if (!code) {
-        setMessage("participant", "error", "✗ Kode peserta masih kosong.");
-        return;
-      }
-      if (!PARTICIPANT_CODE_PATTERN.test(code)) {
-        setMessage(
-          "participant",
-          "error",
-          `✗ Kode hanya boleh berisi huruf, angka, tanda - dan _, tanpa spasi (maksimal 32 karakter). Contoh: ${PARTICIPANT_CODE_EXAMPLE}.`
-        );
-        return;
-      }
-      if (LOOKS_LIKE_NIM.test(code)) {
-        setMessage(
-          "participant",
-          "error",
-          `✗ Kode berupa 8 angka atau lebih terlihat seperti NIM. Gunakan kode anonim dari peneliti: huruf lalu angka, misalnya ${PARTICIPANT_CODE_EXAMPLE}.`
-        );
+      const problem = participantCodeProblem(code);
+      if (problem) {
+        setMessage("participant", "error", `✗ ${problem}`);
         return;
       }
       app.progress.participantCode = code;
       saveProgress(app.progress);
+      app.refreshBadge();
       setMessage("participant", "success", `✓ Kode peserta ${code} disimpan. Jawaban berikutnya dicatat dengan kode ini.`);
     };
 
@@ -286,7 +337,7 @@ export function settingsScreen(app) {
       h(
         "p",
         { id: "participant-help" },
-        "Opsional. Isi hanya jika peneliti memberimu kode. Gunakan ",
+        required ? "Wajib di mode penelitian; kode bisa diganti tetapi tidak dikosongkan. Gunakan " : "Opsional. Isi hanya jika peneliti memberimu kode. Gunakan ",
         h("strong", {}, "kode anonim"),
         ", ",
         h("strong", {}, "bukan nama atau NIM"),
@@ -305,7 +356,7 @@ export function settingsScreen(app) {
         "div",
         { class: "button-row" },
         h("button", { type: "button", class: "button button--primary", onClick: save }, "Simpan kode"),
-        current
+        current && !required
           ? h(
               "button",
               {
@@ -343,7 +394,7 @@ export function settingsScreen(app) {
       notice = h(
         "p",
         { class: "notice notice--warning" },
-        "⚠ Penyimpanan hampir penuh. Pastikan semua log terkirim atau ekspor CSV, lalu hapus log (lihat prosedur pameran di README)."
+        "⚠ Penyimpanan hampir penuh. Pastikan semua log terkirim atau ekspor CSV, lalu hapus log (lihat README, "Jika muncul peringatan kapasitas")."
       );
     }
 
@@ -497,6 +548,7 @@ export function settingsScreen(app) {
 
   function render() {
     const scrollY = window.scrollY;
+    const mode = currentMode(app);
     // Built through h() so that a null child is skipped instead of becoming the text "null".
     const screen = h(
       "div",
@@ -507,11 +559,13 @@ export function settingsScreen(app) {
       isStorageAvailable()
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),
+      modeCard(mode),
       resetCard(),
-      exhibitionCard(),
+      exhibitionCard(mode),
       furiganaCard(),
-      consentCard(),
-      participantCard(),
+      // Exhibition mode records nothing, so it has no consent or participant code (D-112).
+      asksConsent(mode) ? consentCard() : null,
+      asksConsent(mode) ? participantCard(mode) : null,
       logCard(),
       contentCard()
     );

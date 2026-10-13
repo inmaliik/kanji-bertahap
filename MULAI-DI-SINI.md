@@ -54,11 +54,15 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 - **Menaruh aplikasi di internet:** [Menaruh aplikasi di Netlify](README.md#menaruh-aplikasi-di-netlify).
 - **Mengumpulkan data jawaban:** [Pengiriman log ke Google Apps Script](README.md#pengiriman-log-ke-google-apps-script)
   dan [Layar persetujuan peserta](README.md#layar-persetujuan-peserta).
-- **Sebelum validasi dan pameran:** [Pengujian yang wajib dijalankan tim](README.md#pengujian-yang-wajib-dijalankan-tim),
-  lalu [Daftar periksa sebelum validasi ahli](README.md#daftar-periksa-sebelum-validasi-ahli) dan
-  [Daftar periksa sebelum pameran](README.md#daftar-periksa-sebelum-pameran).
-- **Di stan pameran:** cetak [Prosedur pameran](README.md#prosedur-pameran-untuk-penjaga-stan). Mode pameran (papan
-  peringkat) dinyalakan di Pengaturan hanya untuk stan, tidak untuk uji coba penelitian.
+- **Tiga mode sesi:** umum (bawaan), pameran (tidak merekam apa pun, papan peringkat), dan penelitian (lewat tautan
+  khusus, persetujuan dan kode peserta wajib). Lihat [Mode sesi](README.md#mode-sesi). Data penelitian dipisahkan
+  dengan kolom `sessionMode` = `research` di log.
+- **Sebelum validasi, pameran, dan uji coba:** [Pengujian yang wajib dijalankan tim](README.md#pengujian-yang-wajib-dijalankan-tim),
+  lalu [Daftar periksa sebelum validasi ahli](README.md#daftar-periksa-sebelum-validasi-ahli),
+  [Daftar periksa sebelum pameran](README.md#daftar-periksa-sebelum-pameran), dan
+  [Daftar periksa sebelum uji coba penelitian](README.md#daftar-periksa-sebelum-uji-coba-penelitian).
+- **Di stan pameran:** cetak [Prosedur pameran](README.md#prosedur-pameran-untuk-penjaga-stan).
+- **Sesi penelitian:** [Prosedur uji coba penelitian](README.md#prosedur-uji-coba-penelitian-untuk-peneliti).
 - **Peneliti yang memegang spreadsheet:**
   [menghapus data peserta yang menarik persetujuan](README.md#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan).
 
@@ -84,6 +88,7 @@ membukanya tanpa sengaja. Berkas ini tidak ikut diunggah ke Netlify, jadi alamat
 | Pratinjau semua materi (untuk validator) | `https://NAMA-SITUS.netlify.app/#/preview/all` |
 | Pratinjau satu bab | `https://NAMA-SITUS.netlify.app/#/preview/B03` (ganti nomor babnya) |
 | Pemeriksa dan konverter materi (CSV) | `https://NAMA-SITUS.netlify.app/tools/convert.html` |
+| **Tautan penelitian** (bagikan hanya kepada peserta) | `https://NAMA-SITUS.netlify.app/#/penelitian` |
 
 Ini mencegah paparan tidak sengaja, **bukan** kecurangan yang disengaja: situs statis tidak bisa menyembunyikan
 apa pun, dan `data/content.json` bisa dibuka langsung oleh siapa saja yang tahu alamatnya (DECISIONS D-86).
@@ -109,6 +114,10 @@ kerja, cukup minta ke Claude:
 
 Claude akan melaporkan apa yang terkirim. Folder `sumber/`, `tmp/`, dan file ekspor log tidak pernah ikut (diatur di
 `.gitignore`), dan repo-nya tetap privat.
+
+**Riwayat yang sudah ada di GitHub tidak pernah ditulis ulang, dan tidak ada push paksa** (DECISIONS D-113).
+Kesalahan diperbaiki dengan commit baru. Jika suatu saat penulisan ulang tampak perlu, Claude berhenti dan
+menjelaskan alasannya dulu; tidak ada yang dijalankan sebelum Anda menyetujuinya.
 
 ## Yang sedang menghalangi
 

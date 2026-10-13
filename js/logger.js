@@ -11,6 +11,7 @@
 
 import { readJson, writeJson, removeKey } from "./storage.js";
 import { createId } from "./state.js";
+import { RECORDING_MODES } from "./session-mode.js";
 
 export const LOG_KEY = "kanjiGame.log.v1";
 const LOG_CHUNK_SIZE = 200;
@@ -21,7 +22,8 @@ export const LOG_COLUMNS = [
   "appVersion",
   "contentRevision", // content.json revision the answer was given against
   "playerId", // random per device/player; new after progress reset
-  "participantCode", // optional anonymous code entered in Settings
+  "participantCode", // anonymous code; optional in general mode, required in research mode
+  "sessionMode", // general | research; exhibition mode writes no rows (D-112)
   "consentStatus", // "agreed" for answers; "withdrawn" for the one row written when consent is withdrawn
   "consentVersion", // version of data/consent.json the player agreed to
   "consentAt", // when the player agreed (also on the withdrawal row)
@@ -129,10 +131,13 @@ export function onLogAppended(listener) {
 }
 
 /**
- * Append one answer. Missing columns are written as empty.
+ * Append one answer. Missing columns are written as empty. A row without a
+ * recording sessionMode is refused, so exhibition mode can never write one,
+ * whichever screen asks (D-112).
  * @returns {boolean} true if persisted to storage
  */
 export function logAnswer(record) {
+  if (!RECORDING_MODES.includes(record.sessionMode)) return false;
   let persisted = false;
   try {
     const row = toRow({ rowId: createId(), timestamp: new Date().toISOString(), ...record });

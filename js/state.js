@@ -92,6 +92,7 @@ export function createProgress(now = new Date()) {
   return {
     playerId: createId(),
     participantCode: null,
+    sessionMode: "general", // "research" after opening the research link; exhibition is a device setting (D-112)
     consent: null, // { choice, version, at } — asked again when the consent text version changes
     createdAt: now.toISOString(),
     lastPlayed: null,
@@ -126,6 +127,7 @@ function isValidProgress(value) {
 // Fill fields added after a progress object was first written.
 function normalizeProgress(progress) {
   progress.participantCode ??= null;
+  if (progress.sessionMode !== "research") progress.sessionMode = "general";
   progress.consent ??= null;
   progress.createdAt ??= null;
   progress.lastPlayed ??= null;
@@ -163,7 +165,7 @@ export function saveProgress(progress) {
   return writeJson(PROGRESS_KEY, progress);
 }
 
-/** New player: fresh playerId, no quest progress, default settings. Answer logs are untouched. */
+/** New player: fresh playerId, no quest progress, default settings, general mode. Answer logs are untouched. */
 export function resetProgress() {
   const progress = createProgress();
   saveProgress(progress);

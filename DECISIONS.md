@@ -520,7 +520,9 @@ teks placeholder atau versi lama dipisahkan saat analisis. Redaksi persetujuan a
 yang harus disetujui pembimbing, sehingga tidak dikarang pengembang dan tidak disimpan di kode. **Alternatif
 ditolak:** Persetujuan per perangkat (terbawa ke pengunjung berikutnya); teks di dalam kode; memblokir tombol
 setuju selama teks masih placeholder (menghalangi uji coba internal pencatatan). *Dilengkapi oleh D-52 (pengaman
-pengiriman selama teks placeholder) dan D-53 (penarikan persetujuan).*
+pengiriman selama teks placeholder) dan D-53 (penarikan persetujuan).* *Diubah oleh D-112: pilihan "main tanpa
+merekam" tetap ada di mode umum; di mode penelitian, tidak setuju berarti keluar dari mode penelitian; mode pameran
+tidak menampilkan layar ini.*
 
 ### D-51 · Deploy lewat unggah folder Netlify, tanpa dokumen internal
 **Tanggal:** 2026-09-15. **Keputusan:** Aplikasi ditaruh di Netlify dengan menyeret folder unggahan berisi
@@ -1105,7 +1107,8 @@ dengan reset; ada tombol tersendiri untuk mengosongkannya, dengan konfirmasi. Ti
 tidak dicatat di log penelitian. **Alasan pembatasan:** Papan peringkat daring bertentangan dengan janji anonim di layar
 persetujuan; persaingan juga merupakan perlakuan tersendiri yang akan mencampuri hasil uji coba, sehingga papan hanya
 ada di stan pameran dan tidak pernah aktif dalam uji coba penelitian. **Alternatif ditolak:** Papan daring; nama atau
-kode peserta di papan (nama tidak pantas atau identitas peserta bisa muncul di layar stan).
+kode peserta di papan (nama tidak pantas atau identitas peserta bisa muncul di layar stan). *Dilengkapi oleh D-112:
+mode pameran juga mematikan pencatatan dan melewati layar persetujuan, dan papan terkunci mati di mode penelitian.*
 
 ### D-107 · Gambar karakter 1080×1080
 **Tanggal:** 2026-10-13. **Keputusan:** Standar karakter di `ASSETS.md` menjadi kanvas 1080×1080 (persegi, transparan,
@@ -1190,6 +1193,61 @@ baris log mencatat `appVersion`; dengan aturan ini, versi 0.x menandai data peng
 sehingga batasnya terbaca dari kolom log tanpa perlu mencocokkan tanggal. **Alternatif ditolak:** Menaikkan versi
 sekarang (data dari materi draf akan tercatat dengan versi yang sama dengan data penelitian); hanya mengandalkan
 `contentRevision` (versi aplikasi tetap perlu menandai perubahan kode di antara revisi materi).
+
+*Diubah oleh D-112: aturan versinya tetap, tetapi artinya dipersempit. Versi 1.x menandai **rilis materi** (berlaku
+sejak validasi ahli), bukan data penelitian. Validasi ahli, pameran, dan uji coba penelitian berjalan dengan versi
+yang sama, sehingga nomor versi tidak bisa memisahkan data penelitian; pemisahnya kolom `sessionMode`.*
+
+### D-112 · Tiga mode sesi: umum, pameran, penelitian
+**Tanggal:** 2026-10-13. **Keputusan:** Aplikasi berjalan dalam satu dari tiga mode, dan setiap baris log mencatatnya
+di kolom `sessionMode` (`general` atau `research`). Semua aturan antarmode ada di `js/session-mode.js`.
+- **Umum** (bawaan): layar persetujuan sebelum quest pertama, pencatatan hanya setelah setuju, kode peserta opsional,
+  papan peringkat mati dan tidak bisa dinyalakan.
+- **Pameran** (sakelar "Mode pameran" yang sudah ada, setelan perangkat): **pencatatan mati sama sekali**, layar
+  persetujuan dilewati, papan peringkat menyala. Logger sendiri menolak setiap baris yang `sessionMode`-nya bukan
+  `general` atau `research`, jadi tidak ada layar yang bisa menulis log di mode ini, termasuk lewat jalur yang
+  terlewat.
+- **Penelitian** (tautan `#/penelitian`, disimpan per pemain di `progress.sessionMode`): persetujuan wajib sebelum
+  apa pun; tidak setuju berarti keluar dari mode penelitian (tetap bisa bermain di mode umum tanpa direkam); **kode
+  peserta wajib** sebelum permainan dimulai, dengan format yang sama (`K4-01`, bukan NIM), bisa diganti tetapi tidak
+  dikosongkan; papan peringkat terkunci mati dan sakelar mode pameran tidak tersedia. Mode bertahan setelah dimuat
+  ulang; reset progres mengembalikan ke mode umum. Penanda **● Mode penelitian · <kode>** selalu tampil di atas layar,
+  dan Pengaturan menampilkan mode yang aktif.
+
+Ketentuan tambahan yang ditetapkan saat membangun: (1) mode penelitian **mengalahkan** sakelar pameran, dan membuka
+tautan penelitian **mematikan** mode pameran di perangkat itu, sehingga reset benar-benar kembali ke mode umum;
+(2) tautan penelitian di perangkat yang masih menyimpan progres pemain lain (quest, item, pilihan persetujuan, atau
+kode peserta) meminta konfirmasi lalu memulai **pemain baru**, supaya semua peserta mulai dari kondisi yang sama;
+layar sambutan dan karakter yang sudah dipilih tidak dihitung sebagai progres; (3) baris penarikan persetujuan di mode
+penelitian ditulis dengan `sessionMode` = `research` sebelum perangkat keluar dari mode itu.
+
+Uji otomatis (`tests/session-mode.test.mjs`) memastikan mode pameran tidak menghasilkan satu baris pun, mode
+penelitian tidak mencatat sebelum kode peserta valid diisi, dan papan peringkat tidak bisa menyala di luar mode
+pameran (termasuk peserta penelitian di perangkat yang sakelar pamerannya tertinggal menyala).
+
+**Alasan:** Ini **menggantikan maksud awal memakai nomor versi aplikasi sebagai batas data penelitian** (D-111).
+Draf berakhir sebelum validasi ahli, jadi validasi ahli, pameran, dan uji coba penelitian berjalan dengan versi yang
+sama. Batas data penelitian harus melekat pada sesi, bukan pada rilis. Kode peserta wajib karena kode inilah yang
+memasangkan data aplikasi dengan nilai pretest dan posttest. Pengunjung pameran bukan peserta penelitian, sehingga
+tidak perlu melihat teks persetujuan penelitian, dan tidak ada data mereka yang perlu disimpan. Papan peringkat dan
+sakelar pameran dikunci di mode penelitian karena persaingan adalah perlakuan tersendiri (D-106). **Alternatif
+ditolak:** Nomor versi sebagai batas (lihat di atas); mode penelitian sebagai setelan perangkat di Pengaturan (peserta
+yang memegang perangkat bisa mematikannya, dan tautan bisa dibagikan langsung ke ponsel peserta); tetap merekam di
+mode pameran dengan pilihan "main tanpa merekam" (pengunjung harus membaca teks persetujuan penelitian yang tidak
+berlaku bagi mereka); peserta yang tidak setuju tetap di mode penelitian tanpa direkam (perangkat tampak seperti
+perangkat peserta padahal tidak menghasilkan data).
+
+### D-113 · Riwayat git yang sudah terkirim tidak ditulis ulang
+**Tanggal:** 2026-10-13. **Keputusan:** Repo punya salinan di GitHub (`inmaliik/kanji-bertahap`, privat). Riwayat yang
+sudah ada di GitHub **tidak boleh ditulis ulang**, dan tidak ada push paksa (`--force`, `--force-with-lease`, atau
+menghapus lalu membuat ulang cabang atau tag). Kesalahan di commit yang sudah terkirim diperbaiki dengan commit baru.
+Jika suatu saat penulisan ulang tampak perlu (misalnya data peserta atau materi `sumber/` ternyata terkirim), pekerjaan
+**berhenti** dan alasannya dijelaskan ke pemilik proyek lebih dulu; tidak ada yang dijalankan sebelum disetujui.
+**Alasan:** Salinan di GitHub adalah cadangan; penulisan ulang bisa menghapus satu-satunya salinan pekerjaan yang benar,
+dan kode commit lama yang sudah dikutip (misalnya di catatan penelitian) menjadi tidak bisa ditemukan. Pembersihan
+riwayat pada 2026-10-13 (gambar asli karakter dari `sumber/` di commit Bagian B) dilakukan **sebelum** push pertama,
+sehingga tidak ada salinan yang terdampak. **Alternatif ditolak:** Mengizinkan push paksa untuk perbaikan kecil
+(manfaatnya kecil, risikonya kehilangan cadangan).
 
 ---
 

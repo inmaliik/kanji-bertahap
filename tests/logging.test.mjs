@@ -16,7 +16,7 @@ async function freshLogger(storage = new MemoryStorage()) {
 
 test("rows are stored in chunks and read back in order", async () => {
   const { logger, storage, col } = await freshLogger();
-  for (let i = 0; i < 450; i++) logger.logAnswer({ responseMs: i });
+  for (let i = 0; i < 450; i++) logger.logAnswer({ sessionMode: "general", responseMs: i });
   const rows = logger.getLogRows();
   assert.equal(rows.length, 450);
   assert.deepEqual(rows.slice(0, 3).map((r) => r[col("responseMs")]), [0, 1, 2]);
@@ -26,11 +26,11 @@ test("rows are stored in chunks and read back in order", async () => {
 
 test("a full storage never overwrites a complete chunk", async () => {
   const { logger, storage, col } = await freshLogger();
-  for (let i = 0; i < 200; i++) logger.logAnswer({ responseMs: i });
+  for (let i = 0; i < 200; i++) logger.logAnswer({ sessionMode: "general", responseMs: i });
   storage.limit = storage.used() + 5;
-  assert.equal(logger.logAnswer({ responseMs: 200 }), false);
+  assert.equal(logger.logAnswer({ sessionMode: "general", responseMs: 200 }), false);
   storage.limit = Infinity;
-  assert.equal(logger.logAnswer({ responseMs: 201 }), true);
+  assert.equal(logger.logAnswer({ sessionMode: "general", responseMs: 201 }), true);
   assert.equal(JSON.parse(storage.getItem(`${logger.LOG_KEY}.chunk.0`)).length, 200);
   assert.equal(logger.getLogRows().length, 202);
   assert.equal(logger.getLogStatus().unsavedRows, 1);
@@ -42,7 +42,7 @@ test("rows stored with an older column list are migrated once", async () => {
   storage.setItem("kanjiGame.log.v1", JSON.stringify({ version: 1, columns: ["timestamp", "levelId", "answer"], chunkCount: 1, rowCount: 1, sentCount: 0 }));
   storage.setItem("kanjiGame.log.v1.chunk.0", JSON.stringify([["t0", "L01", "a"]]));
   const { logger, col } = await freshLogger(storage);
-  logger.logAnswer({ levelId: "L02", answer: "b", hintUsed: true });
+  logger.logAnswer({ sessionMode: "general", levelId: "L02", answer: "b", hintUsed: true });
   const rows = logger.getLogRows();
   assert.equal(rows[0][col("answer")], "a");
   assert.equal(rows[1][col("hintUsed")], 1);
@@ -51,7 +51,7 @@ test("rows stored with an older column list are migrated once", async () => {
 
 test("unsent batches are marked sent, and a clear during sending does not mark new rows", async () => {
   const { logger } = await freshLogger();
-  for (let i = 0; i < 230; i++) logger.logAnswer({ responseMs: i });
+  for (let i = 0; i < 230; i++) logger.logAnswer({ sessionMode: "general", responseMs: i });
   let sent = 0;
   for (let batch = logger.getUnsentBatch(50); batch.rows.length; batch = logger.getUnsentBatch(50)) {
     logger.markSent(batch);
@@ -60,17 +60,17 @@ test("unsent batches are marked sent, and a clear during sending does not mark n
   assert.equal(sent, 230);
   assert.equal(logger.getLogStatus().unsentRows, 0);
 
-  logger.logAnswer({ responseMs: 1 });
+  logger.logAnswer({ sessionMode: "general", responseMs: 1 });
   const stale = logger.getUnsentBatch(50);
   logger.clearLog();
-  logger.logAnswer({ responseMs: 2 });
+  logger.logAnswer({ sessionMode: "general", responseMs: 2 });
   logger.markSent(stale);
   assert.equal(logger.getLogStatus().unsentRows, 1);
 });
 
 test("CSV has a BOM, escapes quotes, and neutralizes formulas", async () => {
   const { logger } = await freshLogger();
-  logger.logAnswer({ stage: "production", answer: '=HYPERLINK("x"), "ok"' });
+  logger.logAnswer({ sessionMode: "general", stage: "production", answer: '=HYPERLINK("x"), "ok"' });
   const csv = logger.logToCsv();
   assert.equal(csv.charCodeAt(0), 0xfeff);
   assert.ok(csv.includes(`"'=HYPERLINK(""x""), ""ok"""`));
@@ -78,7 +78,7 @@ test("CSV has a BOM, escapes quotes, and neutralizes formulas", async () => {
 
 test("deleting a player's rows keeps unsent and exported markers correct", async () => {
   const { logger, col } = await freshLogger();
-  for (let i = 0; i < 250; i++) logger.logAnswer({ playerId: i % 2 ? "keep" : "gone", responseMs: i });
+  for (let i = 0; i < 250; i++) logger.logAnswer({ sessionMode: "general", playerId: i % 2 ? "keep" : "gone", responseMs: i });
   // Rows 0–99 have been sent.
   let sent = 0;
   while (sent < 100) {
@@ -101,7 +101,7 @@ test("deleting a player's rows keeps unsent and exported markers correct", async
   assert.equal(next.rows[0][col("responseMs")], 101, "sending resumes at the first unsent kept row");
 });
 
-test("the app version marks development data apart from research data (D-111)", async () => {
+test("the app version becomes 1.x when content leaves draft (D-111)", async () => {
   const { APP_VERSION } = await import(jsModule("config.js"));
   const { contentRevision } = loadSampleContent();
   const major = Number(APP_VERSION.split(".")[0]);

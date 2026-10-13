@@ -1,9 +1,13 @@
 // Consent screen: shown before the first game of each player and reachable
-// from Settings. The wording comes from data/consent.json (D-50).
+// from Settings. The wording comes from data/consent.json (D-50). In research
+// mode there is no "play without recording": declining ends research mode for
+// this player, who keeps playing in general mode (D-112). Exhibition mode
+// records nothing and never shows it.
 
 import { h } from "../dom.js";
-import { APP_VERSION } from "../config.js";
+import { currentMode, playerColumns } from "../event-log.js";
 import { deleteRows, logAnswer } from "../logger.js";
+import { leaveResearch, SESSION_MODE } from "../session-mode.js";
 import { CONSENT_CHOICE, consentStatus, saveProgress, setConsent } from "../state.js";
 
 const formatTime = (iso) => new Date(iso).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
@@ -22,9 +26,22 @@ export function consentStatusText(app) {
 export function consentScreen(app, { afterChoice, backHref = null }) {
   const text = app.consentText;
   const root = h("div", { class: "screen consent" });
+  const mode = currentMode(app);
+  const research = mode === SESSION_MODE.RESEARCH;
+
+  if (mode === SESSION_MODE.EXHIBITION) {
+    return h(
+      "div",
+      { class: "screen consent" },
+      backHref ? h("a", { class: "back-link", href: backHref }, h("span", { "aria-hidden": "true" }, "‹ "), "Kembali") : null,
+      h("h1", { tabindex: "-1" }, "Persetujuan perekaman"),
+      h("p", {}, "Perangkat ini sedang dalam mode pameran: tidak ada jawaban yang direkam, jadi persetujuan tidak diperlukan.")
+    );
+  }
 
   const choose = (choice) => {
     setConsent(app.progress, choice, text?.version ?? null);
+    if (research && choice === CONSENT_CHOICE.DECLINED) leaveResearch(app.progress);
     saveProgress(app.progress);
     afterChoice(choice);
   };
@@ -36,13 +53,10 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
    */
   function withdrawAndDelete() {
     const previous = app.progress.consent;
-    const { playerId, participantCode } = app.progress;
+    const { playerId } = app.progress;
     const deleted = deleteRows((record) => record.playerId === playerId);
     logAnswer({
-      appVersion: APP_VERSION,
-      contentRevision: app.content?.contentRevision,
-      playerId,
-      participantCode,
+      ...playerColumns(app, mode),
       consentStatus: "withdrawn",
       consentVersion: previous.version,
       consentAt: previous.at,
@@ -51,6 +65,7 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
       answer: String(deleted), // rows deleted on this device
     });
     setConsent(app.progress, CONSENT_CHOICE.DECLINED, text?.version ?? previous.version);
+    if (research) leaveResearch(app.progress);
     saveProgress(app.progress);
 
     root.replaceChildren(
@@ -62,7 +77,7 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
         "Jawaban yang sudah telanjur terkirim ke server tidak bisa dihapus dari sini. Aplikasi mengirim catatan penarikan, " +
           "dan peneliti akan menghapus data tersebut secara manual."
       ),
-      h("p", {}, "Mulai sekarang jawabanmu tidak direkam."),
+      h("p", {}, research ? "Mulai sekarang jawabanmu tidak direkam, dan perangkat ini keluar dari mode penelitian." : "Mulai sekarang jawabanmu tidak direkam."),
       h("button", { type: "button", class: "button button--primary button--block", onClick: () => afterChoice(CONSENT_CHOICE.DECLINED) }, "Lanjut")
     );
     root.querySelector("h1").focus();
@@ -72,7 +87,12 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
   function askAboutRecordedData() {
     root.replaceChildren(
       h("h1", { tabindex: "-1" }, "Berhenti merekam"),
-      h("p", {}, "Kamu sebelumnya setuju jawabanmu direkam. Mulai sekarang jawabanmu tidak direkam lagi."),
+      h(
+        "p",
+        {},
+        "Kamu sebelumnya setuju jawabanmu direkam. Mulai sekarang jawabanmu tidak direkam lagi",
+        research ? ", dan perangkat ini keluar dari mode penelitian." : "."
+      ),
       h("p", {}, "Apa yang dilakukan dengan jawaban yang sudah terekam?"),
       h(
         "div",
@@ -100,6 +120,14 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
     {},
     backHref ? h("a", { class: "back-link", href: backHref }, h("span", { "aria-hidden": "true" }, "‹ "), "Kembali") : null,
     h("h1", { tabindex: "-1" }, text ? text.title : "Persetujuan perekaman jawaban"),
+    research
+      ? h(
+          "p",
+          { class: "notice notice--info", role: "note" },
+          "Sesi penelitian. Untuk ikut sebagai peserta, kamu perlu menyetujui perekaman jawaban. Jika tidak setuju, kamu tetap " +
+            "bisa bermain, tetapi bukan sebagai peserta penelitian dan jawabanmu tidak direkam."
+        )
+      : null,
     text?.isPlaceholder
       ? h(
           "p",
@@ -114,7 +142,9 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
       : h(
           "p",
           { class: "notice notice--error" },
-          `✗ Teks persetujuan tidak bisa dimuat, jadi jawaban tidak bisa direkam. Permainan tetap bisa dimainkan tanpa merekam. (${app.consentError})`
+          research
+            ? `✗ Teks persetujuan tidak bisa dimuat, jadi sesi penelitian tidak bisa dimulai. Hubungi peneliti. (${app.consentError})`
+            : `✗ Teks persetujuan tidak bisa dimuat, jadi jawaban tidak bisa direkam. Permainan tetap bisa dimainkan tanpa merekam. (${app.consentError})`
         ),
     app.progress.consent ? h("p", { class: "muted" }, `Pilihan saat ini: ${consentStatusText(app)}`) : null,
     h(
@@ -123,7 +153,7 @@ export function consentScreen(app, { afterChoice, backHref = null }) {
       text
         ? h("button", { type: "button", class: "button button--primary button--block", onClick: () => choose(CONSENT_CHOICE.AGREED) }, "Saya setuju")
         : null,
-      h("button", { type: "button", class: "button button--block", onClick: decline }, "Main tanpa merekam")
+      h("button", { type: "button", class: "button button--block", onClick: decline }, research ? "Tidak setuju, main bukan sebagai peserta" : "Main tanpa merekam")
     ),
     text ? h("p", { class: "consent__version muted" }, `Versi teks: ${text.version}`) : null
   );

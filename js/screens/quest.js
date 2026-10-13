@@ -13,11 +13,10 @@
 // may spell the kotoba (Q-tabemasu) in the address bar (D-81).
 
 import { h, ja } from "../dom.js";
-import { APP_VERSION } from "../config.js";
 import { buildQuestItems, isIncompleteQuest, isOwnBushu, itemId } from "../model.js";
 import { createSession, PHASE } from "../session.js";
-import { logAnswer } from "../logger.js";
-import { STREAK_TO_MASTER, STATUS, beginAttempt, consentStatus, createId, FURIGANA_MODE, isRecordingAllowed, saveProgress, touch } from "../state.js";
+import { recordRow } from "../event-log.js";
+import { STREAK_TO_MASTER, STATUS, beginAttempt, createId, FURIGANA_MODE, saveProgress, touch } from "../state.js";
 import { nodeStatuses, questPassed, sampleRegionReview } from "../progression.js";
 import { kotobaVisible, pendingReadingLeaks, questByKotoba, readingSettled } from "../reveal.js";
 import { uiLabel } from "../ui-labels.js";
@@ -28,7 +27,7 @@ import { renderReading } from "../stages/reading.js";
 import { renderTest } from "../stages/test.js";
 import { renderProduction } from "../stages/production.js";
 import { backLink, LABELS } from "./common.js";
-import { consentScreen } from "./consent.js";
+import { gateScreen } from "./research.js";
 
 export const questHref = (region, index) => `#/quest/${region.id}/${index + 1}`;
 export const reviewHref = (region) => `#/review/${region.id}`;
@@ -55,10 +54,6 @@ function stepLabel(phase, stage, isReview) {
   return `Pemantapan · ${LABELS.stage[stage]}`;
 }
 
-/** Each player decides about recording before their first game (D-50). */
-function needsConsent(app) {
-  return consentStatus(app.progress, app.consentText?.version ?? null) === "undecided";
-}
 
 const findRegion = (app, id) => app.model.regions.find((r) => r.id === id);
 
@@ -71,7 +66,9 @@ export function questScreen(app, regionKey, position) {
   if (statuses.get(region.id) === STATUS.LOCKED) {
     return messageScreen("Wilayah terkunci", "#/", h("p", {}, `Selesaikan wilayah sebelumnya beserta ulangannya untuk membuka Bab ${region.chapter}.`));
   }
-  if (needsConsent(app)) return consentScreen(app, { afterChoice: () => app.render(), backHref: regionHref(region) });
+  // Consent before the first game (D-50); in research mode also the participant code (D-112).
+  const gate = gateScreen(app, regionHref(region));
+  if (gate) return gate;
 
   const model = app.model;
   const modelQuest = model.quests.get(quest.id);
@@ -108,7 +105,9 @@ export function reviewScreen(app, regionKey) {
       h("p", {}, "Ulangan wilayah terbuka setelah semua quest di wilayah ini tuntas.")
     );
   }
-  if (needsConsent(app)) return consentScreen(app, { afterChoice: () => app.render(), backHref: regionHref(region) });
+  // Consent before the first game (D-50); in research mode also the participant code (D-112).
+  const gate = gateScreen(app, regionHref(region));
+  if (gate) return gate;
 
   const model = app.model;
   const alreadyPassed = statuses.get(id) === STATUS.PASSED;
@@ -197,7 +196,6 @@ function reviewDoneView(app, region, step) {
 function sessionScreen(app, cfg) {
   const { region, isReview, items, streaks, entry } = cfg;
   const model = app.model;
-  const consentVersion = app.consentText?.version ?? null;
   const mode = app.progress.settings.furiganaMode;
   const byKotoba = questByKotoba(model);
   const exitHref = regionHref(region);
@@ -229,17 +227,10 @@ function sessionScreen(app, cfg) {
   }
 
   // The only path to the log. Nothing is written (and so nothing is sent)
-  // unless the player agreed to the current consent text.
+  // unless the player agreed to the current consent text, and never in
+  // exhibition mode (event-log.js, D-112).
   function record(quest, fields) {
-    if (!isRecordingAllowed(app.progress, consentVersion)) return;
-    logAnswer({
-      appVersion: APP_VERSION,
-      contentRevision: app.content.contentRevision,
-      playerId: app.progress.playerId,
-      participantCode: app.progress.participantCode,
-      consentStatus: app.progress.consent.choice,
-      consentVersion: app.progress.consent.version,
-      consentAt: app.progress.consent.at,
+    recordRow(app, {
       sessionId,
       levelId: cfg.levelId,
       isReview,

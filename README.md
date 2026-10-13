@@ -143,7 +143,8 @@ js/progression.js           urutan dan kunci wilayah, persentase, sampel 復習
 js/ui-labels.js             label antarmuka berbahasa Jepang dari data/ui.json
 js/assets.js                slot aset: gambar yang dipaskan ke wadahnya, pemeriksa aset
 js/map-layout.js            potongan peta: daftar, posisi lokasi per potongan, posisi sementara
-js/event-log.js             baris log peristiwa (pembukaan index)
+js/event-log.js             satu-satunya jalur penulisan log quest dan peristiwa (pembukaan index)
+js/session-mode.js          mode sesi umum / pameran / penelitian: semua aturan yang berbeda antarmode
 js/cast.js                  karakter: nama dan potret pembicara, data karakter
 js/xp.js                    level, XP, dan eksplorasi, dihitung dari progres
 js/leaderboard.js           setelan perangkat (mode pameran) dan papan peringkat per perangkat
@@ -183,8 +184,9 @@ js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
 js/screens/content-check.js pemeriksaan konten, karakter, potongan peta, dan aset (halaman tim)
 js/screens/preview.js       pratinjau dan cetak materi untuk validator (halaman tim)
-js/screens/settings.js      pengaturan: reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
+js/screens/settings.js      pengaturan: mode sesi, reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
 js/screens/consent.js       layar persetujuan perekaman
+js/screens/research.js      tautan penelitian, gerbang persetujuan dan kode peserta, penanda mode penelitian
 
 tools/convert.html          pemeriksa dan konverter CSV → content.json di browser (untuk tim konten)
 tools/csv-to-json.mjs       konversi lima CSV → data/content.json dari terminal
@@ -759,7 +761,7 @@ tidak menghalangi peserta yang sudah lebih jauh.
 Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v2`. Key ini berbeda dari versi level di
 tag `v1-akhir` (`kanjiGame.progress.v1`), sehingga progres kedua versi tidak pernah tercampur. **Reset progres**
 (Pengaturan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, pilihan persetujuan, dan
-karakter, dan mengembalikan setelan furigana ke bawaan. Pemain berikutnya mulai dari layar sambutan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
+karakter, mengembalikan setelan furigana ke bawaan, dan mengakhiri mode penelitian (lihat [Mode sesi](#mode-sesi)). Pemain berikutnya mulai dari layar sambutan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
 
 Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v2.corrupt.<waktu>`
 dan memulai progres baru.
@@ -767,14 +769,48 @@ dan memulai progres baru.
 > Buka aplikasi di **satu tab saja** per perangkat. Dua tab yang terbuka bersamaan saling menimpa
 > progres; yang terakhir menyimpan yang berlaku.
 
+## Mode sesi
+
+Aplikasi berjalan dalam salah satu dari tiga mode (D-112). Mode yang aktif tertulis di bagian atas
+**Pengaturan → Mode sesi**, dan setiap baris log mencatatnya di kolom `sessionMode`. **Kolom inilah yang
+memisahkan data penelitian dari data lain**, bukan nomor versi aplikasi.
+
+| | Umum | Pameran | Penelitian |
+|---|---|---|---|
+| Cara masuk | Bawaan, siapa pun yang membuka alamat aplikasi | Pengaturan → **Mode pameran** (setelan perangkat) | **Tautan penelitian**: alamat aplikasi diakhiri `#/penelitian` |
+| Layar persetujuan | Ya, sebelum quest pertama | **Dilewati** | Ya, **sebelum apa pun** |
+| Pencatatan | Hanya setelah setuju | **Mati sama sekali**: tidak ada baris yang ditulis maupun dikirim | Hanya setelah setuju **dan** kode peserta diisi |
+| Kode peserta | Opsional | Tidak dipakai | **Wajib** sebelum permainan dimulai; bisa diganti, tidak bisa dikosongkan |
+| Papan peringkat | Mati | Bisa dinyalakan (menyala bersama mode pameran) | Terkunci mati; setelan mode pameran tidak tersedia |
+| `sessionMode` di log | `general` | (tidak ada baris) | `research` |
+
+**Mode penelitian** disimpan per pemain: bertahan setelah halaman dimuat ulang, dan berakhir saat **Reset
+progres** (kembali ke mode umum, atau mode pameran jika sakelarnya menyala). Selama aktif, penanda kuning
+**● Mode penelitian · K4-01** selalu tampil di atas layar, supaya peneliti bisa memastikan perangkat peserta
+berada di mode yang benar. Hal lain yang perlu diketahui:
+
+- Peserta yang **tidak setuju** tetap bisa bermain, tetapi perangkat keluar dari mode penelitian (menjadi mode
+  umum, tanpa merekam). Begitu juga jika peserta menarik persetujuan belakangan.
+- Jika tautan penelitian dibuka di perangkat yang **masih menyimpan progres pemain lain**, aplikasi meminta
+  konfirmasi lalu memulai **pemain baru**, supaya semua peserta mulai dari kondisi yang sama. Membuka tautan itu
+  lagi saat sudah di mode penelitian tidak mengubah apa pun.
+- Membuka tautan penelitian di perangkat yang mode pamerannya menyala akan **mematikan mode pameran** di perangkat
+  itu.
+
+Membuat tautan penelitian: ambil alamat aplikasi di Netlify, lalu tambahkan `#/penelitian` di belakangnya,
+misalnya `https://nama-situs.netlify.app/#/penelitian`. Bagikan tautan ini hanya kepada peserta.
+
 ## Layar persetujuan peserta
 
-Aplikasi merekam jawaban peserta, termasuk kalimat yang mereka ketik sendiri di tahap 5. Karena itu setiap
-pemain memilih lebih dulu, **sebelum permainan pertama**:
+Aplikasi merekam jawaban peserta, termasuk kalimat yang mereka ketik sendiri di tahap 5. Karena itu, di mode
+umum dan mode penelitian, setiap pemain memilih lebih dulu (mode pameran tidak merekam apa pun, sehingga layar ini
+tidak muncul):
 
 - **Saya setuju** — jawaban direkam dan dikirim seperti biasa.
-- **Main tanpa merekam** — permainan berjalan normal, tetapi **tidak ada satu baris log pun yang ditulis maupun
-  dikirim**. Pilihan untuk pengunjung umum di pameran yang bukan peserta penelitian.
+- **Main tanpa merekam** (mode umum) — permainan berjalan normal, tetapi **tidak ada satu baris log pun yang
+  ditulis maupun dikirim**.
+- **Tidak setuju, main bukan sebagai peserta** (mode penelitian) — sama seperti di atas, dan perangkat keluar dari
+  mode penelitian. Tidak ada pilihan untuk tetap berstatus peserta tanpa direkam.
 
 Layar ini muncul lagi setelah **Reset progres** (pemain berikutnya), dan ketika **versi teks persetujuan
 berubah**. Pilihan beserta waktunya disimpan, dan setiap baris log mencatat `consentStatus`, `consentVersion`,
@@ -822,7 +858,7 @@ Daftar ini fakta teknis untuk membantu penyusun teks, **bukan** redaksi persetuj
 - level, tahap, soal yang ditampilkan, pilihan jawaban beserta urutannya, jawaban yang dipilih, benar atau
   salah, dan apakah bantuan "Tampilkan arti" dipakai;
 - di tahap 5: **kalimat yang diketik peserta apa adanya** dan penilaian dirinya ("sudah mirip"/"masih ragu");
-- versi aplikasi, revisi materi, dan status serta versi persetujuan.
+- versi aplikasi, revisi materi, mode sesi (umum atau penelitian), dan status serta versi persetujuan.
 
 Aplikasi tidak merekam nama, NIM, alamat email, lokasi, atau informasi perangkat. Data disimpan di perangkat
 dan, jika pengiriman diaktifkan, dikirim ke Google Sheet milik tim.
@@ -830,13 +866,16 @@ dan, jika pengiriman diaktifkan, dikirim ke Google Sheet milik tim.
 ### Peserta yang menarik persetujuan
 
 Jika peserta yang sudah setuju membuka layar persetujuan (⚙ Pengaturan → Persetujuan perekaman) lalu memilih
-**Main tanpa merekam**, aplikasi menanyakan apa yang dilakukan dengan jawaban yang sudah terekam:
+**Main tanpa merekam** (di mode penelitian: **Tidak setuju**), aplikasi menanyakan apa yang dilakukan dengan jawaban yang sudah terekam:
 
 - **Hapus juga data saya yang sudah terekam** — semua jawaban pemain itu dihapus dari perangkat, lalu aplikasi
   menulis **satu baris penarikan** (`consentStatus` = `withdrawn`) berisi `playerId`, kode peserta jika ada, waktu,
   dan jumlah baris yang dihapus dari perangkat (kolom `answer`). Baris ini ikut dikirim ke spreadsheet, kecuali
   persetujuannya dulu diberikan atas teks placeholder.
 - **Biarkan data yang sudah terekam** — hanya berhenti merekam jawaban berikutnya.
+
+Di mode penelitian, kedua pilihan juga mengeluarkan perangkat dari mode penelitian. Baris penarikan masih ditulis
+dengan `sessionMode` = `research`.
 
 Jawaban yang **sudah terkirim** ke spreadsheet tidak bisa dihapus oleh aplikasi. Peneliti menghapusnya secara
 manual; lihat [Untuk peneliti: menghapus data peserta yang menarik persetujuan](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan).
@@ -866,12 +905,13 @@ Dibuka dari menu **Pengaturan** di peta dan layar lain di luar quest.
 
 | Bagian | Isi |
 |---|---|
-| Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). |
+| Mode sesi | Mode yang aktif (**Umum**, **Pameran**, atau **Penelitian**), apa artinya, dan kode peserta di mode penelitian. |
+| Pemain berikutnya | ID pemain saat ini dan tombol **Reset progres** (dengan konfirmasi). Reset juga mengakhiri mode penelitian. |
 | Furigana | **Selalu tampil**, **Tampil setelah menjawab**, atau **Tidak pernah** (lihat [Aturan permainan](#aturan-permainan)). |
-| Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. |
-| Kode peserta | Opsional. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
+| Persetujuan perekaman | Pilihan pemain saat ini, versi teks, dan tombol **Buka layar persetujuan**. Tidak tampil di mode pameran. |
+| Kode peserta | Opsional di mode umum, **wajib** di mode penelitian (bisa diganti, tidak bisa dikosongkan), tidak tampil di mode pameran. Hanya huruf, angka, `-`, `_`, tanpa spasi; deretan 8 angka atau lebih ditolak karena menyerupai NIM. Gunakan kode anonim dari peneliti dengan format **huruf lalu angka**, misalnya `K4-01`. Tercatat di setiap baris log dan dikosongkan saat reset. |
 | Riwayat jawaban | Jumlah jawaban, **indikator kapasitas** (peringatan sejak ±80%), status pengiriman ke server, **Ekspor CSV**, dan **Hapus log** (konfirmasi ganda: kotak konfirmasi, lalu mengetik `HAPUS`). |
-| Mode pameran | Sakelar **Tampilkan papan peringkat di perangkat ini** dan tombol **Kosongkan papan peringkat** (D-106). Setelan perangkat, tidak ikut direset. |
+| Mode pameran | Sakelar **Mode pameran di perangkat ini** (pencatatan mati, layar persetujuan dilewati, papan peringkat tampil) dan tombol **Kosongkan papan peringkat** (D-106, D-112). Setelan perangkat, tidak ikut direset. Tidak tersedia di mode penelitian. |
 | Materi | Revisi materi, tanda DRAF, dan tautan **Tentang aplikasi**. Halaman tim (pemeriksaan konten, pratinjau) sengaja tidak ditautkan. |
 
 **Pemeriksaan konten dan aset** (untuk tim, dibuka lewat alamatnya yang dicatat di `MULAI-DI-SINI.md`, jangan dibuka di depan peserta karena memuat isi materi): daftar
@@ -891,7 +931,8 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 |---|---|
 | `rowId` | ID unik tiap baris. Dipakai spreadsheet untuk membuang baris yang terkirim dua kali. |
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
-| `participantCode` | Kode peserta anonim, jika diisi. |
+| `participantCode` | Kode peserta anonim: wajib di mode penelitian, opsional di mode umum. |
+| `sessionMode` | `research` untuk data penelitian (tautan penelitian, setuju, kode peserta terisi) atau `general` untuk pemain umum. Mode pameran tidak menulis baris. **Saring analisis penelitian dengan kolom ini.** |
 | `consentStatus`, `consentVersion`, `consentAt` | `agreed` untuk jawaban (baris hanya ditulis setelah persetujuan), atau `withdrawn` untuk baris penarikan; versi teks persetujuan yang disetujui dan waktu persetujuan diberikan. Pada baris penarikan, `timestamp` adalah waktu penarikan dan `answer` jumlah baris yang dihapus dari perangkat. |
 | `levelId`, `isReview` | Quest (`Q-…`) atau ulangan wilayah (`REV-B06`) tempat baris ditulis, dan 1 jika ulangan. |
 | `regionId`, `questId` | Wilayah (`B06`) dan quest asal item. |
@@ -920,7 +961,7 @@ otomatis.
 
 ## Pengiriman log ke Google Apps Script
 
-**Ini jalur utama pengumpulan data**, termasuk saat pameran. Ekspor CSV hanya cadangan.
+**Ini jalur utama pengumpulan data penelitian.** Ekspor CSV hanya cadangan. Mode pameran tidak menulis log, jadi tidak ada yang dikirim dari stan.
 
 Cara kerjanya: setiap jawaban disimpan di perangkat lebih dulu, lalu dikirim per kelompok (50 baris)
 ke Web App. Baris dianggap terkirim hanya jika server membalas `{"ok": true}`. Jika gagal (jaringan
@@ -928,7 +969,7 @@ mati, server lambat), aplikasi tetap berjalan normal, baris tetap tersimpan, dan
 otomatis: 2 detik setelah jawaban berikutnya, saat jaringan kembali, dan setiap 60 detik. Status dan
 pesan galat terlihat di Pengaturan → Riwayat jawaban → Pengiriman ke server.
 
-> ⚠ **Siapkan dan uji endpoint jauh sebelum hari pameran, jangan di hari-H.** Skrip di bawah sudah
+> ⚠ **Siapkan dan uji endpoint jauh sebelum sesi penelitian pertama, jangan di hari-H.** Skrip di bawah sudah
 > diuji dengan tiruan layanan Google, tetapi tim wajib mengujinya sendiri di akun Google yang akan
 > dipakai.
 
@@ -1084,7 +1125,7 @@ aplikasi, sehingga orang lain secara teori bisa mengirim data sampah. Saring dat
 
 ## Ekspor CSV (cadangan)
 
-Dipakai jika pengiriman ke server tidak bisa diandalkan, misalnya jaringan pameran mati.
+Dipakai jika pengiriman ke server tidak bisa diandalkan, misalnya jaringan di tempat sesi penelitian mati.
 
 1. Pengaturan → Riwayat jawaban → **Ekspor CSV**.
 2. File `kanji-bertahap-log-TAHUNBULANTANGGAL-JAMMENIT.csv` masuk ke folder Unduhan perangkat.
@@ -1099,49 +1140,42 @@ menjalankannya sebagai rumus.
 
 Tidak perlu memahami kode. Semua langkah dilakukan dari aplikasi. Bagian ini sebaiknya dicetak dan ditaruh di meja stan.
 
-**Pameran dan uji coba penelitian berbeda.** Di pameran, **mode pameran** dinyalakan supaya pengunjung bisa melihat
-papan peringkat. Dalam uji coba penelitian (kelas, sesi peserta), mode pameran **harus mati**: persaingan adalah
-perlakuan tersendiri yang mencampuri hasil (D-106).
+**Di pameran tidak ada yang direkam.** Selama **mode pameran** menyala, aplikasi tidak menulis maupun mengirim satu
+baris log pun, dan layar persetujuan tidak muncul: pengunjung pameran bukan peserta penelitian (D-112). Papan
+peringkat hanya ada di mode ini. **Peserta penelitian tidak dilayani di perangkat stan**; mereka memakai tautan
+penelitian di perangkat lain (lihat [Prosedur uji coba penelitian](#prosedur-uji-coba-penelitian-untuk-peneliti)).
 
 ### Seminggu sebelum pameran (koordinator data)
 
-1. Pastikan pengiriman log sudah aktif dan sudah diuji dari ponsel yang akan dipakai
-   (bagian [Pengiriman log](#pengiriman-log-ke-google-apps-script), langkah 4).
-2. Di setiap perangkat pameran, buka aplikasi dari tautan Netlify di **satu tab saja**.
-3. Di setiap perangkat: **Pengaturan → Mode pameran** → nyalakan **Tampilkan papan peringkat di perangkat ini**.
+1. Di setiap perangkat pameran, buka aplikasi dari tautan Netlify di **satu tab saja**.
+2. Jika perangkat pernah dipakai untuk bermain sebelumnya, buka **Pengaturan → Riwayat jawaban**. Jika masih ada
+   jawaban, **Ekspor CSV**, serahkan ke koordinator data, lalu **Hapus log…**. Log yang kosong memudahkan memeriksa
+   bahwa pameran memang tidak merekam apa pun.
+3. Di setiap perangkat: **Pengaturan → Mode pameran** → nyalakan **Mode pameran di perangkat ini**.
    Setelan ini milik perangkat dan tidak hilang saat reset progres.
-4. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
+4. Periksa bagian atas Pengaturan: **Mode saat ini: Pameran**.
+5. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
 
 ### Pagi hari sebelum stan dibuka
 
-1. Nyalakan perangkat dan pastikan terhubung ke internet.
-2. Buka aplikasi → **Pengaturan** (menu di bawah layar) → bagian **Riwayat jawaban**.
-3. Periksa tiga hal:
-   - **Pengiriman ke server** tidak menampilkan pesan merah.
-   - **Penyimpanan terpakai** di bawah 80%. Jika sudah 80% atau lebih, jalankan langkah
-     *Jika muncul peringatan kapasitas* di bawah sebelum mulai.
-   - Tidak ada tulisan "jawaban tidak bisa disimpan".
-4. Bagian **Mode pameran**: pastikan sakelar menyala. Jika papan peringkat dibuat per hari, tekan
-   **Kosongkan papan peringkat** → **Ya, kosongkan** (nomor pemain mulai lagi dari 01). Jika papan dibiarkan
-   berlanjut dari kemarin, lewati langkah ini.
-5. Bagian **Pemain berikutnya**: tekan **Reset progres** → **Ya, reset progres**.
+1. Nyalakan perangkat dan buka aplikasi → **Pengaturan** (menu di bawah layar).
+2. Pastikan tertulis **Mode saat ini: Pameran**. Jika tertulis Umum, nyalakan lagi sakelar **Mode pameran**. Jika
+   tertulis **Penelitian** (ada penanda kuning "Mode penelitian" di atas layar), perangkat ini sedang dipakai untuk
+   uji coba penelitian: tekan **Reset progres**, lalu nyalakan mode pameran.
+3. Bagian **Mode pameran**: jika papan peringkat dibuat per hari, tekan **Kosongkan papan peringkat** →
+   **Ya, kosongkan** (nomor pemain mulai lagi dari 01). Jika papan dibiarkan berlanjut dari kemarin, lewati langkah ini.
+4. Bagian **Pemain berikutnya**: tekan **Reset progres** → **Ya, reset progres**.
 
 ### Setiap kali pengunjung berganti
 
 1. Pengaturan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus.
-2. Jika pengunjung adalah peserta penelitian dan membawa kode dari peneliti: isi **Kode peserta**
-   (bentuknya huruf lalu angka, misalnya `K4-01`), lalu **Simpan kode**. Jangan pernah mengisi nama atau NIM.
-3. Tekan **‹ Peta**. Layar **sambutan** muncul (berisi penafian materi); serahkan perangkat ke pengunjung.
-4. Pengunjung menekan tombol lanjut, **memilih karakter** (Hana atau Kazu), lalu sampai di peta. Peta menggulir
-   sendiri ke lokasi yang sedang dikerjakan.
-5. Saat pengunjung membuka quest pertama, **layar persetujuan** muncul:
-   - **Pengunjung umum** (bukan peserta penelitian): minta mereka memilih **Main tanpa merekam**.
-   - **Peserta penelitian**: minta mereka membaca teksnya sampai selesai, lalu memilih sendiri. Jangan memilihkan.
-6. Setelah bermain, pengunjung bisa membuka **🏆 Papan peringkat** dari peta. Baris mereka ditandai **(kamu)**,
+2. Tekan **‹ Peta**. Layar **sambutan** muncul (berisi penafian materi); serahkan perangkat ke pengunjung.
+3. Pengunjung menekan tombol lanjut, **memilih karakter** (Hana atau Kazu), lalu sampai di peta. Peta menggulir
+   sendiri ke lokasi yang sedang dikerjakan. Quest langsung bisa dimainkan; tidak ada layar persetujuan.
+4. Setelah bermain, pengunjung bisa membuka **🏆 Papan peringkat** dari peta. Baris mereka ditandai **(kamu)**,
    dengan nomor pemain seperti "Pemain 07". Papan hanya memuat potret karakter, nomor, level, dan XP, tanpa nama.
 
-Reset **tidak** menghapus jawaban pengunjung sebelumnya; semuanya tetap tersimpan dan terkirim. XP pengunjung
-sebelumnya tetap di papan dengan nomornya.
+XP pengunjung sebelumnya tetap di papan dengan nomornya.
 
 ### Jika muncul spanduk kuning "Aplikasi ini juga terbuka di tab lain"
 
@@ -1152,14 +1186,41 @@ Artinya aplikasi terbuka dua kali di perangkat yang sama, dan progres bisa salin
 3. Jika pengunjung sedang bermain, progres quest yang sedang dimainkan mungkin perlu diulang. Jawaban
    yang sudah tercatat di log tidak hilang.
 
-### Setiap satu jam atau saat istirahat
+### Akhir hari
 
-1. Buka Pengaturan → Riwayat jawaban.
-2. Jika tertulis **✓ Semua jawaban sudah terkirim**: tidak perlu melakukan apa-apa.
-3. Jika tertulis **Belum terkirim: N jawaban** dan ada pesan merah:
-   - Periksa koneksi internet, lalu tekan **Kirim sekarang**.
-   - Jika masih gagal, tekan **Ekspor CSV** sebagai cadangan dan beri tahu koordinator data.
-     Permainan tetap bisa berjalan seperti biasa.
+1. Papan peringkat boleh dibiarkan (berlanjut besok) atau dikosongkan besok pagi (langkah pagi nomor 3).
+2. Pemeriksaan singkat: **Pengaturan → Riwayat jawaban** menunjukkan jumlah jawaban yang **sama** dengan pagi tadi
+   (nol jika log sudah dikosongkan sebelum pameran). Jika bertambah, ada perangkat yang tidak dalam mode pameran;
+   beri tahu koordinator data.
+3. Setelah pameran selesai, **matikan mode pameran** dan kosongkan papannya di setiap perangkat. Perangkat yang
+   akan dipakai untuk uji coba penelitian tidak perlu diubah lagi: tautan penelitian mematikan mode pameran sendiri.
+
+## Prosedur uji coba penelitian (untuk peneliti)
+
+Sesi penelitian (kelas, sesi peserta) memakai **tautan penelitian**, bukan alamat biasa dan bukan perangkat stan.
+
+### Sebelum sesi
+
+1. Siapkan **daftar kode peserta** anonim (`K4-01`, `K4-02`, …). Simpan pasangan kode ↔ nama **terpisah** dari
+   aplikasi dan dari spreadsheet log, misalnya di berkas peneliti sendiri. Pasangan inilah yang menghubungkan data
+   aplikasi dengan nilai pretest dan posttest.
+2. Buat tautan penelitian: alamat Netlify + `#/penelitian`, misalnya `https://nama-situs.netlify.app/#/penelitian`.
+
+### Untuk setiap peserta
+
+1. Peserta membuka tautan penelitian di perangkatnya (atau di perangkat sesi yang sudah di-reset). Jika perangkat
+   masih menyimpan progres pemain lain, aplikasi meminta konfirmasi untuk mulai sebagai pemain baru.
+2. Layar persetujuan muncul. Peserta membaca sendiri sampai selesai dan memilih sendiri; jangan memilihkan. Jika
+   peserta **tidak setuju**, ia tetap boleh bermain, tetapi bukan sebagai peserta: penanda mode penelitian hilang
+   dan jawabannya tidak direkam.
+3. Peserta mengisi **kode peserta** miliknya. Permainan baru bisa dimulai setelah kode diisi.
+4. Periksa penanda kuning di atas layar: **● Mode penelitian · K4-01** dengan kode yang benar. Jika kodenya
+   salah, ganti di **Pengaturan → Kode peserta**.
+5. Setelah sesi, periksa **Pengaturan → Riwayat jawaban**: **✓ Semua jawaban sudah terkirim**. Jika gagal terkirim,
+   **Ekspor CSV** sebagai cadangan.
+
+Perangkat yang dipakai bergantian: setelah satu peserta selesai dan jawabannya terkirim, **Reset progres**, lalu
+buka tautan penelitian lagi untuk peserta berikutnya.
 
 ### Jika muncul peringatan kapasitas
 
@@ -1170,19 +1231,6 @@ Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di peta dan di Pen
 3. Tekan **Ekspor CSV** dan simpan filenya (kirim ke koordinator data atau salin ke laptop).
 4. Periksa bahwa file CSV bisa dibuka.
 5. Baru setelah itu: **Hapus log…** → ketik `HAPUS` → **Hapus log permanen**.
-
-Jika muncul pesan **merah** "Penyimpanan penuh", lakukan langkah di atas **sekarang juga**, sebelum
-pengunjung berikutnya bermain.
-
-### Akhir hari
-
-1. Pengaturan → pastikan **✓ Semua jawaban sudah terkirim**.
-2. **Ekspor CSV** sebagai cadangan harian, beri nama file sesuai tanggal jika perlu, serahkan ke
-   koordinator data.
-3. Jangan menghapus log sebelum koordinator memastikan data di spreadsheet dan file CSV lengkap.
-4. Papan peringkat boleh dibiarkan (berlanjut besok) atau dikosongkan besok pagi (langkah pagi nomor 4).
-5. Setelah pameran selesai, **matikan mode pameran** di setiap perangkat sebelum perangkat dipakai untuk uji coba
-   penelitian, dan kosongkan papannya.
 
 ## Pratinjau dan cetak untuk validator ahli
 
@@ -1260,7 +1308,8 @@ dan sejenisnya tidak menambah apa pun, supaya pemain tidak terdorong menebak cep
 XP tidak bisa melenceng dan tidak bisa ditimbun dengan mengulang quest. **Level tidak mengunci apa pun**: wilayah
 tetap hanya terbuka lewat penyelesaian bab dan 復習.
 
-**Papan peringkat — mode pameran** (D-106). Mati secara bawaan; dinyalakan petugas di **Pengaturan → Mode pameran**.
+**Papan peringkat — mode pameran** (D-106). Hanya ada di mode pameran, yang dinyalakan petugas di **Pengaturan →
+Mode pameran**; tidak pernah di mode umum atau mode penelitian (D-112).
 Isinya pemain-pemain yang pernah bermain **di perangkat ini**, diurutkan menurut XP, masing-masing dengan potret
 karakter pilihannya dan nomor urut ("Pemain 07"), tanpa nama, tanpa kode peserta, dan tanpa teks ketikan. Tidak
 memakai server, tidak dikirim ke mana pun, dan tidak dicatat di log penelitian. Papan disimpan terpisah dan
@@ -1362,7 +1411,7 @@ sini; periksa manual di ponsel.
 ## Pengujian yang wajib dijalankan tim
 
 Tiga hal berikut **belum bisa diuji oleh pengembang**. Kerjakan sesuai urutan; urutannya mengikuti
-jadwal: validasi ahli jauh lebih dulu daripada pameran.
+jadwal: validasi ahli jauh lebih dulu daripada uji coba penelitian.
 
 ### 1. Cetak pratinjau di Safari dan Firefox — sebelum validasi ahli
 
@@ -1384,9 +1433,9 @@ Lakukan di **Safari** (Mac atau iPhone) dan **Firefox**:
    - [ ] Setiap quest diakhiri kotak **Catatan validator**.
 4. Jika ada yang gagal, **jangan kirim PDF dari browser tersebut**. Pakai PDF dari browser yang lolos.
 
-### 2. Endpoint Apps Script di akun Google sungguhan — jauh sebelum pameran
+### 2. Endpoint Apps Script di akun Google sungguhan — jauh sebelum uji coba penelitian
 
-**Kenapa:** ini jalur utama pengumpulan data di pameran. Skrip baru diuji dengan tiruan layanan Google,
+**Kenapa:** ini jalur utama pengumpulan data penelitian. Skrip baru diuji dengan tiruan layanan Google,
 belum di akun Google yang sebenarnya. Masalah izin atau akses hanya muncul di akun sungguhan.
 
 1. Ikuti [Pengiriman log ke Google Apps Script](#pengiriman-log-ke-google-apps-script) langkah 1–4.
@@ -1396,11 +1445,11 @@ belum di akun Google yang sebenarnya. Masalah izin atau akses hanya muncul di ak
    - [ ] Sheet `log` berisi baris baru; huruf Jepang tampil benar.
    - [ ] Matikan Wi-Fi, jawab beberapa soal, nyalakan lagi: dalam 1 menit semua terkirim, dan tidak ada
          baris ganda di sheet (periksa kolom `rowId`).
-   - [ ] Uji dari minimal dua ponsel berbeda yang akan dipakai di pameran.
+   - [ ] Uji dari minimal dua ponsel berbeda yang akan dipakai peserta.
 
-### 3. Unduhan CSV di iPhone — sebelum pameran
+### 3. Unduhan CSV di iPhone — sebelum uji coba penelitian
 
-**Kenapa:** ekspor CSV adalah cadangan saat jaringan pameran mati. Unduhan file di iPhone berbeda dari
+**Kenapa:** ekspor CSV adalah cadangan saat jaringan di sesi penelitian mati. Unduhan file di iPhone berbeda dari
 Android dan komputer, dan belum pernah dicoba.
 
 1. Di iPhone, buka aplikasi di Safari, mainkan beberapa soal.
@@ -1431,8 +1480,8 @@ Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dik
       dibiarkan sementara.
 - [ ] `contentRevision` **sudah dinaikkan** dari `draft-0` (misalnya menjadi `rev-1`) saat konversi CSV.
 - [ ] Pada kali pertama `contentRevision` keluar dari draf, `APP_VERSION` di `js/config.js` **dinaikkan ke `1.0.0`**
-      dalam commit yang sama (DECISIONS D-111). Versi 0.x di log menandai data pengembangan, 1.x data penelitian.
-      Uji otomatis gagal jika langkah ini terlewat.
+      dalam commit yang sama (DECISIONS D-111). Versi 1.x menandai rilis materi; data penelitian dipisahkan dengan
+      kolom `sessionMode` (D-112). Uji otomatis gagal jika langkah ini terlewat.
 - [ ] Pratinjau dibuka ulang: spanduk dan label **DRAF sudah tidak muncul**, dan revisi yang tertulis sesuai.
 - [ ] Pengujian tim nomor 1 (cetak di Safari dan Firefox) sudah lolos.
 - [ ] PDF pratinjau untuk validator dibuat dari browser yang lolos, dan nama filenya memuat nama revisi.
@@ -1442,25 +1491,43 @@ Dijalankan oleh ketua tim konten. Semua butir harus dicentang sebelum materi dik
 Dijalankan oleh koordinator data dan penjaga stan.
 
 - [ ] Aplikasi dengan materi final sudah di-deploy ke Netlify (lihat [Menaruh aplikasi di Netlify](#menaruh-aplikasi-di-netlify)), dan tautannya sudah dicoba.
-- [ ] Pengujian tim nomor 2 (endpoint Apps Script) sudah lolos, dan `LOG_REMOTE_ENABLED` aktif di versi
-      yang di-deploy.
-- [ ] Pengujian tim nomor 3 (CSV di iPhone) sudah lolos.
 - [ ] Aset dari tim sudah diganti dan halaman pemeriksaan aset tidak menunjukkan ✗ (potongan peta, ikon lokasi,
       ikon menu, karakter); nama tokoh lawan bicara di `data/characters.json` sudah diisi tim.
-- [ ] Setiap perangkat pameran sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, satu quest
-      dimainkan sampai tuntas, dan Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
-- [ ] **Mode pameran** sudah dinyalakan di setiap perangkat stan, dan papan peringkat dari uji coba sudah dikosongkan.
-- [ ] Setiap perangkat sudah di-**Reset progres** dan log uji coba sudah dihapus setelah diekspor.
+- [ ] Log lama di setiap perangkat stan sudah diekspor dan dihapus, sehingga **Riwayat jawaban** menunjukkan 0.
+- [ ] **Mode pameran** sudah dinyalakan di setiap perangkat stan, Pengaturan menampilkan **Mode saat ini: Pameran**,
+      dan papan peringkat dari uji coba sudah dikosongkan.
+- [ ] Setiap perangkat stan sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, tidak ada layar
+      persetujuan, satu quest dimainkan sampai tuntas, pemain muncul di papan peringkat, dan **Riwayat jawaban
+      tetap 0**.
+- [ ] Setiap perangkat sudah di-**Reset progres**.
 - [ ] Bagian [Prosedur pameran](#prosedur-pameran-untuk-penjaga-stan) sudah **dicetak** dan ada di meja stan.
-- [ ] Penjaga stan sudah berlatih: reset, mengisi kode peserta, membaca status pengiriman, ekspor CSV, membuka
-      dan mengosongkan papan peringkat, dan menangani spanduk tab ganda.
-- [ ] Teks persetujuan di `data/consent.json` sudah diganti dengan redaksi yang disetujui dosen pembimbing,
-      `isPlaceholder` bernilai `false`, dan `version` sudah diganti. Layar persetujuan dibuka ulang dan spanduk
-      **TEKS SEMENTARA** sudah tidak muncul.
+- [ ] Penjaga stan sudah berlatih: reset, membaca **Mode saat ini**, membuka dan mengosongkan papan peringkat,
+      dan menangani spanduk tab ganda.
+- [ ] Penjaga stan tahu bahwa peserta penelitian tidak dilayani di stan, dan ke mana mereka diarahkan.
+- [ ] Nomor telepon koordinator data tertulis di lembar prosedur.
+- [ ] Pengisi daya tersedia.
+
+## Daftar periksa sebelum uji coba penelitian
+
+Dijalankan oleh peneliti sebelum sesi peserta pertama. Lihat [Prosedur uji coba penelitian](#prosedur-uji-coba-penelitian-untuk-peneliti).
+
+- [ ] Aplikasi dengan materi yang sudah keluar dari draf sudah di-deploy ke Netlify (`contentRevision` bukan
+      `draft-…`, `APP_VERSION` 1.x; lihat [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)).
+- [ ] **Tautan penelitian** (alamat Netlify + `#/penelitian`) sudah dibuat dan diuji di ponsel: tautan membuka
+      layar persetujuan, penanda **● Mode penelitian** tampil, permainan tidak bisa dimulai sebelum kode peserta
+      diisi, dan Pengaturan menampilkan **Mode saat ini: Penelitian** tanpa sakelar mode pameran.
+- [ ] **Daftar kode peserta** anonim (`K4-01`, `K4-02`, …) sudah disiapkan, dan pasangan kode ↔ nama **disimpan
+      terpisah** dari aplikasi dan dari spreadsheet log.
+- [ ] **Teks persetujuan final** sudah dipasang: `data/consent.json` berisi redaksi yang disetujui dosen
+      pembimbing, `isPlaceholder` bernilai `false`, dan `version` sudah diganti. Layar persetujuan dibuka ulang dan
+      spanduk **TEKS SEMENTARA** sudah tidak muncul.
 - [ ] Teks persetujuan menjelaskan bahwa peserta boleh berhenti dan meminta datanya dihapus, sesuai prosedur di
       [Peserta yang menarik persetujuan](#peserta-yang-menarik-persetujuan).
-- [ ] Peneliti yang memegang spreadsheet sudah membaca [prosedur penghapusan manual](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan).
-- [ ] Jika ada peserta penelitian: daftar kode peserta anonim (misalnya `K4-01`, `K4-02`, …) sudah disiapkan
-      peneliti, terpisah dari daftar nama.
-- [ ] Nomor telepon koordinator data tertulis di lembar prosedur.
-- [ ] Pengisi daya dan koneksi internet cadangan (misalnya hotspot ponsel) tersedia.
+- [ ] Pengujian tim nomor 2 (endpoint Apps Script) sudah lolos, dan `LOG_REMOTE_ENABLED` aktif di versi
+      yang di-deploy. Pengujian tim nomor 3 (CSV di iPhone) sudah lolos sebagai cadangan.
+- [ ] **Satu sesi uji** lewat tautan penelitian (dengan kode uji, misalnya `UJI-01`) sudah dimainkan sampai satu
+      quest tuntas, dan baris lognya tiba di spreadsheet dengan `sessionMode` = **`research`** dan `participantCode`
+      = `UJI-01`. Baris uji ini lalu ditandai atau dihapus dari spreadsheet supaya tidak ikut dianalisis.
+- [ ] Peneliti yang memegang spreadsheet sudah membaca [prosedur penghapusan manual](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan),
+      dan tahu bahwa analisis penelitian disaring dengan `sessionMode` = `research`.
+- [ ] Perangkat sesi (jika memakai perangkat bersama) sudah di-**Reset progres**, dan mode pameran mati.

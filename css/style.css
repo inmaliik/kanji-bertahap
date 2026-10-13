@@ -1080,6 +1080,31 @@ rt {
   }
 }
 
+/* Research mode badge (D-112): small, above every screen, never scrolled away. */
+.mode-badge {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  margin: 0;
+  padding: 0.25rem max(var(--gutter), env(safe-area-inset-left));
+  background: var(--highlight);
+  border-bottom: var(--line) solid var(--border);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mode-card--research {
+  background: var(--highlight);
+}
+
+@media print {
+  .mode-badge {
+    display: none !important;
+  }
+}
+
 /* Validation issues ------------------------------------------------------------ */
 
 .issues {

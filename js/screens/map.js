@@ -25,7 +25,9 @@ import { nodeStatuses, regionSummary } from "../progression.js";
 import { storageUsage } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
 import { exploration, levelOf, xpOf } from "../xp.js";
-import { loadDevice, recordScore } from "../leaderboard.js";
+import { recordScore } from "../leaderboard.js";
+import { currentMode } from "../event-log.js";
+import { leaderboardAvailable } from "../session-mode.js";
 import { menuBar } from "./menu.js";
 import { regionHref } from "./quest.js";
 import { regionSheet } from "./region.js";
@@ -154,11 +156,11 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
   const summaries = model.regions.map((region) => regionSummary(model, progress, region, statuses));
   const usage = storageUsage();
   const explored = exploration(model, progress);
-  const device = loadDevice();
+  const mode = currentMode(app);
 
   // Exhibition mode keeps this player's score on the device board (D-106).
   const { xp } = xpOf(model, progress);
-  recordScore({ playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
+  recordScore(mode, { playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
 
   const { places, segmentCount } = placeLocations(model.regions, app.mapLayout);
   const points = places.map((p) => columnPoint(p, segmentCount));
@@ -227,7 +229,7 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
       segments,
       h("div", { class: "map__layer" }, paths(app, points), pins)
     ),
-    device.exhibitionMode ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
+    leaderboardAvailable(mode) ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
     h("h2", { class: "map-list__title" }, "Wilayah"),
     h(
       "ul",

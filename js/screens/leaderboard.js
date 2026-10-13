@@ -4,13 +4,15 @@
 
 import { h } from "../dom.js";
 import { avatar } from "../cast.js";
-import { loadDevice, playerLabel, ranking } from "../leaderboard.js";
+import { playerLabel, ranking } from "../leaderboard.js";
+import { currentMode } from "../event-log.js";
+import { leaderboardAvailable } from "../session-mode.js";
 import { backLink } from "./common.js";
 import { menuBar } from "./menu.js";
 
 export function leaderboardScreen(app) {
   const head = [backLink("#/", "Peta"), h("h1", { tabindex: "-1" }, "🏆 Papan peringkat")];
-  if (!loadDevice().exhibitionMode) {
+  if (!leaderboardAvailable(currentMode(app))) {
     return h(
       "div",
       { class: "screen" },

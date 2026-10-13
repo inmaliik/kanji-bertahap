@@ -281,13 +281,15 @@ test("exhibition leaderboard: off by default, per device, numbered players, surv
   globalThis.localStorage = new MemoryStorage();
   try {
     const L = await import(`${jsModule("leaderboard.js")}?board`);
-    L.recordScore({ playerId: "a", character: "hana", xp: 10, level: 1 });
+    const { sessionModeOf } = await import(jsModule("session-mode.js"));
+    const mode = () => sessionModeOf(S.createProgress(), L.loadDevice());
+    L.recordScore(mode(), { playerId: "a", character: "hana", xp: 10, level: 1 });
     assert.deepEqual(L.ranking(), [], "nothing is kept while exhibition mode is off");
 
     L.saveDevice({ exhibitionMode: true });
-    L.recordScore({ playerId: "a", character: "hana", xp: 10, level: 1 });
-    L.recordScore({ playerId: "b", character: "kazu", xp: 70, level: 2 });
-    L.recordScore({ playerId: "a", character: "hana", xp: 40, level: 1 });
+    L.recordScore(mode(), { playerId: "a", character: "hana", xp: 10, level: 1 });
+    L.recordScore(mode(), { playerId: "b", character: "kazu", xp: 70, level: 2 });
+    L.recordScore(mode(), { playerId: "a", character: "hana", xp: 40, level: 1 });
     assert.deepEqual(L.ranking().map((r) => [L.playerLabel(r.number), r.xp]), [["Pemain 02", 70], ["Pemain 01", 40]]);
 
     // A reset only replaces kanjiGame.progress.v2; the board and the device setting stay.
@@ -296,7 +298,7 @@ test("exhibition leaderboard: off by default, per device, numbered players, surv
     assert.equal(L.loadDevice().exhibitionMode, true);
     L.clearBoard();
     assert.deepEqual(L.ranking(), []);
-    L.recordScore({ playerId: "c", character: "kazu", xp: 0, level: 1 });
+    L.recordScore(mode(), { playerId: "c", character: "kazu", xp: 0, level: 1 });
     assert.equal(L.ranking()[0].number, 1, "numbers start again after clearing");
   } finally {
     delete globalThis.localStorage;

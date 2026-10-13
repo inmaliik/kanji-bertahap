@@ -1,9 +1,15 @@
-// Non-answer events in the log, e.g. opening the index (D-68). Written only
-// with consent, like answers (D-50).
+// The one path to the answer log for quests and events. Rows are written only
+// with consent (D-50) and only in a recording session mode (D-112). Non-answer
+// events, e.g. opening the index, are logged here too (D-68).
 
 import { APP_VERSION } from "./config.js";
 import { logAnswer } from "./logger.js";
-import { isRecordingAllowed, STATUS } from "./state.js";
+import { loadDevice } from "./leaderboard.js";
+import { recordingAllowed, sessionModeOf } from "./session-mode.js";
+import { STATUS } from "./state.js";
+
+/** Session mode of the current player on this device. */
+export const currentMode = (app) => sessionModeOf(app.progress, loadDevice());
 
 /** Quests the player started but has not passed yet, for the openQuests column. */
 export function openQuests(progress) {
@@ -12,20 +18,32 @@ export function openQuests(progress) {
     .map(([id]) => id);
 }
 
-export function recordEvent(app, fields) {
-  if (!isRecordingAllowed(app.progress, app.consentText?.version ?? null)) return;
+/** Columns every row of the current player shares. */
+export function playerColumns(app, mode = currentMode(app)) {
   const { progress } = app;
-  logAnswer({
+  return {
     appVersion: APP_VERSION,
-    contentRevision: app.content.contentRevision,
+    contentRevision: app.content?.contentRevision,
     playerId: progress.playerId,
     participantCode: progress.participantCode,
-    consentStatus: progress.consent.choice,
-    consentVersion: progress.consent.version,
-    consentAt: progress.consent.at,
-    phase: "event",
+    sessionMode: mode,
+    consentStatus: progress.consent?.choice,
+    consentVersion: progress.consent?.version,
+    consentAt: progress.consent?.at,
     furiganaMode: progress.settings.furiganaMode,
-    openQuests: openQuests(progress).join(" | "),
-    ...fields,
-  });
+  };
+}
+
+/**
+ * Write one row if this player may be recorded now.
+ * @returns {boolean} true if a row was written and stored
+ */
+export function recordRow(app, fields) {
+  const mode = currentMode(app);
+  if (!recordingAllowed(mode, app.progress, app.consentText?.version ?? null)) return false;
+  return logAnswer({ ...playerColumns(app, mode), ...fields });
+}
+
+export function recordEvent(app, fields) {
+  return recordRow(app, { phase: "event", openQuests: openQuests(app.progress).join(" | "), ...fields });
 }

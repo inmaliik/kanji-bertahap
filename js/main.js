@@ -26,10 +26,16 @@ import { characterScreen } from "./screens/character.js";
 import { loadCharacters } from "./cast.js";
 import { settingsScreen } from "./screens/settings.js";
 import { consentScreen } from "./screens/consent.js";
+import { gateScreen, modeBadge, researchLinkScreen } from "./screens/research.js";
+import { currentMode } from "./event-log.js";
+import { SESSION_MODE } from "./session-mode.js";
 
 window.__kanjiAppBooted = true;
 
 const root = document.getElementById("app");
+// Research-mode badge, above every screen (D-112).
+const badgeSlot = document.createElement("div");
+root.before(badgeSlot);
 
 /** Shared state passed to every screen. */
 const app = {
@@ -52,6 +58,7 @@ const app = {
   kanaError: null,
   notices: [], // { kind, text } shown on the home screen
   render,
+  refreshBadge, // for screens that re-render themselves, e.g. Settings
 };
 
 const ROUTES = [
@@ -59,6 +66,8 @@ const ROUTES = [
   { pattern: /^#?\/?$/, screen: () => firstScreen() },
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
   { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
+  // The research link shared with participants; replaced by #/ once the player is in research mode (D-112).
+  { pattern: /^#\/penelitian$/, screen: () => researchLinkScreen(app, () => location.replace("#/")) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
   { pattern: /^#\/review\/([^/]+)$/, screen: (id) => reviewScreen(app, decodeURIComponent(id)) },
   { pattern: /^#\/index$/, screen: () => indexScreen(app) },
@@ -77,6 +86,10 @@ const ROUTES = [
 ];
 
 function firstScreen() {
+  // Research mode: consent and participant code before anything else. Other
+  // modes ask for consent before the first quest instead (D-50).
+  const gate = currentMode(app) === SESSION_MODE.RESEARCH ? gateScreen(app) : null;
+  if (gate) return gate;
   if (!app.progress.welcomeSeen) return welcomeScreen(app, navigate);
   if (!app.progress.character && app.characters?.players?.length) return characterScreen(app, navigate);
   return mapScreen(app);
@@ -118,9 +131,15 @@ function render() {
   const hash = location.hash;
   const route = ROUTES.find((r) => r.pattern.test(hash));
   root.replaceChildren(route ? route.screen(...hash.match(route.pattern).slice(1)) : notFoundScreen());
+  refreshBadge();
   // Room at the bottom for the fixed menu bar (D-69), and no page scroll behind an open sheet.
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
+}
+
+function refreshBadge() {
+  const badge = modeBadge(app);
+  badgeSlot.replaceChildren(...(badge ? [badge] : []));
 }
 
 function navigate() {
