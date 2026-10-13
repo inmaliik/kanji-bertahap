@@ -1,4 +1,4 @@
-// Content spreadsheet (five CSV files, one per tab) → content.json structure.
+// Content spreadsheet (five CSV files, one per tab, plus the optional hadiah tab) → content.json structure.
 // Pure module shared by tools/csv-to-json.mjs (Node) and tools/convert.html
 // (browser): no file system, no DOM.
 //
@@ -8,9 +8,11 @@
 //   kotoba      one row per kotoba
 //   quest       one row per quest; row order = order inside its region
 //   percakapan  one row per conversation line
+//   hadiah      optional: one row per reward and its milestone (D-123)
 // Each file is recognised by its header row, so file names do not matter.
 
 import { SCHEMA_VERSION, PLAYER_SPEAKER, UNKNOWN_VALUE } from "./validate.js";
+import { regionId } from "./model.js";
 
 export const TABS = Object.freeze({
   wilayah: ["chapter", "title", "intro_summary", "intro_points", "pin_segment", "pin_x", "pin_y"],
@@ -30,10 +32,14 @@ export const TABS = Object.freeze({
     "conversation_id", "line_no", "speaker", "ja", "translation", "highlight", "blank", "distractors",
     "sentence_chapter", "scene", "placeholder",
   ],
+  hadiah: ["reward_id", "title", "text", "requires_chapters", "requires_world"],
 });
 
 /** Download order used in README and in the converter page. */
-export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan"];
+export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan", "hadiah"];
+
+/** Tabs the spreadsheet may leave out: no "hadiah" tab means no rewards (D-123). */
+export const OPTIONAL_TABS = Object.freeze(["hadiah"]);
 
 /**
  * Columns a tab may leave out of its header row: added after the team's
@@ -43,7 +49,7 @@ export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan"];
 export const OPTIONAL_COLUMNS = Object.freeze({ quest: ["cat_name", "cat_body", "cat_pattern", "cat_accessory", "cat_color"] });
 
 // A column that exists in exactly one tab identifies the file.
-const SIGNATURE = { wilayah: "intro_summary", kanji: "bushu_char", kotoba: "word_ruby", quest: "quest_id", percakapan: "conversation_id" };
+const SIGNATURE = { wilayah: "intro_summary", kanji: "bushu_char", kotoba: "word_ruby", quest: "quest_id", percakapan: "conversation_id", hadiah: "reward_id" };
 
 // Conversation-level columns may be written on the first line only.
 const CONVERSATION_COLUMNS = ["sentence_chapter", "scene", "placeholder"];
@@ -245,6 +251,23 @@ function catOf(cells) {
     accessory: cells.cat_accessory ?? "",
     color: cells.cat_color ? cells.cat_color : null,
   };
+}
+
+/** One reward per row (D-123): its milestone as chapters to finish, a world to complete, or both. */
+function buildRewards(rows, problems, rowMap) {
+  const rewards = [];
+  for (const { row, cells } of rows) {
+    const chapters = splitList(cells.requires_chapters).map((c) => parseInteger(c, "requires_chapters", "hadiah", [row], problems, { allowDash: false }));
+    const world = cells.requires_world === "" ? null : parseInteger(cells.requires_world, "requires_world", "hadiah", [row], problems, { allowDash: false });
+    rowMap.set(`rewards[${rewards.length}]`, { tab: "hadiah", rows: [row] });
+    rewards.push({
+      id: cells.reward_id,
+      title: cells.title,
+      text: cells.text,
+      requires: { regions: chapters.filter(Number.isInteger).map(regionId), world: world ?? null },
+    });
+  }
+  return rewards;
 }
 
 function buildKanji(rows, problems, rowMap) {
@@ -508,14 +531,14 @@ export function convertCsvFilesToContent(files, revision) {
     tabs[result.tab] = { ...result, name: file.name };
     recognized.push({ name: file.name, tab: result.tab });
   }
-  const missing = TAB_ORDER.filter((t) => !tabs[t]);
+  const missing = TAB_ORDER.filter((t) => !tabs[t] && !OPTIONAL_TABS.includes(t));
   if (missing.length && !fatal.length) {
-    fatal.push(`Tab yang belum dipilih: ${missing.join(", ")}. Unduh setiap tab sebagai CSV, lalu pilih kelima file sekaligus.`);
+    fatal.push(`Tab yang belum dipilih: ${missing.join(", ")}. Unduh setiap tab sebagai CSV, lalu pilih semua file sekaligus.`);
   }
   if (fatal.length) return { fatal: fatal.join("\n\n"), problems: [], recognized };
 
   const problems = new CsvProblems();
-  for (const tab of TAB_ORDER) {
+  for (const tab of TAB_ORDER.filter((t) => tabs[t])) {
     if (tabs[tab].wide.length) {
       problems.add(tab, tabs[tab].wide, "Baris ini punya lebih banyak kolom daripada baris judul. Periksa koma di dalam sel yang tidak diberi tanda kutip.");
     }
@@ -528,6 +551,7 @@ export function convertCsvFilesToContent(files, revision) {
   const regions = buildRegions(tabs.wilayah.rows, tabs.quest.rows, conversations, problems, rowMap);
 
   const content = { schemaVersion: SCHEMA_VERSION, contentRevision: revision, regions, kanji, kotoba };
+  if (tabs.hadiah) content.rewards = buildRewards(tabs.hadiah.rows, problems, rowMap);
   return { fatal: null, problems: problems.list, recognized, content, rowMap };
 }
 

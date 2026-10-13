@@ -214,5 +214,22 @@
         "いんみます"
       ]
     }
+  ],
+  "rewards": [
+    {
+      "id": "H-B01-B05",
+      "title": "«BELUM DIISI: judul hadiah»",
+      "text": "«BELUM DIISI: teks hadiah, misalnya besaran diskon kartu»",
+      "requires": {
+        "regions": [
+          "B01",
+          "B02",
+          "B03",
+          "B04",
+          "B05"
+        ],
+        "world": null
+      }
+    }
   ]
 }

@@ -7,6 +7,7 @@ import { flushLog, getSenderStatus, subscribeSenderStatus } from "../log-sender.
 import { FURIGANA_MODE, resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
 import { isStorageAvailable } from "../storage.js";
 import { getBuildId } from "../build.js";
+import { rewardsAvailable, unredeemed } from "../rewards.js";
 import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
 import { menuBar } from "./menu.js";
@@ -154,17 +155,24 @@ export function settingsScreen(app) {
   // --- Next visitor -------------------------------------------------------------
 
   function resetCard() {
+    // Earned rewards live in the player's progress: a reset loses them (D-123).
+    const pending = rewardsAvailable(currentMode(app)) ? unredeemed(app.progress) : [];
+    const lost = pending.length
+      ? `⚠ ${pending.length} hadiah belum ditukar (${pending.map((r) => r.title).join(", ")}) ikut terhapus dan tidak bisa dikembalikan. Tukar dulu jika pemainnya masih ingin memakainya.`
+      : null;
     return h(
       "section",
       { class: "card", "aria-labelledby": "reset-title" },
       h("h2", { id: "reset-title" }, "Pemain berikutnya"),
       h("p", { class: "muted" }, "Lakukan reset setiap kali perangkat berpindah ke pemain lain, misalnya di pameran."),
       messageFor("reset"),
+      lost ? h("p", { class: "notice notice--warning" }, lost) : null,
       h("p", {}, "ID pemain saat ini: ", h("code", {}, app.progress.playerId)),
       confirmFlow({
         openLabel: "Reset progres",
         title: "Reset progres di perangkat ini?",
         details: [
+          ...(lost ? [lost] : []),
           "Semua progres misi dihapus, termasuk misi yang sudah tuntas.",
           "Pemain berikutnya mendapat ID pemain baru; kode peserta, pilihan persetujuan, dan karakter dikosongkan, dan setelan furigana kembali ke bawaan.",
           "Mode penelitian berakhir: pemain berikutnya mulai di mode umum, atau mode pameran jika menyala.",

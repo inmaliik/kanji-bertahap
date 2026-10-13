@@ -36,6 +36,7 @@ import { leaderboardAvailable } from "../session-mode.js";
 import { menuBar } from "./menu.js";
 import { regionCats } from "../cats.js";
 import { catFigure } from "../cat-figure.js";
+import { rewardMapCard } from "./rewards.js";
 import { regionHref } from "./quest.js";
 import { regionSheet } from "./region.js";
 
@@ -284,6 +285,8 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
       h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), uiLabel(app, "exploration"), ` Dunia ${world.number}: ${explored}%`)
     ),
     worldTabs(app, world, statuses),
+    // The reward card (D-123): never in research mode.
+    rewardMapCard(app),
     worldInfo.complete ? h("p", { class: "notice notice--success" }, `✓ Dunia ${world.number} tamat.`) : null,
     app.notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, n.text)),
     usage.warning

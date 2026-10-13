@@ -101,6 +101,7 @@ export function createProgress(now = new Date()) {
     character: null, // id of the chosen player character (D-102)
     world: null, // number of the world the map showed last (D-117)
     rescuesShown: [], // missions whose cat rescue moment was shown; which cats are free is derived (D-121)
+    rewards: {}, // reward id → { title, text, achievedAt, redeemedAt }: kept as earned, whatever the material says later (D-123)
     items: {}, // item id → streak, shared by every quest and review (D-61)
     quests: {}, // quest or review id → entry
   };
@@ -136,6 +137,7 @@ function normalizeProgress(progress) {
   progress.welcomeSeen ??= false;
   progress.character ??= null;
   if (!Array.isArray(progress.rescuesShown)) progress.rescuesShown = [];
+  if (!isPlainObject(progress.rewards)) progress.rewards = {};
   if (!Number.isInteger(progress.world)) progress.world = null;
   if (!isPlainObject(progress.settings)) progress.settings = {};
   if (!Object.values(FURIGANA_MODE).includes(progress.settings.furiganaMode)) progress.settings.furiganaMode = DEFAULT_FURIGANA_MODE;

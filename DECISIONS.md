@@ -1444,6 +1444,39 @@ dihitung dari misi dan 復習 di dunia yang sedang tampil saja. Labelnya diambil
 探検 berfurigana dengan glos "Eksplorasi"), seperti label Jepang lain. **Alasan:** Lencana menempel di peta, dan peta
 hanya menampilkan satu dunia; persentase gabungan semua dunia membingungkan begitu dunia lain punya sebagian materi.
 **Alternatif ditolak:** Persentase gabungan semua dunia (perilaku tahap 2).
+
+### D-123 · Tahap 4: hadiah kartu fisik, penukaran tatap muka, tidak ada di mode penelitian
+**Tanggal:** 2026-10-14. **Keputusan:** Menerapkan bagian hadiah dari D-116.
+- **Tonggak di data**, tab spreadsheet `hadiah` yang **opsional** (tanpa tab itu, tidak ada hadiah; spreadsheet lama tetap
+  bisa dikonversi): bab yang wilayahnya harus diselesaikan (semua misi dan 復習), dunia yang harus ditamatkan, atau
+  keduanya. **Bawaan: B01–B05**, dengan judul dan teks berupa penanda draf sampai tim memutuskannya. Tonggak yang belum
+  bisa dicapai materi sekarang diperingatkan validator dan tidak ditampilkan di peta. Judul dan teks hadiah tampil di peta
+  sebelum misi dimainkan, jadi validator menerapkan D-79 padanya (error jika memuat kotoba atau cara bacanya).
+- **Pencapaian bertanggal dan tetap:** saat tonggak tercapai, progres menyimpan tanggal, judul, dan teks hadiah saat itu.
+  Hadiah yang diraih tetap diraih walaupun materi bertambah atau tonggaknya diubah.
+- **Penukaran tatap muka:** layar hadiah menampilkan teks hadiah, tanggal diraih, potret karakter, kode pemain pendek
+  (empat karakter pertama ID pemain acak, misalnya `#7F3A`), dan jumlah kucing di koleksi. Penjual menekan **Sudah
+  ditukar** dan mengetik `DITUKAR`; hadiah itu lalu tidak bisa ditukar lagi di perangkat tersebut.
+- **Terus terang: ini sistem kepercayaan, bukan pengaman.** Situs statis tidak bisa menjaga kode rahasia, sehingga tidak
+  ada kode diskon yang seolah-olah aman. Reset progres, browser lain, atau ponsel lain bisa meraih hadiah yang sama lagi,
+  dan tanda "sudah ditukar" hanya ada di perangkat itu. Pemain sendiri juga bisa menekan tombolnya; konfirmasi dengan kata
+  hanya mencegah ketukan tidak sengaja.
+- **Kartu di peta**, bukan pintu menu (D-116): "Hadiah siap ditukar" jika ada yang belum ditukar, selain itu "Hadiah
+  berikutnya" dengan progresnya.
+- **Reset progres** menghapus hadiah yang belum ditukar, dan Pengaturan memperingatkannya dengan menyebut hadiahnya.
+- **Mode penelitian tidak punya hadiah sama sekali:** tidak diraih (walaupun tonggaknya tercapai), tidak ada kartu,
+  peringatan reset tidak menyebutnya, dan `#/hadiah` menjawab seperti halaman yang tidak ada. Mode umum dan pameran
+  berjalan normal. Jika peserta keluar dari mode penelitian (tidak setuju), hadiah dihitung dari progres saat itu.
+- **Uji:** `tests/rewards.test.mjs` (tidak pernah ada di mode penelitian; yang sudah ditukar tidak bisa ditukar lagi;
+  tonggak dari data menentukan kapan diraih; tetap diraih setelah materi berubah; validator dan tab opsional), dan uji
+  semua layar (T-20) memeriksa bahwa tidak ada layar mode penelitian yang memuat kata "hadiah" atau 🎁, termasuk untuk
+  peserta yang sudah menuntaskan tonggaknya.
+
+**Alasan:** Tim butuh tonggak yang bisa dicapai sekarang, padahal Dunia 1 baru punya 5 dari 25 bab. Menyimpan hadiah
+beserta teksnya membuat janji kepada pemain tidak berubah diam-diam. Insentif dari luar mengubah perilaku peserta, sama
+alasannya dengan papan peringkat (D-106). **Alternatif ditolak:** Kode diskon di aplikasi (tidak bisa dirahasiakan di
+situs statis); menyimpan hadiah di setelan perangkat (hadiah milik pemain, bukan perangkat); hadiah sebagai pintu menu
+(menu harus sama di semua mode, D-116).
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

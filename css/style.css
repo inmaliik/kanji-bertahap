@@ -3488,3 +3488,119 @@ input[type="radio"] {
   }
 }
 
+
+/* Rewards (D-123) -------------------------------------------------------------
+   Never shown in research mode. Ready to redeem: the highlight color, the most
+   important card on the map; redeemed: the "done" color. */
+
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: var(--tap);
+  margin-block: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.reward-card--ready {
+  border-width: 3px;
+  background: var(--highlight);
+}
+
+.reward-card__icon {
+  font-size: 1.5rem;
+}
+
+.reward-card__body {
+  display: grid;
+  min-width: 0;
+}
+
+.reward-card__label {
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.reward-card__title {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.reward-card__progress {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.reward-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reward {
+  padding: 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.reward--ready {
+  border-width: 3px;
+}
+
+.reward--redeemed {
+  background: var(--success-soft);
+}
+
+.reward__title {
+  margin: 0;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+
+.reward__text {
+  margin: 0.25rem 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.reward__status {
+  margin: 0.5rem 0;
+  font-weight: 700;
+}
+
+.reward-player {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--line) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--band);
+}
+
+.reward-player__avatar {
+  width: 56px;
+  height: 56px;
+}
+
+.reward-player p {
+  margin: 0;
+}
+
+.reward-player__code {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.reward-player__cats {
+  font-weight: 700;
+}
