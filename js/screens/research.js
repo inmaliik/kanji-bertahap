@@ -117,7 +117,7 @@ export function researchLinkScreen(app, enter) {
       "Perangkat ini masih menyimpan progres pemain sebelumnya. Sesi penelitian selalu dimulai dari awal sebagai pemain " +
         "baru, supaya kondisi semua peserta sama."
     ),
-    h("ul", {}, h("li", {}, "Progres quest, pilihan persetujuan, dan kode peserta pemain sebelumnya dihapus."), h("li", {}, "Riwayat jawaban (log) tidak dihapus.")),
+    h("ul", {}, h("li", {}, "Progres misi, pilihan persetujuan, dan kode peserta pemain sebelumnya dihapus."), h("li", {}, "Riwayat jawaban (log) tidak dihapus.")),
     h(
       "div",
       { class: "button-row" },

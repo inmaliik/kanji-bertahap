@@ -76,7 +76,7 @@ export function renderProduction({ quest, kotoba, mode, readingRevealed, otherLe
     root.replaceChildren(
       h("h2", { class: "question__title", tabindex: "-1" }, "Tulis kalimatmu sendiri"),
       h("p", { class: "production__prompt" }, quest.productionPrompt),
-      h("p", { class: "production__label" }, "Kotoba quest ini:"),
+      h("p", { class: "production__label" }, "Kotoba misi ini:"),
       h(
         "ul",
         { class: "production__kotoba" },
@@ -169,7 +169,7 @@ export function renderProduction({ quest, kotoba, mode, readingRevealed, otherLe
               )
             )
           )
-        : h("p", { class: "muted" }, "Quest ini tidak punya contoh kalimat."),
+        : h("p", { class: "muted" }, "Misi ini tidak punya contoh kalimat."),
       h(
         "fieldset",
         { class: "self-assessment" },

@@ -99,6 +99,7 @@ export function createProgress(now = new Date()) {
     settings: { furiganaMode: DEFAULT_FURIGANA_MODE },
     welcomeSeen: false, // the welcome screen with the disclaimer was shown (D-71)
     character: null, // id of the chosen player character (D-102)
+    world: null, // number of the world the map showed last (D-117)
     items: {}, // item id → streak, shared by every quest and review (D-61)
     quests: {}, // quest or review id → entry
   };
@@ -133,6 +134,7 @@ function normalizeProgress(progress) {
   progress.lastPlayed ??= null;
   progress.welcomeSeen ??= false;
   progress.character ??= null;
+  if (!Number.isInteger(progress.world)) progress.world = null;
   if (!isPlainObject(progress.settings)) progress.settings = {};
   if (!Object.values(FURIGANA_MODE).includes(progress.settings.furiganaMode)) progress.settings.furiganaMode = DEFAULT_FURIGANA_MODE;
   if (!isPlainObject(progress.items)) progress.items = {};

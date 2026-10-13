@@ -49,7 +49,7 @@ function nextStep(app, region, reviewStatus) {
   const index = region.quests.findIndex((q) => !questPassed(app.progress, q));
   if (index !== -1) {
     const started = questStarted(app.progress, region.quests[index]);
-    return { href: questHref(region, index), label: `${started ? "Lanjutkan" : "Mulai"} Quest ${index + 1}` };
+    return { href: questHref(region, index), label: `${started ? "Lanjutkan" : "Mulai"} Misi ${index + 1}` };
   }
   if (reviewStatus !== STATUS.PASSED) return { href: reviewHref(region), label: reviewStatus === STATUS.IN_PROGRESS ? "Lanjutkan ulangan" : "Mulai ulangan" };
   return null;
@@ -66,7 +66,7 @@ export function regionSheet(app, regionKey) {
   const title = `Bab ${region.chapter} — ${region.title}`;
 
   if (summary.state === "locked") {
-    return sheet(title, h("p", { class: "notice notice--warning" }, "🔒 Wilayah ini terbuka setelah wilayah sebelumnya dan ulangannya tuntas."));
+    return sheet(title, h("p", { class: "notice notice--warning" }, "🔒 Wilayah ini terbuka setelah wilayah sebelumnya di dunia ini dan ulangannya tuntas."));
   }
 
   // Kotoba of the player's earlier encounters that share a kanji with `quest` but are read differently.
@@ -92,7 +92,7 @@ export function regionSheet(app, regionKey) {
       h(
         "div",
         { class: "quest-row__main" },
-        h("p", { class: "quest-row__title" }, `Quest ${i + 1}`),
+        h("p", { class: "quest-row__title" }, `Misi ${i + 1}`),
         h("p", { class: "quest-row__kotoba" }, word, word ? " · " : null, kotoba.meaning),
         h("p", { class: `quest-row__status status status--${status.cls}` }, status.text),
         isIncompleteQuest(quest) ? h("p", { class: "quest-row__note" }, "⚠ Belum lengkap: belum ada uji konteks.") : null,
@@ -118,7 +118,7 @@ export function regionSheet(app, regionKey) {
     { class: "card review-row", "aria-labelledby": "review-title" },
     h("h2", { id: "review-title", class: "review-row__title" }, uiLabel(app, "review")),
     reviewStatus === STATUS.LOCKED
-      ? h("p", { class: "muted" }, "🔒 Terbuka setelah semua quest di wilayah ini tuntas. Wilayah berikutnya terbuka setelah ulangan ini tuntas.")
+      ? h("p", { class: "muted" }, "🔒 Terbuka setelah semua misi di wilayah ini tuntas. Wilayah berikutnya terbuka setelah ulangan ini tuntas.")
       : [
           h("p", {}, reviewStatus === STATUS.PASSED ? "✓ Tuntas. Wilayah ini selesai." : "Wajib diselesaikan sebelum wilayah berikutnya terbuka."),
           h(
@@ -135,7 +135,7 @@ export function regionSheet(app, regionKey) {
     h(
       "div",
       { class: "mastery" },
-      h("label", { for: "region-progress", class: "mastery__label" }, `${summary.passed} dari ${summary.total} quest tuntas (${summary.percent}%)`),
+      h("label", { for: "region-progress", class: "mastery__label" }, `${summary.passed} dari ${summary.total} misi tuntas (${summary.percent}%)`),
       h("progress", { id: "region-progress", max: summary.total, value: summary.passed })
     ),
     h(
@@ -145,11 +145,11 @@ export function regionSheet(app, regionKey) {
       h("p", {}, region.intro.summary),
       region.intro.points.length ? h("ul", {}, region.intro.points.map((p) => h("li", {}, p))) : null
     ),
-    h("h2", {}, "Quest"),
+    h("h2", {}, "Misi"),
     h(
       "p",
       { class: "muted" },
-      "Quest boleh dikerjakan dalam urutan apa pun. Kotoba tiap quest muncul di daftar ini setelah kamu menyimak percakapan pengantarnya."
+      "Misi boleh dikerjakan dalam urutan apa pun. Kotoba tiap misi muncul di daftar ini setelah kamu menyimak percakapan pengantarnya."
     ),
     h("ul", { class: "quest-list" }, questRows),
     reviewRow,

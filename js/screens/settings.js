@@ -165,7 +165,7 @@ export function settingsScreen(app) {
         openLabel: "Reset progres",
         title: "Reset progres di perangkat ini?",
         details: [
-          "Semua progres quest dihapus, termasuk quest yang sudah tuntas.",
+          "Semua progres misi dihapus, termasuk misi yang sudah tuntas.",
           "Pemain berikutnya mendapat ID pemain baru; kode peserta, pilihan persetujuan, dan karakter dikosongkan, dan setelan furigana kembali ke bawaan.",
           "Mode penelitian berakhir: pemain berikutnya mulai di mode umum, atau mode pameran jika menyala.",
           "Riwayat jawaban (log) tidak dihapus.",
@@ -221,7 +221,7 @@ export function settingsScreen(app) {
       h(
         "p",
         { class: "muted" },
-        "Setelan ini disimpan untuk pemain saat ini dan tidak bisa diubah di tengah quest. Apa pun setelannya, ",
+        "Setelan ini disimpan untuk pemain saat ini dan tidak bisa diubah di tengah misi. Apa pun setelannya, ",
         "cara baca yang masih akan ditanyakan tetap disembunyikan supaya jawabannya tidak bocor."
       )
     );

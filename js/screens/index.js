@@ -66,7 +66,7 @@ function notAvailable(app, back) {
     app,
     backLink(back, "Kembali"),
     h("h1", { tabindex: "-1" }, "Belum tersedia"),
-    h("p", {}, "Isi ini muncul di index setelah kamu menyimak percakapan pengantar quest yang memperkenalkannya.")
+    h("p", {}, "Isi ini muncul di index setelah kamu menyimak percakapan pengantar misi yang memperkenalkannya.")
   );
 }
 
@@ -97,7 +97,7 @@ export function indexScreen(app) {
     return screen(
       app,
       h("h1", { tabindex: "-1" }, "Index"),
-      h("p", { class: "notice notice--info" }, "Index masih kosong. Kanji dan kotoba muncul di sini setelah kamu menyimak percakapan pengantar sebuah quest.")
+      h("p", { class: "notice notice--info" }, "Index masih kosong. Kanji dan kotoba muncul di sini setelah kamu menyimak percakapan pengantar sebuah misi.")
     );
   }
   return screen(
@@ -183,7 +183,7 @@ export function kanjiDetailScreen(app, ch) {
   const entry = c.model.kanji.get(ch);
   const head = [backLink(kanjiHref(ch), "Kembali"), ja("p", { class: "kanji-hero__char kanji-hero__char--static" }, ch)];
   if (!entry) {
-    return screen(app, head, h("h1", { tabindex: "-1" }, "Detail kanji ini belum tersedia"), h("p", {}, "Kanji ini bukan kanji sasaran quest mana pun."));
+    return screen(app, head, h("h1", { tabindex: "-1" }, "Detail kanji ini belum tersedia"), h("p", {}, "Kanji ini bukan kanji sasaran misi mana pun."));
   }
 
   const hiddenTypes = pendingReadingTypes(c.model, c.progress, ch);

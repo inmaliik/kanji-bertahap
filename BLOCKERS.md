@@ -9,8 +9,11 @@ lama berbasis level disimpan di tag git `v1-akhir`.
 
 Rincian alasan keputusan ada di `DECISIONS.md`; langkah kerja ada di `README.md`.
 
-**Pengerjaan fitur sudah berhenti.** Pekerjaan kode berikutnya datang bersama materi lengkap dan aset dari tim:
-memasukkan materi, mengganti aset, dan memperbaiki apa yang ditemukan saat materi itu dimainkan.
+**Pengerjaan fitur berjalan lagi dalam enam tahap** (D-116): deploy otomatis (selesai), dunia (selesai, menunggu
+tinjauan), kucing, hadiah, adegan cerita, dan pemolesan antarmuka. Daftar di bawah tetap berlaku di samping tahap-tahap
+itu: materi, aset, dan keputusan penelitian dari tim masih menentukan kapan uji coba sungguhan bisa dimulai. Tahap 3–6
+menambah kebutuhan aset baru (lapisan kucing, panel dan suara adegan cerita) yang akan dicatat di `ASSETS.md` saat
+tahapnya dikerjakan.
 
 ---
 
@@ -18,7 +21,7 @@ memasukkan materi, mengganti aset, dan memperbaiki apa yang ditemukan saat mater
 
 Materi impor tim saat ini (bab 1–5 dari `konteks.docx` dan `jukugo.txt`: 5 wilayah, 40 quest, 41 kanji, 66 kotoba)
 ada sebagai lima CSV di `sumber/impor/` di komputer pengembang (tidak masuk git). Pemeriksa materi melaporkan
-12 error dan 273 peringatan; rinciannya di butir 1–4.
+12 error dan 271 peringatan (diperiksa ulang 2026-10-13 dengan versi dunia); rinciannya di butir 1–4.
 
 ### 1. Nama tokoh, perusahaan, dan universitas — **Terbuka**
 Nama dari buku diganti penanda: `«NAMA-TOKOH-1»`…`«NAMA-TOKOH-5»`, `«NAMA-PERUSAHAAN-1»`, `«NAMA-PERUSAHAAN-2»`,
@@ -106,10 +109,10 @@ Jadwal uji coba perlu tahu berapa menit dibutuhkan per quest dan per 復習. Uku
 
 ## Teknis dan logistik
 
-### 11. Aplikasi belum disambungkan ke Netlify; endpoint Apps Script belum dibuat — **Sebagian**
-Deploy otomatis dari GitHub sudah disiapkan (`netlify.toml`, `terbitkan.sh`, uji isi terbitan, D-115) dan langkah
-menyambungkannya ditulis di README bagian "Menaruh aplikasi di Netlify". Belum dijalankan: menyambungkan situs
-Netlify ke repo. Langkah membuat endpoint Apps Script juga sudah ditulis di README, belum dijalankan.
+### 11. Endpoint Apps Script belum dibuat — **Sebagian**
+Situs sudah tersambung ke GitHub dan terbit otomatis dari `main` di <https://kanjikucing.netlify.app/> (D-115);
+`build.json` di situs menunjukkan commit yang sedang terbit. Yang belum: endpoint Apps Script untuk pengiriman log.
+Langkahnya sudah ditulis di README, belum dijalankan.
 
 ### 12. Aplikasi butuh jaringan saat dibuka — **Diterima**
 Aplikasi tidak menyimpan dirinya untuk dipakai offline (PWA tidak dibangun, keputusan disetujui). Jika jaringan

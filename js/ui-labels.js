@@ -18,6 +18,7 @@ export const UI_LABEL_FALLBACKS = Object.freeze({
   jukugo: "Kata majemuk",
   example: "Contoh kalimat",
   bookTitle: "Minna no Nihongo Shokyu I",
+  bookTitle2: "Minna no Nihongo Shokyu II",
 });
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

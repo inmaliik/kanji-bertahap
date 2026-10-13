@@ -54,10 +54,13 @@ const declared = (body, prop) => {
   const m = new RegExp(`(?:^|;|\\s)${prop}\\s*:\\s*([^;]+);`).exec(body);
   return m ? resolve(m[1]) : null;
 };
-const backgrounds = new Set([resolve("var(--bg)"), resolve("var(--surface)")]);
+// Backgrounds that carry the ordinary ink and secondary text. A rule that sets
+// its own text color on its background (the ink-filled primary button, D-118)
+// is checked as that pair instead, in the rule check below.
+const backgrounds = new Set([resolve("var(--bg)"), resolve("var(--surface)"), resolve("var(--page-blue)")]);
 for (const { body } of rules) {
   const bg = declared(body, "background") ?? declared(body, "background-color");
-  if (bg && isHex(bg)) backgrounds.add(bg.toLowerCase());
+  if (bg && isHex(bg) && !declared(body, "color")) backgrounds.add(bg.toLowerCase());
 }
 
 test("the palette is the team's six macaron colors plus ink", () => {
@@ -87,6 +90,33 @@ test("every text color on every background in use meets WCAG AA (4.5:1)", () => 
   }
   assert.deepEqual(failures, [], report.join("\n"));
   console.log(`  backgrounds in use: ${[...backgrounds].join(", ")}\n  ${report.join("\n  ")}`);
+});
+
+test("every tint of the blue scale carries ink and secondary text at AA and the ink outline at 3:1 (D-118)", () => {
+  const scale = Object.keys(vars).filter((k) => /^blue-\d+$/.test(k));
+  assert.deepEqual(scale, ["blue-50", "blue-100", "blue-200"]);
+  const ink = resolve("var(--text)");
+  const muted = resolve("var(--muted)");
+  const report = scale.map((k) => {
+    const bg = resolve(`var(--${k})`);
+    return { k, bg, ink: contrast(ink, bg), muted: contrast(muted, bg) };
+  });
+  const weak = report.filter((r) => r.ink < 4.5 || r.muted < 4.5 || contrast(resolve("var(--border)"), r.bg) < 3);
+  assert.deepEqual(weak, [], report.map((r) => `${r.k} ${r.bg}: ink ${r.ink.toFixed(2)}, secondary ${r.muted.toFixed(2)}`).join("\n"));
+  console.log(report.map((r) => `  ${r.k} ${r.bg}: ink ${r.ink.toFixed(2)}, secondary ${r.muted.toFixed(2)}`).join("\n"));
+});
+
+test("the primary button on blue screens is ink with white text, and white text is used on ink only (D-118)", () => {
+  const action = resolve("var(--action)");
+  const onAction = resolve("var(--on-action)");
+  assert.ok(contrast(onAction, action) >= 4.5, `white on ink: ${contrast(onAction, action).toFixed(2)}`);
+  for (const k of ["blue-50", "blue-100", "blue-200"]) {
+    assert.ok(contrast(action, resolve(`var(--${k})`)) >= 3, `the ink button stands out from ${k}`);
+  }
+  const whiteText = rules.filter(({ body }) => declared(body, "color")?.toLowerCase() === onAction.toLowerCase());
+  assert.ok(whiteText.length > 0);
+  const elsewhere = whiteText.filter(({ body }) => (declared(body, "background") ?? declared(body, "background-color"))?.toLowerCase() !== action.toLowerCase());
+  assert.deepEqual(elsewhere.map((r) => r.selector), [], "white text is used only on the ink fill");
 });
 
 test("the ink outline stands out from every background (3:1, non-text UI)", () => {

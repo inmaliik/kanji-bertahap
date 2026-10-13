@@ -7,7 +7,7 @@ import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
 import { loadUiLabels } from "./ui-labels.js";
 import { loadAssetManifest } from "./assets.js";
-import { loadMapLayout } from "./map-layout.js";
+import { FALLBACK_LAYOUT, loadMapLayout } from "./map-layout.js";
 import { loadProgress } from "./state.js";
 import { onLogAppended } from "./logger.js";
 import { scheduleFlush, startLogSender } from "./log-sender.js";
@@ -54,7 +54,7 @@ const app = {
   kana: null, // data/kana.json
   characters: null, // data/characters.json (D-102)
   characterProblems: [],
-  mapLayout: { segments: ["potongan-01"] }, // data/map.json (D-108)
+  mapLayout: FALLBACK_LAYOUT, // data/map.json: segments per world (D-108, D-117)
   mapProblems: [],
   kanaError: null,
   notices: [], // { kind, text } shown on the home screen
@@ -65,6 +65,7 @@ const app = {
 const ROUTES = [
   // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
   { pattern: /^#?\/?$/, screen: () => firstScreen() },
+  { pattern: /^#\/dunia\/(\d+)$/, screen: (n) => mapScreen(app, { world: Number(n) }) },
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
   { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
   // The research link shared with participants; replaced by #/ once the player is in research mode (D-112).
@@ -136,6 +137,8 @@ function render() {
   // Room at the bottom for the fixed menu bar (D-69), and no page scroll behind an open sheet.
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
+  // Blue page for the screens already in the blue palette (D-118); the rest follow in stage 6.
+  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen")));
 }
 
 function refreshBadge() {

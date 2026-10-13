@@ -4,7 +4,7 @@
 import { h } from "../dom.js";
 import { checkAssets } from "../assets.js";
 import { unknownSpeakers } from "../cast.js";
-import { unlistedSegments } from "../map-layout.js";
+import { segmentsOf, unlistedSegments } from "../map-layout.js";
 import { backLink, issueList } from "./common.js";
 
 const ASSET_STATE = {
@@ -19,7 +19,7 @@ function assetSection(app) {
   const summary = h("p", {});
   if (app.assets.size) {
     const ids = {
-      segment: app.mapLayout.segments,
+      segment: app.mapLayout.worlds.flatMap((w) => w.segments),
       ...(app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {}),
     };
     checkAssets(app.assets, ids).then((results) => {
@@ -76,17 +76,24 @@ function charactersSection(app) {
 
 function mapSection(app) {
   const unlisted = app.model ? unlistedSegments(app.model.regions, app.mapLayout) : [];
+  const worlds = app.model?.worlds ?? [];
   const problems = [
     ...app.mapProblems,
-    ...unlisted.map(({ region, segment }) => `${region.id} memakai potongan ${segment}, tetapi data/map.json hanya mendaftar ${app.mapLayout.segments.length} potongan.`),
+    ...worlds
+      .filter((w) => !segmentsOf(app.mapLayout, w.number).length)
+      .map((w) => `Dunia ${w.number} sudah punya materi, tetapi potongan petanya belum didaftar di data/map.json.`),
+    ...unlisted
+      .filter(({ listed }) => listed)
+      .map(({ region, segment, listed }) => `${region.id} memakai potongan ${segment}, tetapi data/map.json hanya mendaftar ${listed} potongan untuk Dunia ${region.world}.`),
   ];
+  const total = app.mapLayout.worlds.reduce((n, w) => n + w.segments.length, 0);
   return h(
     "section",
     { class: "card", "aria-labelledby": "map-title" },
     h("h2", { id: "map-title" }, "Potongan peta (data/map.json)"),
     problems.length
       ? problems.map((p) => h("p", { class: "notice notice--warning" }, `⚠ ${p}`))
-      : h("p", {}, `✓ ${app.mapLayout.segments.length} potongan terdaftar, semua lokasi ada di potongan yang terdaftar.`)
+      : h("p", {}, `✓ ${total} potongan terdaftar, semua lokasi ada di potongan yang terdaftar.`)
   );
 }
 

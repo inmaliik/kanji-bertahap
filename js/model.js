@@ -5,6 +5,7 @@
 
 import { parseRuby, alignReading } from "./ruby.js";
 import { isKanji } from "./jp-text.js";
+import { WORLDS, worldOf } from "./worlds.js";
 
 /** Region id shown in logs and routes, derived from the Minna chapter: 6 → "B06". */
 export const regionId = (chapter) => `B${String(chapter).padStart(2, "0")}`;
@@ -83,7 +84,8 @@ export function questConversations(quest) {
 /**
  * Lookup tables over validated content.
  * @returns {{
- *   regions: object[],               // sorted by chapter, each with `id`
+ *   regions: object[],               // sorted by chapter, each with `id` and its `world` number
+ *   worlds: object[],                // worlds that have material, each with its `regions` (D-117)
  *   quests: Map<string, object>,     // quest id → { ...quest, region }
  *   kotoba: Map<string, object>,     // kotoba id → kotoba
  *   kanji: Map<string, object>,      // kanji → kanji entry
@@ -94,7 +96,9 @@ export function questConversations(quest) {
 export function buildModel(content) {
   const regions = [...content.regions]
     .sort((a, b) => a.chapter - b.chapter)
-    .map((region) => ({ ...region, id: regionId(region.chapter) }));
+    .map((region) => ({ ...region, id: regionId(region.chapter), world: worldOf(region.chapter).number }));
+  // A world without material is not shown (D-116).
+  const worlds = WORLDS.map((world) => ({ ...world, regions: regions.filter((r) => r.world === world.number) })).filter((w) => w.regions.length);
 
   const quests = new Map();
   const conversations = new Map();
@@ -119,7 +123,7 @@ export function buildModel(content) {
     }
   }
 
-  return { regions, quests, kotoba, kanji, conversations, kotobaByKanji };
+  return { regions, worlds, quests, kotoba, kanji, conversations, kotobaByKanji };
 }
 
 /**
@@ -160,9 +164,10 @@ export function buildQuestItems(model, quest) {
 }
 
 /**
- * Other kotoba sharing a kanji with `kanji`, from regions up to `chapter`.
- * Regions open one after another, so every earlier region is already open;
- * this is the kun'yomi–on'yomi contrast across regions (D-56).
+ * Other kotoba sharing a kanji with `kanji`, from regions up to `chapter`:
+ * the kun'yomi–on'yomi contrast across regions (D-56). Worlds open freely
+ * (D-117), so an earlier region need not have been played; callers show only
+ * the kotoba this player has already met.
  */
 export function kotobaWithKanji(model, kanji, chapter, except = null) {
   // Index-only kotoba outside the book (chapter null) are not part of any

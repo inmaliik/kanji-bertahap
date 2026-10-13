@@ -3,13 +3,27 @@
 **Kanji Bertahap** adalah web game untuk belajar kanji dan kotoba tingkat N5 (kemudian N4), bagi mahasiswa
 semester 1 Pendidikan Bahasa Jepang yang memakai みんなの日本語初級I. Produk ini dikembangkan untuk mata kuliah
 教材開発, akan divalidasi ahli, direvisi dua putaran, dipamerkan, dan menjadi bahan skripsi. Pemain memilih karakter
-lalu menjelajahi **peta kota**: setiap bab Minna (1–12) adalah satu lokasi. Di setiap lokasi ada beberapa **quest**;
-satu quest mengajarkan satu kotoba lewat percakapan pengantar, lalu melatih bentuk kanji, cara baca, kotoba dalam
+lalu memilih **dunia** (Dunia 1 = 初級I, Dunia 2 = 初級II) dan menjelajahi **peta kota**-nya: setiap bab Minna
+adalah satu lokasi. Di setiap lokasi ada beberapa **misi** (di spreadsheet dan data tetap disebut quest);
+satu misi mengajarkan satu kotoba lewat percakapan pengantar, lalu melatih bentuk kanji, cara baca, kotoba dalam
 percakapan uji, dan menulis kalimat sendiri. Setiap bab ditutup 復習 (ulangan). Jawaban dapat direkam untuk
 penelitian, hanya jika peserta menyetujuinya.
-**Status saat ini: aplikasinya sudah selesai dibangun, tetapi materi dan asetnya belum.** Pengerjaan fitur berhenti;
-pekerjaan berikutnya datang bersama materi lengkap dan aset dari tim. Materi bab 1–5 dari dokumen tim sudah diimpor
-ke format spreadsheet, tetapi masih menunggu nama tokoh, terjemahan, arti, dan seluruh percakapan uji
+**Situs:** <https://kanjikucing.netlify.app/>, terbit otomatis dari cabang `main` di GitHub.
+
+**Status saat ini: aplikasi sedang dikembangkan lagi, dalam enam tahap** (DECISIONS D-116), masing-masing diakhiri
+titik berhenti untuk ditinjau:
+
+| Tahap | Isi | Status |
+|---|---|---|
+| 1 | Deploy otomatis ke Netlify, `buildId` di log | ✓ Selesai |
+| 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai, menunggu tinjauan |
+| 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | Menunggu persetujuan |
+| 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | Belum |
+| 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | Belum |
+| 6 | Pemolesan antarmuka dari referensi tim, warna biru di semua layar | Belum |
+
+Di samping itu, materi dan aset dari tim masih ditunggu. Materi bab 1–5 dari dokumen tim sudah diimpor ke format
+spreadsheet, tetapi masih menunggu nama tokoh, terjemahan, arti, dan seluruh percakapan uji
 (lihat [`BLOCKERS.md`](BLOCKERS.md)). Versi lama berbasis level disimpan di tag git `v1-akhir`.
 
 > ⚠ **Materi masih berstatus `draft-0`.** Artinya nomor bab, contoh kalimat, dan pengecoh belum diperiksa terhadap
@@ -32,8 +46,7 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 3. Mulai dari contoh bentuk kolom di `tools/templates/` (lima file CSV, satu per tab; bisa di-*import* ke Google
    Sheets). Percakapan di template masih sementara dan bukan contoh percakapan yang baik.
 4. Periksa pekerjaan Anda sendiri dengan **pemeriksa materi** di browser:
-   `https://NAMA-SITUS.netlify.app/tools/convert.html`. Tidak perlu memasang apa pun. Minta tautan persisnya ke
-   pengelola aplikasi.
+   `https://kanjikucing.netlify.app/tools/convert.html`. Tidak perlu memasang apa pun.
 5. Setiap nomor bab dan jumlah guratan yang Anda periksa dicentang di
    [Yang harus diverifikasi terhadap buku](README.md#yang-harus-diverifikasi-terhadap-buku).
 
@@ -70,9 +83,9 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 
 Validator diberi dua tautan:
 
-- **Daftar materi untuk dinilai dan dicetak:** `https://NAMA-SITUS.netlify.app/#/preview/all`
+- **Daftar materi untuk dinilai dan dicetak:** `https://kanjikucing.netlify.app/#/preview/all`
   (per bab, per quest: kanji, kotoba, percakapan dengan ilustrasinya, dan kotak catatan validator)
-- **Aplikasi untuk dicoba dimainkan:** `https://NAMA-SITUS.netlify.app/`
+- **Aplikasi untuk dicoba dimainkan:** `https://kanjikucing.netlify.app/`
 
 Kirim tautan **hanya setelah** [Daftar periksa sebelum validasi ahli](README.md#daftar-periksa-sebelum-validasi-ahli)
 selesai. Jika halaman pratinjau masih bertanda **DRAF**, jangan dikirim.
@@ -80,18 +93,21 @@ selesai. Jika halaman pratinjau masih bertanda **DRAF**, jangan dikirim.
 ## Alamat halaman untuk tim (tidak ditautkan dari aplikasi)
 
 Halaman berikut memuat seluruh materi, jadi **sengaja tidak ditautkan** dari dalam aplikasi supaya peserta tidak
-membukanya tanpa sengaja. Berkas ini tidak ikut terbit di Netlify, jadi alamatnya hanya tercatat di sini.
+membukanya tanpa sengaja. Berkas ini tidak ikut terbit di Netlify, tetapi **repo GitHub-nya publik**, jadi daftar di
+bawah juga bisa dibaca siapa pun di GitHub. **Alamat-alamat ini tidak rahasia** dan tidak pernah dimaksudkan rahasia
+(DECISIONS D-86, D-119).
 
 | Halaman | Alamat |
 |---|---|
-| Pemeriksaan konten dan aset | `https://NAMA-SITUS.netlify.app/#/content-check` |
-| Pratinjau semua materi (untuk validator) | `https://NAMA-SITUS.netlify.app/#/preview/all` |
-| Pratinjau satu bab | `https://NAMA-SITUS.netlify.app/#/preview/B03` (ganti nomor babnya) |
-| Pemeriksa dan konverter materi (CSV) | `https://NAMA-SITUS.netlify.app/tools/convert.html` |
-| **Tautan penelitian** (bagikan hanya kepada peserta) | `https://NAMA-SITUS.netlify.app/#/penelitian` |
+| Pemeriksaan konten dan aset | `https://kanjikucing.netlify.app/#/content-check` |
+| Pratinjau semua materi (untuk validator) | `https://kanjikucing.netlify.app/#/preview/all` |
+| Pratinjau satu bab | `https://kanjikucing.netlify.app/#/preview/B03` (ganti nomor babnya) |
+| Pemeriksa dan konverter materi (CSV) | `https://kanjikucing.netlify.app/tools/convert.html` |
+| **Tautan penelitian** (bagikan hanya kepada peserta) | `https://kanjikucing.netlify.app/#/penelitian` |
 
-Ini mencegah paparan tidak sengaja, **bukan** kecurangan yang disengaja: situs statis tidak bisa menyembunyikan
-apa pun, dan `data/content.json` bisa dibuka langsung oleh siapa saja yang tahu alamatnya (DECISIONS D-86).
+Tidak menautkan halaman-halaman ini hanya mencegah peserta **tidak sengaja** membukanya, **bukan** mencegah orang yang
+sengaja mencari: situs statis tidak bisa menyembunyikan apa pun, dan `data/content.json` bisa dibuka langsung oleh
+siapa saja (DECISIONS D-86). Jadi jangan pernah menaruh sesuatu yang memang rahasia di situs maupun di repo.
 
 ## Saya programmer berikutnya
 
@@ -107,17 +123,24 @@ otomatis.
 
 ## Mencadangkan pekerjaan
 
-Salinan cadangan proyek ini disimpan di GitHub, di repo **privat** `inmaliik/kanji-bertahap`. Setiap selesai sesi
-kerja, cukup minta ke Claude:
+Salinan cadangan proyek ini disimpan di GitHub, di repo `inmaliik/kanji-bertahap`. **Repo ini publik dengan sengaja**:
+siapa pun bisa membacanya, tetapi isinya tetap milik «NAMA-TIM» dan tidak boleh dipakai ulang tanpa izin (berkas
+[`NOTICE`](NOTICE), README bagian "Hak cipta"). Setiap selesai sesi kerja, cukup minta ke Claude:
 
 > **Cadangkan pekerjaan hari ini ke GitHub: jalankan uji, commit perubahan, lalu kirim semua cabang dan tag.**
 
-Claude akan melaporkan apa yang terkirim. Folder `sumber/`, `tmp/`, dan file ekspor log tidak pernah ikut (diatur di
-`.gitignore`), dan repo-nya tetap privat.
+Karena repo publik, pelindung yang sebenarnya adalah **isinya**. Sebelum setiap push, Claude memastikan:
 
-Setelah Netlify disambungkan ke GitHub, mencadangkan juga **menerbitkan**: situs ikut diperbarui sekitar satu menit
-kemudian, kecuali terbitan sedang dikunci untuk uji coba penelitian (README, "Kunci terbitan selama uji coba
-penelitian").
+1. **Seluruh uji otomatis lulus.** Tidak ada push dengan uji yang gagal.
+2. **Tidak ada yang tidak boleh terbit di repo:** `sumber/` (materi turunan buku dan data mentah tim), `tmp/`, file
+   log, file ekspor jawaban, dan CSV apa pun di luar `tools/templates/`. Ini dicek di semua commit yang akan dikirim,
+   bukan hanya di berkas yang ada sekarang, dan uji `tests/repo.test.mjs` menjaganya juga.
+3. **Uji browser** sudah dijalankan sebagai langkah terakhir sebelum commit.
+
+Claude lalu melaporkan apa yang terkirim. `.gitignore` sudah menolak `sumber/`, `tmp/`, dan file log.
+
+Mencadangkan ke `main` juga **menerbitkan**: situs ikut diperbarui sekitar satu menit kemudian, kecuali terbitan
+sedang dikunci untuk uji coba penelitian (README, "Kunci terbitan selama uji coba penelitian").
 
 **Riwayat yang sudah ada di GitHub tidak pernah ditulis ulang, dan tidak ada push paksa** (DECISIONS D-113).
 Kesalahan diperbaiki dengan commit baru. Jika suatu saat penulisan ulang tampak perlu, Claude berhenti dan

@@ -617,6 +617,8 @@ dibedakan. **Alternatif ditolak:** Kotoba disarangkan di dalam kanji seperti di 
 ditulis dua kali); relasi kanji–kotoba diisi manual; kotoba dirujuk dengan tulisannya (homograf tidak bisa dibedakan).
 
 ### D-58 · Cakupan materi bab 1–12 dan aturan bab
+*Cakupan bab 1–12 digantikan oleh D-117 (bab 1–50 dalam dua dunia); aturan bab kotoba = bab wilayah dan
+`sentenceChapter` tetap berlaku.*
 **Tanggal:** 2026-09-29. **Keputusan:** Bab wilayah dan bab kotoba harus 1–12 (**error** jika di luar). Bab kotoba
 quest harus sama dengan bab wilayahnya (**error**). `sentenceChapter` kini dimiliki setiap **percakapan** dan
 dibandingkan dengan **bab wilayah**, bukan bab kotoba (**peringatan** jika lebih tinggi, seperti D-48). Kotoba yang
@@ -1053,7 +1055,8 @@ otomatis memeriksa setiap latar yang dipakai terhadap teks (AA 4,5:1) dan garis 
 sebagai warna teks atau garis. Gaya cetak tidak diubah. **Alasan:** Kontras pastel terhadap putih hanya 1,0–1,7, jadi
 tanpa garis tinta tombol pastel nyaris tidak terlihat; satu warna tinta yang sama dengan garis aset membuat situs
 menyatu dengan gaya gambar karakter. **Temuan saat penerapan:** uji kontras langsung menangkap bilah kapasitas yang
-isiannya berubah menjadi tinta pekat; diganti biru, dan pink saat peringatan.
+isiannya berubah menjadi tinta pekat; diganti biru, dan pink saat peringatan. *Diperbarui oleh D-118: biru menjadi
+warna dominan dalam tiga tingkat, dan tombol utama di layar biru berisi tinta; peran pink tetap.*
 
 ### D-102 · Karakter pemain: pilihan jadi, standar kanvas, potret dari kotak potong
 **Tanggal:** 2026-10-13. **Keputusan:** Dua karakter tim, Hana dan Kazu, ada di `assets/karakter/` (PNG transparan
@@ -1248,7 +1251,8 @@ Jika suatu saat penulisan ulang tampak perlu (misalnya data peserta atau materi 
 dan kode commit lama yang sudah dikutip (misalnya di catatan penelitian) menjadi tidak bisa ditemukan. Pembersihan
 riwayat pada 2026-10-13 (gambar asli karakter dari `sumber/` di commit Bagian B) dilakukan **sebelum** push pertama,
 sehingga tidak ada salinan yang terdampak. **Alternatif ditolak:** Mengizinkan push paksa untuk perbaikan kecil
-(manfaatnya kecil, risikonya kehilangan cadangan).
+(manfaatnya kecil, risikonya kehilangan cadangan). *Diperbarui oleh D-119: repo kini publik dengan sengaja; aturan
+tidak menulis ulang riwayat tetap berlaku.*
 
 ### D-114 · Konteks: penggunaan AI disetujui dosen pengampu, dan pembagian peran
 **Tanggal:** 2026-10-13. **Konteks:** Dosen pengampu sudah menyetujui penggunaan AI dalam proyek ini. Pembagian peran:
@@ -1304,6 +1308,93 @@ dari referensi. Keputusan yang diambil:
 - **Menu bawah** lima pintu (Index, Kucing, Cerita, Kana, Pengaturan), sama persis di semua mode.
 
 **Alasan:** Lihat laporan rancangan; alasan per bagian dicatat lagi di keputusan masing-masing tahap saat diterapkan.
+
+### D-117 · Tahap 2: dunia di atas wilayah, dibuka bebas, peta per dunia
+**Tanggal:** 2026-10-13. **Keputusan:** Menerapkan bagian dunia dari D-116.
+- **Daftar dunia tetap di kode** (`js/worlds.js`): Dunia 1 = 初級I bab 1–25, Dunia 2 = 初級II bab 26–50. Dunia sebuah
+  wilayah diturunkan dari babnya, tidak ditulis di spreadsheet. **D-58 digantikan:** bab wilayah dan kotoba harus
+  1–50 (error di luar itu, pesannya menyebut rentang tiap dunia). Aturan bab kotoba quest = bab wilayah tetap.
+- **Urutan berlaku per dunia.** Wilayah pertama setiap dunia terbuka sejak awal; di dalam dunia, wilayah berikutnya
+  terbuka setelah ulangan wilayah sebelumnya tuntas (D-55). Ulangan wilayah mengambil bagian "wilayah sebelumnya"
+  hanya dari dunia yang sama.
+- **Kotoba dunia lain tidak dianggap sudah aman.** Validator menghitung pengecoh cara baca otomatis (D-84) hanya dari
+  kotoba bab sebelumnya di dunia yang sama, dan peringatan `OTHER_QUEST_KOTOBA_IN_LINE` (D-79) kini juga berlaku untuk
+  kotoba quest dunia lain. Aplikasi sendiri sudah memeriksa per pemain (kotoba yang sudah diperkenalkan dan dikuasai),
+  sehingga tidak berubah.
+- **Dunia tamat** (`worldSummary`) hanya jika semua bab dalam rentangnya ada di materi dan semua wilayahnya tuntas
+  termasuk ulangan. Dunia yang tamat diberi ✓; adegan penutupnya menunggu tahap 5.
+- **Peta per dunia.** `data/map.json` menjadi `{ "worlds": [ { "world": 1, "segments": [...] } ] }`; nomor
+  `pin_segment` dihitung di peta dunia wilayah itu. Satu nama potongan hanya untuk satu dunia. Dunia bermateri yang
+  belum punya daftar potongan tampil dengan satu kotak keterangan, dan halaman pemeriksaan aset menyebutnya.
+- **Pilihan dunia** berupa dua tombol di atas peta ("Dunia 1 · Shokyu I"), hanya jika materi punya lebih dari satu
+  dunia; alamatnya `#/dunia/N`. Nama buku di kode ditulis latin, karena teks Jepang hanya boleh ada di berkas data;
+  judul Jepangnya ada di `data/ui.json`. Dunia yang terakhir dilihat disimpan di progres (`progress.world`), sehingga `#/` dan semua tombol
+  "kembali ke peta" kembali ke dunia itu tanpa mengubah setiap tautan. Reset progres melupakannya.
+- **Disclaimer dihitung dari materi:** buku dan bab per dunia ("みんなの日本語初級I bab 1–5"), dengan label baru
+  `bookTitle2` di `data/ui.json` untuk 初級II.
+- **"Quest" menjadi "Misi"** di semua teks layar pemain dan halaman pratinjau validator. Nama tab spreadsheet, kolom,
+  ID (`Q-…`), alamat (`#/quest/…`), kolom log, dan pesan pemeriksa materi tetap memakai "quest", karena itu bahasa
+  kerja tim konten dan data yang sudah terkumpul.
+
+**Alasan:** Menurunkan dunia dari bab menjaga prinsip satu fakta ditulis sekali (D-59). Dunia dibuka bebas karena
+mahasiswa 初級II tidak boleh dipaksa menuntaskan 初級I di aplikasi; konsekuensinya, materi dunia lain tidak bisa
+dianggap sudah dipelajari, sehingga pemeriksaan urutan dibatasi per dunia. Menyimpan dunia terakhir di progres lebih
+kecil dan lebih aman daripada mengubah belasan tautan "kembali ke peta". Menampilkan pilihan dunia hanya jika ada dua
+dunia menjaga tampilan sekarang (materi bab 1–12 saja) tetap sederhana. **Alternatif ditolak:** Kolom `dunia` di tab
+wilayah (fakta ganda yang bisa bertentangan dengan bab); membuka Dunia 2 setelah Dunia 1 tamat (Dunia 1 tidak akan
+tamat selama materinya baru sebagian); satu peta panjang untuk semua dunia (peta Dunia 2 harus menunggu peta Dunia 1
+selesai digambar); mempertahankan format lama `data/map.json` sebagai Dunia 1 (dua format untuk satu berkas).
+*Diperbarui: nama buku di tab dunia dan di judul daftar wilayah diambil dari `data/ui.json` (`bookTitle`,
+`bookTitle2`) dan tampil dengan furigana, seperti label Jepang lain (D-76). Jika labelnya tidak ada di berkas, tampil
+teks latin cadangan dari `js/ui-labels.js`, sama seperti label lain.*
+
+### D-118 · Biru menjadi warna dominan antarmuka, dalam tiga tingkat (memperbarui D-101)
+**Tanggal:** 2026-10-13. **Keputusan tim:** biru adalah warna dominan antarmuka. Peran pink untuk "salah" dan tindakan
+berbahaya (D-101) tetap. **Penerapan:** skala biru diturunkan dari biru tim `#BAE1FF`, semuanya di `:root`:
+
+| Tingkat | Warna | Peran | Tinta | Teks sekunder | Garis tinta |
+|---|---|---|---|---|---|
+| `--blue-50` | `#ECF6FF` | latar halaman (`--page-blue`) | 9,95 | 7,59 | 9,95 |
+| `--blue-100` | `#BAE1FF` | kepala layar, bilah lengket, bidang, bilah menu (`--band`) | 7,93 | 6,05 | 7,93 |
+| `--blue-200` | `#9DD2FA` | yang terpilih: tab dunia yang terbuka, pintu menu aktif (`--selected`) | 6,75 | 5,16 | 6,75 |
+
+Ambang: teks AA 4,5:1, garis 3:1. **Tombol utama** di layar biru berisi **tinta `#403C3C` dengan teks putih** (10,71:1;
+`--action`, `--on-action`), karena isian putih hanya 1,08–1,35:1 dan isian biru 1,0–1,6:1 terhadap latar biru, sehingga
+keduanya tenggelam. Tinta dan putih sudah warna tim, jadi tidak ada warna baru. **Gelembung ucapan pemain** tetap biru
+`#BAE1FF`; supaya tetap menonjol saat halaman menjadi biru (tahap 6), percakapan dan soal akan diletakkan di atas kartu
+putih, sehingga gelembung pemain biru di atas putih dan gelembung lawan bicara putih bergaris tinta. **Sekarang
+diterapkan** di peta (termasuk lembar wilayahnya), tab dunia, dan pintu menu yang aktif; layar lain mengikuti di tahap 6.
+Uji kontras memeriksa ketiga tingkat secara eksplisit, pasangan teks putih di atas tinta, bahwa tombol tinta menonjol dari
+setiap tingkat biru, dan bahwa teks putih hanya dipakai di atas tinta. **Alternatif ditolak:** `#78B7F6` sebagai tingkat
+tua (tinta 5,13 lolos, tetapi teks sekunder 3,92 gagal AA; uji menolaknya); teks putih di atas biru tua (paling tinggi
+2,09:1); tombol utama kuning (kuning sudah berperan sebagai stabilo kotoba dan bagian kosong); tombol utama putih
+bergaris tinta (tidak cukup berbeda dari tombol biasa).
+
+### D-119 · Repo GitHub publik dengan sengaja; pelindungnya adalah isi repo
+**Tanggal:** 2026-10-13. **Keputusan:** Repo `inmaliik/kanji-bertahap` dibuat publik dengan sengaja oleh pemilik
+proyek. Akibatnya: (1) pemeriksaan sebelum setiap push bukan lagi soal status privat, melainkan isi: seluruh uji lulus,
+dan tidak ada `sumber/`, `tmp/`, log, file ekspor jawaban, atau CSV di luar `tools/templates/` di commit mana pun yang
+dikirim; uji `tests/repo.test.mjs` menjaga berkas yang dilacak git; (2) alamat halaman tim di `MULAI-DI-SINI.md` kini
+terbaca publik dan dicatat terus terang sebagai **tidak rahasia** (sejalan dengan D-86: tidak menautkan hanya mencegah
+paparan tidak sengaja); (3) berkas `NOTICE` dan bagian "Hak cipta" di README menyatakan bahwa kode, materi,
+ilustrasi, dan suara milik «NAMA-TIM» dan tidak boleh dipakai ulang tanpa izin; **tidak ada lisensi sumber terbuka**
+(uji memastikan tidak ada berkas lisensi). `NOTICE` tidak ikut terbit. (4) `data/content.json` memang sudah terbaca di
+situs, jadi repo publik tidak menambah kebocoran untuk data penelitian (D-86); data jawaban tidak pernah ada di repo.
+**Identitas penulis commit:** 34 commit pertama tercatat dengan email Gmail pribadi pemilik proyek; riwayat itu tidak
+ditulis ulang (D-113). Commit berikutnya dari komputer pengembang memakai alamat noreply GitHub akun `inmaliik`
+(`207126736+inmaliik@users.noreply.github.com`, diatur hanya untuk repo ini); commit dari sesi cloud tercatat sebagai
+`Claude <noreply@anthropic.com>`. **Alasan:** Dengan repo publik, satu-satunya perlindungan yang berarti adalah apa yang
+tidak pernah masuk repo. **Alternatif ditolak:** Menulis ulang riwayat untuk mengganti email lama (D-113).
+
+### D-120 · Aturan kerja: uji browser paling akhir, seluruh uji lulus sebelum push
+**Tanggal:** 2026-10-13. **Keputusan:** (1) **Uji browser selalu menjadi langkah paling akhir sebelum commit.** Jika ada
+suntingan sesudahnya, sekecil apa pun, uji browser diulang (dari T-19). (2) **Seluruh uji otomatis harus lulus sebelum
+setiap push**; push pertama tahap 2 membawa uji yang gagal, dan itu tidak boleh terulang. (3) Satu commit per titik
+berhenti, dan `DECISIONS.md` diperbarui setiap ada keputusan. (4) Riwayat yang sudah terkirim tidak ditulis ulang dan
+tidak ada push paksa (D-113). (5) Dokumen proyek (README, `MULAI-DI-SINI.md`, `ASSETS.md`, `BLOCKERS.md`,
+`DECISIONS.md`) dan laporan ditulis dalam **bahasa Indonesia**, karena dibaca anggota tim yang bukan programmer.
+**Alasan:** Galat T-19 lolos karena suntingan terjadi setelah uji browser; uji yang gagal di `main` atau di cabang yang
+akan digabung membuat setiap uji berikutnya kehilangan arti.
 
 ---
 

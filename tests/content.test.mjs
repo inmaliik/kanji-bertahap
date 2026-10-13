@@ -59,11 +59,17 @@ test("sample content passes; its warnings are the placeholders, the missing pin 
   assert.equal(warnings[0].code, "PLACEHOLDER_CONVERSATION", "placeholder warnings are listed first");
 });
 
-test("material is limited to Minna chapters 1–12 and kotoba belong to their region's chapter", () => {
+test("material is limited to the chapters of the worlds (1–50) and kotoba belong to their region's chapter", () => {
   const data = sample();
-  data.regions[0].chapter = 13;
+  data.regions[0].chapter = 51;
   let { errors } = validateContent(data);
   assert.ok(errors.some((e) => e.code === "CHAPTER_OUT_OF_SCOPE" && e.prominent));
+  assert.match(errors.find((e) => e.code === "CHAPTER_OUT_OF_SCOPE").message, /Dunia 1 = Shokyu I bab 1–25, Dunia 2 = Shokyu II bab 26–50/);
+  // Chapter 13 was outside D-58's bab 1–12; it now belongs to Dunia 1 (D-117).
+  const thirteen = sample();
+  thirteen.regions[0].chapter = 13;
+  thirteen.kotoba.forEach((k) => (k.chapter = 13));
+  assert.ok(!codes(validateContent(thirteen).errors).includes("CHAPTER_OUT_OF_SCOPE"));
 
   const moved = sample();
   moved.kotoba[0].chapter = 5; // 食べます taught in another chapter than its region B06
@@ -71,7 +77,7 @@ test("material is limited to Minna chapters 1–12 and kotoba belong to their re
   assert.ok(codes(errors).includes("KOTOBA_CHAPTER_MISMATCH"));
 
   const outside = sample();
-  outside.kotoba.push({ ...outside.kotoba[0], id: "shokuji", word: "食事", ruby: "[食|しょく][事|じ]", reading: "しょくじ", readingType: "onyomi", chapter: 13 });
+  outside.kotoba.push({ ...outside.kotoba[0], id: "shokuji", word: "食事", ruby: "[食|しょく][事|じ]", reading: "しょくじ", readingType: "onyomi", chapter: 0 });
   ({ errors } = validateContent(outside));
   assert.ok(errors.some((e) => e.code === "CHAPTER_OUT_OF_SCOPE" && e.path === "kotoba[2].chapter"));
 

@@ -7,16 +7,22 @@ import { APP_TITLE, APP_VERSION } from "../config.js";
 import { getBuildId } from "../build.js";
 import { saveProgress } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
+import { chapterRanges } from "../worlds.js";
 import { backLink } from "./common.js";
 
-/** The disclaimer paragraph; the book title comes from data/ui.json. */
+/** Books and chapters the material covers, counted from its regions (D-117). */
+export const disclaimerScope = (model) =>
+  model.worlds.map((world) => ({ bookLabel: world.bookLabel, chapters: chapterRanges(world.regions.map((r) => r.chapter)) }));
+
+/** The disclaimer paragraph; book titles come from data/ui.json. */
 export function disclaimer(app) {
+  const scope = disclaimerScope(app.model).flatMap(({ bookLabel, chapters }, i) => [i ? " dan " : null, uiLabel(app, bookLabel), ` bab ${chapters}`]);
   return h(
     "p",
     { class: "disclaimer" },
     "Materi aplikasi ini mengikuti cakupan ",
-    uiLabel(app, "bookTitle"),
-    " bab 1–12. Semua kalimat dan percakapan ditulis oleh tim pengembang dan tidak disalin dari buku."
+    scope,
+    ". Semua kalimat dan percakapan ditulis oleh tim pengembang dan tidak disalin dari buku."
   );
 }
 
