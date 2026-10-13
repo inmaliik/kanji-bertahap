@@ -306,7 +306,7 @@ function summaryTable(model, issuesAt, regionPath) {
             h("td", {}, String(region.chapter)),
             h("td", {}, region.title),
             h("td", {}, String(region.quests.length)),
-            h("td", {}, ja("span", {}, [...new Set(region.quests.flatMap((q) => q.targetKanji))].join("・"))),
+            h("td", {}, ja("span", {}, [...new Set(region.quests.flatMap((q) => q.targetKanji))].join(" · "))),
             h("td", {}, String(region.quests.reduce((n, q) => n + q.tests.length, 0))),
             h("td", {}, String(issuesAt(regionPath.get(region.id)).length))
           )
