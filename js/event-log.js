@@ -3,6 +3,7 @@
 // events, e.g. opening the index, are logged here too (D-68).
 
 import { APP_VERSION } from "./config.js";
+import { getBuildId } from "./build.js";
 import { logAnswer } from "./logger.js";
 import { loadDevice } from "./leaderboard.js";
 import { recordingAllowed, sessionModeOf } from "./session-mode.js";
@@ -23,6 +24,7 @@ export function playerColumns(app, mode = currentMode(app)) {
   const { progress } = app;
   return {
     appVersion: APP_VERSION,
+    buildId: getBuildId(),
     contentRevision: app.content?.contentRevision,
     playerId: progress.playerId,
     participantCode: progress.participantCode,

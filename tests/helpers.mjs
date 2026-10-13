@@ -12,11 +12,11 @@ export function loadSampleContent() {
 }
 
 /**
- * The schema v1 sample (three levels) kept in data/archive. Used only by the
+ * The schema v1 sample (three levels) kept in arsip/. Used only by the
  * v1 session-rule tests until step 2 replaces that engine.
  */
 export function loadV1Archive() {
-  return JSON.parse(readFileSync(new URL("../data/archive/content-v1.json", import.meta.url), "utf8"));
+  return JSON.parse(readFileSync(new URL("../arsip/content-v1.json", import.meta.url), "utf8"));
 }
 
 export const clone = (value) => JSON.parse(JSON.stringify(value));

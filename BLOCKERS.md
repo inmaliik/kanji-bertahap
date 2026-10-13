@@ -106,10 +106,10 @@ Jadwal uji coba perlu tahu berapa menit dibutuhkan per quest dan per 復習. Uku
 
 ## Teknis dan logistik
 
-### 11. Aplikasi belum di-deploy; endpoint Apps Script belum dibuat — **Sebagian**
-Langkah menaruh aplikasi di Netlify tanpa baris perintah (dengan daftar folder yang diunggah: `index.html`, `css/`,
-`js/`, `data/`, `assets/`, `tools/`) dan langkah membuat endpoint Apps Script sudah ditulis di README. Belum
-dijalankan.
+### 11. Aplikasi belum disambungkan ke Netlify; endpoint Apps Script belum dibuat — **Sebagian**
+Deploy otomatis dari GitHub sudah disiapkan (`netlify.toml`, `terbitkan.sh`, uji isi terbitan, D-115) dan langkah
+menyambungkannya ditulis di README bagian "Menaruh aplikasi di Netlify". Belum dijalankan: menyambungkan situs
+Netlify ke repo. Langkah membuat endpoint Apps Script juga sudah ditulis di README, belum dijalankan.
 
 ### 12. Aplikasi butuh jaringan saat dibuka — **Diterima**
 Aplikasi tidak menyimpan dirinya untuk dipakai offline (PWA tidak dibangun, keputusan disetujui). Jika jaringan

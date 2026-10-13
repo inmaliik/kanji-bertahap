@@ -6,6 +6,7 @@ import { clearLog, getLogStatus, logToCsv, markExported } from "../logger.js";
 import { flushLog, getSenderStatus, subscribeSenderStatus } from "../log-sender.js";
 import { FURIGANA_MODE, resetProgress, saveProgress, storageUsage, STORAGE_WARNING_RATIO } from "../state.js";
 import { isStorageAvailable } from "../storage.js";
+import { getBuildId } from "../build.js";
 import { backLink } from "./common.js";
 import { consentStatusText } from "./consent.js";
 import { menuBar } from "./menu.js";
@@ -536,6 +537,8 @@ export function settingsScreen(app) {
       { class: "card", "aria-labelledby": "content-title" },
       h("h2", { id: "content-title" }, "Materi"),
       h("p", {}, "Revisi materi: ", h("strong", {}, contentRevision)),
+      // The build every log row records; all research rows must share one (D-115).
+      h("p", {}, "Build: ", h("code", {}, getBuildId().slice(0, 12))),
       isDraft
         ? h("p", { class: "notice notice--error" }, "✗ DRAF — nomor bab belum diverifikasi terhadap buku. Jangan kirim ke validator ahli.")
         : null,

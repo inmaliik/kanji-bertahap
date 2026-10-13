@@ -80,7 +80,7 @@ selesai. Jika halaman pratinjau masih bertanda **DRAF**, jangan dikirim.
 ## Alamat halaman untuk tim (tidak ditautkan dari aplikasi)
 
 Halaman berikut memuat seluruh materi, jadi **sengaja tidak ditautkan** dari dalam aplikasi supaya peserta tidak
-membukanya tanpa sengaja. Berkas ini tidak ikut diunggah ke Netlify, jadi alamatnya hanya tercatat di sini.
+membukanya tanpa sengaja. Berkas ini tidak ikut terbit di Netlify, jadi alamatnya hanya tercatat di sini.
 
 | Halaman | Alamat |
 |---|---|
@@ -114,6 +114,10 @@ kerja, cukup minta ke Claude:
 
 Claude akan melaporkan apa yang terkirim. Folder `sumber/`, `tmp/`, dan file ekspor log tidak pernah ikut (diatur di
 `.gitignore`), dan repo-nya tetap privat.
+
+Setelah Netlify disambungkan ke GitHub, mencadangkan juga **menerbitkan**: situs ikut diperbarui sekitar satu menit
+kemudian, kecuali terbitan sedang dikunci untuk uji coba penelitian (README, "Kunci terbitan selama uji coba
+penelitian").
 
 **Riwayat yang sudah ada di GitHub tidak pernah ditulis ulang, dan tidak ada push paksa** (DECISIONS D-113).
 Kesalahan diperbaiki dengan commit baru. Jika suatu saat penulisan ulang tampak perlu, Claude berhenti dan

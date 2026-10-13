@@ -533,7 +533,8 @@ tautan untuk validator lebih cepat dari rencana, dan tidak ada anggota tim yang 
 perintah. Semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya, sehingga dokumen internal dan
 data peserta tidak boleh ikut. `tools/` tetap diunggah karena memuat pemeriksa materi untuk tim konten (D-49).
 **Alternatif ditolak:** Menghubungkan repositori Git ke Netlify (membutuhkan repositori daring dan akses Git);
-mengunggah seluruh folder proyek.
+mengunggah seluruh folder proyek. *Digantikan oleh D-115: repo kini ada di GitHub, dan Netlify menerbitkan enam butir
+yang sama secara otomatis.*
 
 ### D-52 · Pengiriman log dimatikan paksa selama teks persetujuan masih placeholder
 **Tanggal:** 2026-09-16. **Keputusan:** Versi teks persetujuan yang diawali `placeholder` menandai teks sementara.
@@ -1259,6 +1260,51 @@ ditolak atau diperingatkan validator. Referensi visual dari pihak lain dipakai s
 saja; bentuk, ornamen, ikon, dan asetnya tidak ditiru, dan berkas referensinya tidak masuk repo (`sumber/` ada di
 `.gitignore`).
 
+### D-115 · Deploy otomatis dari GitHub, hanya enam butir situs, dan `buildId` di setiap baris log
+**Tanggal:** 2026-10-13. **Keputusan:** Netlify disambungkan ke repo GitHub dan menerbitkan cabang `main` otomatis.
+`netlify.toml` menetapkan folder terbit `_situs` dan perintah `sh terbitkan.sh`, yang **hanya menyalin** `index.html`,
+`css/`, `js/`, `data/`, `assets/`, `tools/` ke `_situs` dan menulis `_situs/build.json` berisi kode commit yang sedang
+dibangun (`COMMIT_REF` dari Netlify; selain kode heksadesimal ditulis `dev`). Aplikasi membaca `build.json` saat dibuka
+(tanpa berkas itu: `dev`), menampilkannya di Pengaturan dan Tentang, dan mencatatnya di kolom log baru `buildId`.
+`data/archive/` dipindah ke `arsip/` di luar enam butir, karena isinya catatan internal yang selama ini ikut terbit.
+Pratinjau cabang dan pratinjau permintaan tarik dimatikan. Selama uji coba penelitian, terbitan dikunci di Netlify, dan
+daftar periksa mensyaratkan semua baris ber-`sessionMode` `research` memiliki `buildId` yang sama. Uji
+`tests/deploy.test.mjs` menjalankan perintah terbit pada salinan berkas yang dilacak git dan gagal jika isi `_situs`
+bukan tepat enam butir dan `build.json`, jika ada dokumen, uji, arsip, atau CSV log di dalamnya, atau jika berkas
+yang dimuat aplikasi tertinggal. **Alasan:** Tim membutuhkan tautan yang selalu terbaru tanpa langkah manual, tetapi
+dokumen internal (yang memuat alamat halaman tim) tidak boleh terbit. Penyalinan bukan build step yang mengubah
+aplikasi: berkas yang terbit identik dengan yang di repo. Mengunci terbitan mencegah perubahan selama uji coba, tetapi
+tidak membuktikannya; `buildId` di setiap baris adalah bukti yang bisa diperiksa untuk skripsi. **Alternatif
+ditolak:** Menerbitkan seluruh repo dengan daftar larangan (berkas baru otomatis ikut terbit); memindahkan enam butir
+ke folder `situs/` (semua jalur di uji, alat terminal, dan dokumen ikut berubah); unggah folder manual (D-51, tidak
+selalu terbaru).
+
+### D-116 · Rancangan dunia, kucing, adegan cerita, dan hadiah disetujui; diterapkan bertahap
+**Tanggal:** 2026-10-13. **Keputusan:** Rancangan putaran 2026-10-13 disetujui, diterapkan dalam enam tahap dengan titik
+berhenti: (1) deploy otomatis (D-115), (2) dunia, (3) kucing, (4) hadiah, (5) adegan cerita, (6) pemolesan antarmuka
+dari referensi. Keputusan yang diambil:
+- **Dunia** adalah lapisan di atas wilayah (Dunia 1 = 初級I bab 1–25, Dunia 2 = 初級II bab 26–50). **D-58 digantikan:**
+  bab wilayah dan kotoba harus berada dalam rentang dunianya; README, validator, dan disclaimer (dihitung dari bab yang
+  ada di materi) diubah di tahap 2, dan D-58 ditandai saat itu. Dunia **dibuka bebas**, karena mahasiswa 初級II harus
+  bisa langsung masuk Dunia 2; wilayah di dalam dunia tetap berurutan. Dunia tanpa materi tidak ditampilkan. Dunia
+  **tamat** hanya jika semua bab dalam rentangnya ada di materi dan tuntas, sehingga adegan penutup Dunia 1 belum akan
+  diputar dalam waktu dekat. "Quest" menjadi "Misi" di antarmuka; strukturnya tetap.
+- **Kucing:** satu per misi tuntas, tidak bergantung pada XP. Disusun dari lapisan (tubuh berupa isi dan garis, corak
+  dipotong mask CSS mengikuti tubuh, aksesori di titik jangkar), dengan **warna bulu dari data**: 9 berkas, 3 warna,
+  72 kombinasi. Jika tim aset menolak, dipakai 12 berkas tanpa pewarnaan; peralihannya hanya perubahan data. Validator
+  memperingatkan kombinasi kembar dan menerapkan D-79 pada nama kucing; kucing yang belum bebas tampil sebagai siluet
+  tanpa nama. Di peta paling banyak 3 kucing per lokasi ditambah lencana jumlah. Mekanisme lapisan yang sama dipakai
+  untuk kustomisasi karakter nanti.
+- **Adegan cerita** (folder `assets/cerita/`; "adegan" tetap berarti ilustrasi percakapan): pembuka dan penutup dunia,
+  pemicu dari daftar tetap. Subtitle `text` wajib, `ja` opsional dengan peringatan jika di atas bab pemain; bahasa
+  naskah **belum diputuskan tim**. **Baris pemain hanya subtitle, tanpa suara** (sejalan dengan D-72/D-97); skema tetap
+  mendukung suara per karakter. Validator menerapkan D-79 pada naskah.
+- **Hadiah:** tonggak di data (bawaan B01–B05), penukaran tatap muka dengan kode pemain pendek, tombol "Sudah ditukar",
+  tidak ada di mode penelitian, peringatan saat reset jika ada hadiah yang belum ditukar. Kartu di peta, bukan pintu menu.
+- **Menu bawah** lima pintu (Index, Kucing, Cerita, Kana, Pengaturan), sama persis di semua mode.
+
+**Alasan:** Lihat laporan rancangan; alasan per bagian dicatat lagi di keputusan masing-masing tahap saat diterapkan.
+
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -1399,3 +1445,15 @@ opsional harus punya keadaan "tidak ada" yang rapi, bukan hanya keadaan placehol
 `figure` di Bagian B memotong sepatu Hana dan Kazu; terlihat juga di tangkapan layar pemilihan karakter Bagian B tetapi
 terlewat. **Tindakan:** Kotak diperpanjang sampai 82% tinggi kanvas. **Dampak:** Tangkapan layar perlu diperiksa sampai
 tepi gambar, bukan hanya tata letaknya.
+
+### T-19 · Galat sintaks di Pengaturan membuat aplikasi tidak bisa dibuka
+**Tanggal:** 2026-10-13. **Temuan:** Commit `caecade` (mode sesi) memasukkan nama bagian README bertanda kutip ganda ke
+dalam string bertanda kutip ganda di `js/screens/settings.js`. Berkas itu gagal diurai, dan karena `main.js` memuatnya,
+seluruh aplikasi tidak terbuka. Temuan ini muncul saat memeriksa `build.json` di browser pada tahap 1, setelah
+`caecade` dan `c12af39` sudah terkirim ke GitHub (situs Netlify belum disambungkan, jadi tidak ada pengguna yang
+terdampak). Tiga hal meloloskannya: suntingan dilakukan setelah uji browser putaran itu; uji otomatis tidak memuat
+layar Pengaturan; dan `node --check` untuk berkas `.js` di proyek ini selalu lolos walaupun ada galat sintaks.
+**Tindakan:** Perbaikan satu baris sebagai commit tersendiri (`a518785`), tanpa menulis ulang riwayat (D-113). Uji baru
+`tests/syntax.test.mjs` memeriksa setiap skrip di `js/` dan `tools/` sebagai modul; terbukti menangkap galat yang
+sengaja disisipkan. **Dampak:** Uji browser dijalankan **setelah suntingan terakhir** sebelum commit, dan `node
+--check` tidak dipakai lagi sebagai pemeriksaan sintaks.

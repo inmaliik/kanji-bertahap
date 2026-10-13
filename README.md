@@ -48,63 +48,82 @@ Lalu buka <http://localhost:8000>. Tekan Ctrl+C untuk berhenti.
 
 ## Menaruh aplikasi di Netlify
 
-Tanpa perintah baris perintah. Hasilnya tautan seperti `https://kanji-bertahap.netlify.app` yang bisa
-dibuka dari ponsel atau komputer mana pun. Nama menu di bawah mengikuti tampilan Netlify berbahasa Inggris
-dan bisa sedikit berbeda.
+Netlify mengambil aplikasi langsung dari repo GitHub `inmaliik/kanji-bertahap` dan menerbitkannya ulang setiap kali
+cabang `main` berubah (D-115). Hasilnya tautan seperti `https://kanji-bertahap.netlify.app` yang selalu menampilkan
+versi terbaru. Tidak perlu baris perintah. Nama menu di bawah mengikuti tampilan Netlify berbahasa Inggris dan bisa
+sedikit berbeda.
 
-### 1. Siapkan folder unggahan
+### Apa yang terbit
 
-Buat folder baru, misalnya `kanji-bertahap-situs`, lalu **salin** isi berikut dari folder proyek ke dalamnya:
+Hanya **enam butir situs** ditambah satu berkas kecil:
 
-| Salin (enam butir, semuanya wajib) | Jangan salin |
+| Terbit | Tidak pernah terbit |
 |---|---|
-| `index.html` | `.git` (folder tersembunyi), `.vscode/` |
-| `css/` | `tests/` |
-| `js/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md` (memuat alamat halaman tim), `ASSETS.md` |
-| `data/` (materi, daftar potongan peta, karakter, label) | `sumber/` (dokumen sumber dan impor tim; tidak ada di git) |
-| `assets/` (potongan peta, ikon, karakter, ilustrasi; tanpa folder ini peta dan karakter tidak tampil) | `tmp/` (tangkapan layar pengembang; tidak ada di git) |
-| `tools/` (berisi pemeriksa materi untuk tim konten) | file CSV ekspor log jawaban |
+| `index.html`, `css/`, `js/`, `data/`, `assets/`, `tools/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md`, `ASSETS.md` |
+| `build.json` (dibuat saat terbit: kode commit yang diterbitkan) | `tests/`, `arsip/`, `netlify.toml`, `terbitkan.sh` |
+| | `sumber/`, `tmp/`, file ekspor log (tidak ada di git sama sekali) |
 
-Dokumen internal tidak disalin karena semua isi folder unggahan dapat dibuka siapa pun yang tahu tautannya.
-Hasilnya, folder unggahan berisi tepat: `index.html`, `css/`, `js/`, `data/`, `assets/`, `tools/`.
+Aturannya ada di `netlify.toml`: Netlify menjalankan `terbitkan.sh`, yang **hanya menyalin** enam butir itu ke folder
+`_situs` dan menulis `build.json`, lalu hanya `_situs` yang diterbitkan. Tidak ada yang diubah; aplikasi berjalan sama
+dengan atau tanpa `build.json` (tanpa berkas itu, misalnya di komputer sendiri, build tercatat sebagai `dev`). Uji
+otomatis `tests/deploy.test.mjs` menjalankan perintah yang sama dan gagal jika ada berkas lain yang ikut terbit, atau
+jika ada berkas yang dibutuhkan aplikasi yang tertinggal.
 
-Sebelum menyalin, pastikan:
-- `data/content.json` adalah versi materi yang ingin ditampilkan (periksa revisinya);
-- jika pengiriman log sudah siap, `js/config.js` sudah berisi `LOG_REMOTE_ENABLED = true` dan URL Apps Script
-  (lihat [Pengiriman log](#pengiriman-log-ke-google-apps-script)).
+### 1. Sambungkan Netlify ke GitHub (sekali saja)
 
-### 2. Unggah pertama kali
+1. Buka <https://app.netlify.com> dan masuk (bisa dengan akun Google).
+2. **Jika situs sudah ada dari unggahan manual sebelumnya:** buka situsnya → **Site configuration** → **Build &
+   deploy** → **Continuous deployment** → **Link repository**. Tautannya tetap sama.
+   **Jika belum ada situs:** di halaman **Sites**, pilih **Add new site → Import an existing project**.
+3. Pilih **GitHub**. Saat GitHub meminta izin untuk aplikasi Netlify, pilih **Only select repositories** → centang
+   **`kanji-bertahap`** saja → **Install / Authorize**.
+4. Pilih repo `kanji-bertahap`. Di halaman pengaturan build:
+   - **Branch to deploy:** `main`
+   - **Base directory:** kosong
+   - **Build command** dan **Publish directory:** biarkan apa adanya. Netlify membacanya dari `netlify.toml`
+     (`sh terbitkan.sh` dan `_situs`). Jika kolomnya terisi lain, kosongkan.
+5. Tekan **Deploy**. Tunggu sampai status **Published** (sekitar satu menit).
+6. Jika situs baru: **Site configuration → General → Site details → Change site name**, isi misalnya
+   `kanji-bertahap`.
 
-1. Buka <https://app.netlify.com> dan buat akun gratis (bisa dengan akun Google). Akun diperlukan supaya situs
-   tidak terhapus dan bisa diperbarui.
-2. Di halaman **Sites**, pilih **Add new site → Deploy manually**.
-3. **Seret folder `kanji-bertahap-situs`** (foldernya, bukan isinya satu per satu) ke kotak unggah.
-4. Tunggu sampai status **Published**. Netlify memberi nama acak, misalnya `https://acak-12345.netlify.app`.
+### 2. Matikan pratinjau cabang
 
-### 3. Beri nama yang mudah
+Tautan pratinjau Netlify bisa dibuka siapa saja yang tahu alamatnya, jadi matikan:
 
-1. Buka situsnya → **Site configuration** → **General** → **Site details** → **Change site name**.
-2. Isi nama, misalnya `kanji-bertahap`. Tautannya menjadi `https://kanji-bertahap.netlify.app`.
+1. **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts → Configure.**
+2. **Production branch:** `main`. **Branch deploys:** **Deploy only the production branch**.
+   **Deploy Previews:** **Don't deploy pull requests**. Simpan.
 
-### 4. Periksa hasilnya
+### 3. Periksa hasilnya
 
 - [ ] Tautan utama membuka layar sambutan di ponsel, lalu pemilihan karakter dan peta.
+- [ ] `https://nama-situs.netlify.app/build.json` menampilkan `buildId` berupa kode commit (deretan huruf dan angka),
+      bukan `dev`. Tujuh karakter pertamanya sama dengan commit terakhir di GitHub.
+- [ ] **Pengaturan → Materi** menampilkan **Build:** dengan kode yang sama.
+- [ ] `https://nama-situs.netlify.app/README.md` dan `…/DECISIONS.md` menampilkan **Page not found**.
 - [ ] Peta menampilkan karakter, ikon menu, dan potongan peta (atau kotak keterangan potongan yang belum digambar),
       bukan tanda ✗ berkas hilang.
 - [ ] `https://nama-situs.netlify.app/tools/convert.html` membuka pemeriksa materi.
 - [ ] Alamat pratinjau (`#/preview/all`, dicatat di `MULAI-DI-SINI.md`) menampilkan materi dengan revisi yang benar.
-- [ ] Satu quest bisa dimainkan sampai layar persetujuan dan percakapan pengantar.
 
-### 5. Memperbarui situs
+### 4. Memperbarui situs
 
-Setiap kali materi atau aplikasi berubah:
+Tidak ada langkah manual: setiap commit yang dikirim ke `main` di GitHub (misalnya saat meminta Claude
+**mencadangkan pekerjaan**) diterbitkan otomatis dalam sekitar satu menit. Di ponsel, muat ulang halaman untuk melihat
+versi baru.
 
-1. Siapkan ulang folder unggahan (langkah 1) dengan file terbaru.
-2. Buka situs di Netlify → tab **Deploys**.
-3. Seret folder ke kotak **"Need to update your site? Drag and drop your site output folder here"**.
-4. Tautan tetap sama. Di ponsel, muat ulang halaman untuk melihat versi baru.
+Jika pembaruan ternyata salah: tab **Deploys** → pilih terbitan sebelumnya → **Publish deploy**. Lalu minta
+perbaikannya sebagai commit baru (riwayat di GitHub tidak ditulis ulang, D-113).
 
-Jika pembaruan ternyata salah: tab **Deploys** → pilih unggahan sebelumnya → **Publish deploy**.
+### 5. Kunci terbitan selama uji coba penelitian
+
+Selama periode uji coba, aplikasi **tidak boleh berubah**. Sebelum sesi peserta pertama: tab **Deploys** →
+**Lock to stop auto publishing**. Commit baru tetap tersimpan di GitHub, tetapi tidak diterbitkan. Setelah periode uji
+coba selesai: **Unlock to start auto publishing**.
+
+Kunci mencegah perubahan; **bukti** bahwa tidak ada perubahan ada di log: setiap baris mencatat `buildId`, dan semua
+baris ber-`sessionMode` `research` dalam satu periode uji coba harus memiliki `buildId` yang sama
+(lihat [Daftar periksa sebelum uji coba penelitian](#daftar-periksa-sebelum-uji-coba-penelitian)).
 
 ### Tautan untuk validator ahli
 
@@ -113,8 +132,7 @@ Berikan tautan langsung ke pratinjau. Alamatnya **tidak** ditautkan dari dalam a
 [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli). Selama revisi materi masih
 `draft-…`, halaman itu bertanda DRAF dan **tidak boleh** dikirim ke validator.
 
-Situs dapat dibuka siapa pun yang mengetahui tautannya. Jangan menaruh data jawaban peserta di folder
-unggahan.
+Situs dapat dibuka siapa pun yang mengetahui tautannya. Jangan pernah menaruh data jawaban peserta di repo.
 
 ---
 
@@ -124,7 +142,6 @@ unggahan.
 index.html                  halaman utama + pesan untuk file://
 css/style.css               tampilan (mobile-first)
 data/content.json           SELURUH materi pembelajaran (schemaVersion 2: wilayah, quest, percakapan, kanji, kotoba)
-data/archive/               materi yang keluar dari data aktif (tidak dibaca aplikasi); lihat README di dalamnya
 data/consent.json           teks layar persetujuan peserta (saat ini PLACEHOLDER)
 data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復習, 画数, …)
 data/kana.json              tabel hiragana dan katakana untuk panduan kana
@@ -135,6 +152,7 @@ assets/                     gambar: potongan peta, ikon lokasi dan menu (PLACEHO
 
 js/main.js                  bootstrap aplikasi, routing antar layar
 js/config.js                konfigurasi umum (judul, versi, lokasi content.json)
+js/build.js                 membaca build.json (kode commit yang diterbitkan) untuk kolom log buildId
 js/state.js                 progres di localStorage + SEMUA aturan permainan (ambang, kunci, ulangan, setelan furigana)
 js/session.js               antrean soal satu quest: putaran belajar, produksi, pemantapan, lanjut setelah keluar
 js/furigana.js              furigana mana yang tampil: setelan pemain + aturan anti-bocor
@@ -195,7 +213,10 @@ tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
 tools/templates/            contoh CSV, satu per tab (wilayah, kanji, kotoba, quest, percakapan)
 tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
-tests/                      uji otomatis logika inti (lihat "Uji otomatis")
+tests/                      uji otomatis logika inti, sintaks semua skrip, dan isi terbitan Netlify (lihat "Uji otomatis")
+arsip/                      materi yang keluar dari data aktif dan contoh versi level; tidak dibaca aplikasi, tidak terbit
+netlify.toml                pengaturan Netlify: hanya folder _situs yang terbit
+terbitkan.sh                perintah terbit Netlify: menyalin enam butir situs ke _situs dan menulis build.json
 MULAI-DI-SINI.md            titik masuk: arahan per peran
 ASSETS.md                   spesifikasi setiap slot aset gambar, untuk pembuat aset
 DECISIONS.md                catatan keputusan desain beserta alasannya
@@ -631,14 +652,14 @@ Tim konten mencentang setiap baris setelah memeriksa langsung di みんなの日
 
 Bab yang sudah terverifikasi untuk konten mendatang (belum ada di data): 食堂 — bab 3, 電気 — bab 1,
 銀行員 — bab 1, 自転車 — bab 5, 行きます — bab 5. Kotoba yang dikeluarkan dari data contoh tercatat di
-`data/archive/README.md`.
+`arsip/README.md`.
 
 Daftar ini disalin manual dari `data/content.json`. Perbarui setiap kali wilayah, kanji, atau kotoba ditambahkan.
 
 ## Cakupan bab dan urutan wilayah
 
 - **Materi dibatasi bab 1–12** みんなの日本語初級I. Wilayah atau kotoba dengan bab di luar itu adalah **error**.
-  Materi yang terpaksa keluar dicatat di `data/archive/`, tidak dihapus tanpa jejak.
+  Materi yang terpaksa keluar dicatat di `arsip/`, tidak dihapus tanpa jejak.
 - **Satu wilayah = satu bab.** Urutan wilayah = urutan bab. Wilayah berikutnya terbuka setelah wilayah sebelumnya
   tuntas.
 - **Isi wilayah = kotoba bab itu yang dipilih tim**, bukan semua kanji di kosakata bab tersebut. Urutan tidak lagi
@@ -930,6 +951,7 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | Kolom | Isi |
 |---|---|
 | `rowId` | ID unik tiap baris. Dipakai spreadsheet untuk membuang baris yang terkirim dua kali. |
+| `appVersion`, `buildId` | Versi aplikasi (D-111) dan **kode commit situs yang dipakai** (dari `build.json`; `dev` jika aplikasi tidak dibuka dari Netlify). Semua baris penelitian dalam satu periode uji coba harus ber-`buildId` sama (D-115). |
 | `contentRevision` | Revisi materi saat soal dijawab; memisahkan data antarputaran revisi. |
 | `participantCode` | Kode peserta anonim: wajib di mode penelitian, opsional di mode umum. |
 | `sessionMode` | `research` untuk data penelitian (tautan penelitian, setuju, kode peserta terisi) atau `general` untuk pemain umum. Mode pameran tidak menulis baris. **Saring analisis penelitian dengan kolom ini.** |
@@ -1399,12 +1421,16 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini (55 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+Uji ini (69 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
 (sesi quest, pemantapan, kunci wilayah, 復習), materi yang tidak boleh tampil sebelum diperkenalkan, peta
-(potongan, posisi lokasi), XP dan papan peringkat, kontras palet warna, kontrak aset, log (penyimpanan penuh,
-kolom, antrean pengiriman, CSV), alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), dan bahwa
-tidak ada materi bahasa Jepang yang ditulis langsung di kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di
-sini; periksa manual di ponsel.
+(potongan, posisi lokasi), XP dan papan peringkat, mode sesi (pameran tanpa log, kode peserta wajib di mode
+penelitian), kontras palet warna, kontrak aset, log (penyimpanan penuh, kolom, antrean pengiriman, CSV, `buildId`),
+alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), **isi terbitan Netlify** (hanya enam butir
+situs dan `build.json`), **sintaks setiap skrip**, dan bahwa tidak ada materi bahasa Jepang yang ditulis langsung di
+kode. Jalankan sebelum setiap commit. Tampilan di browser tidak diuji di sini; periksa manual di ponsel.
+
+> `node --check berkas.js` **tidak** melaporkan galat sintaks untuk berkas `.js` di proyek ini (hasilnya selalu
+> lolos). Pemeriksaan sintaks yang sah adalah `tests/syntax.test.mjs`, yang memeriksa setiap skrip sebagai modul.
 
 ---
 
@@ -1513,6 +1539,9 @@ Dijalankan oleh peneliti sebelum sesi peserta pertama. Lihat [Prosedur uji coba 
 
 - [ ] Aplikasi dengan materi yang sudah keluar dari draf sudah di-deploy ke Netlify (`contentRevision` bukan
       `draft-…`, `APP_VERSION` 1.x; lihat [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)).
+- [ ] **Terbitan dikunci** di Netlify (**Deploys → Lock to stop auto publishing**, lihat
+      [Kunci terbitan selama uji coba penelitian](#5-kunci-terbitan-selama-uji-coba-penelitian)), dan kode
+      `buildId` yang terkunci dicatat di catatan penelitian (lihat `https://nama-situs.netlify.app/build.json`).
 - [ ] **Tautan penelitian** (alamat Netlify + `#/penelitian`) sudah dibuat dan diuji di ponsel: tautan membuka
       layar persetujuan, penanda **● Mode penelitian** tampil, permainan tidak bisa dimulai sebelum kode peserta
       diisi, dan Pengaturan menampilkan **Mode saat ini: Penelitian** tanpa sakelar mode pameran.
@@ -1527,7 +1556,10 @@ Dijalankan oleh peneliti sebelum sesi peserta pertama. Lihat [Prosedur uji coba 
       yang di-deploy. Pengujian tim nomor 3 (CSV di iPhone) sudah lolos sebagai cadangan.
 - [ ] **Satu sesi uji** lewat tautan penelitian (dengan kode uji, misalnya `UJI-01`) sudah dimainkan sampai satu
       quest tuntas, dan baris lognya tiba di spreadsheet dengan `sessionMode` = **`research`** dan `participantCode`
-      = `UJI-01`. Baris uji ini lalu ditandai atau dihapus dari spreadsheet supaya tidak ikut dianalisis.
+      = `UJI-01`, dan `buildId` = kode yang dicatat di atas (bukan `dev`). Baris uji ini lalu ditandai atau dihapus
+      dari spreadsheet supaya tidak ikut dianalisis.
+- [ ] Rencana pemeriksaan setelah periode uji coba disepakati: **semua baris ber-`sessionMode` `research` harus
+      memiliki `buildId` yang sama**. Jika ada lebih dari satu, catat sebabnya sebelum analisis (D-115).
 - [ ] Peneliti yang memegang spreadsheet sudah membaca [prosedur penghapusan manual](#untuk-peneliti-menghapus-data-peserta-yang-menarik-persetujuan),
       dan tahu bahwa analisis penelitian disaring dengan `sessionMode` = `research`.
 - [ ] Perangkat sesi (jika memakai perangkat bersama) sudah di-**Reset progres**, dan mode pameran mati.

@@ -4,6 +4,7 @@
 
 import { h } from "../dom.js";
 import { APP_TITLE, APP_VERSION } from "../config.js";
+import { getBuildId } from "../build.js";
 import { saveProgress } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
 import { backLink } from "./common.js";
@@ -23,7 +24,7 @@ function aboutBody(app) {
   return [
     h("p", {}, `${APP_TITLE} adalah web game untuk belajar kanji dan kotoba, bagi mahasiswa semester 1 Pendidikan Bahasa Jepang.`),
     disclaimer(app),
-    h("p", { class: "muted" }, `Versi aplikasi ${APP_VERSION} · revisi materi ${app.content.contentRevision}`),
+    h("p", { class: "muted" }, `Versi aplikasi ${APP_VERSION} · build ${getBuildId().slice(0, 12)} · revisi materi ${app.content.contentRevision}`),
   ];
 }
 

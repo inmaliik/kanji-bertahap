@@ -12,6 +12,9 @@ logs/
 # Team source material (documents, original artwork). Not part of the app; never uploaded.
 sumber/
 
+# Netlify publish folder, rebuilt by terbitkan.sh on every deploy (D-115)
+_situs/
+
 # Temporary test folders (e.g. 30-level dummy content)
 tmp/
 .tmp/

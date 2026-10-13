@@ -20,6 +20,7 @@ export const LOG_COLUMNS = [
   "rowId", // unique per row; lets the spreadsheet drop rows sent twice after a network drop
   "timestamp", // ISO-8601, device clock
   "appVersion",
+  "buildId", // commit the published site was built from (build.json), or "dev" outside Netlify (D-115)
   "contentRevision", // content.json revision the answer was given against
   "playerId", // random per device/player; new after progress reset
   "participantCode", // anonymous code; optional in general mode, required in research mode

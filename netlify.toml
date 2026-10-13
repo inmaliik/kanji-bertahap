@@ -1,0 +1,6 @@
+# Netlify settings (D-115). Only the folder _situs is published; terbitkan.sh
+# fills it with the six site items and build.json. Internal documents, tests and
+# arsip/ stay in the repository and are never served.
+[build]
+  publish = "_situs"
+  command = "sh terbitkan.sh"

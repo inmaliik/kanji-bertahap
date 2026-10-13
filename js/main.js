@@ -1,6 +1,7 @@
 // App bootstrap and hash routing.
 
-import { ASSETS_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
+import { ASSETS_URL, BUILD_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
+import { loadBuildId } from "./build.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
 import { buildModel } from "./model.js";
@@ -160,6 +161,7 @@ async function boot() {
     loadKana(KANA_URL),
     loadCharacters(CHARACTERS_URL),
     loadMapLayout(MAP_URL),
+    loadBuildId(BUILD_URL), // before any row can be logged (D-115)
   ]);
   app.mapLayout = map.layout;
   app.mapProblems = map.problems;
