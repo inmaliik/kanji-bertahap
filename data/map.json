@@ -1,3 +1,5 @@
 {
-  "segments": ["potongan-01", "potongan-02"]
+  "worlds": [
+    { "world": 1, "segments": ["potongan-01", "potongan-02"] }
+  ]
 }

@@ -21,7 +21,7 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 
 | Slot | Berkas (nama persis) | Format | Ukuran (piksel) | Rasio | Latar | Batas ukuran berkas | Muncul di |
 |---|---|---|---|---|---|---|---|
-| `potongan-peta` | `assets/peta/<nama potongan>.png`, satu per potongan, nama sesuai daftar di `data/map.json`, misalnya `assets/peta/potongan-01.png` | PNG | 1080 × 1440 | 3 : 4 (tegak) | tidak transparan | 150 KB per potongan | Peta, layar utama: potongan-potongan latar yang disambung dari atas ke bawah |
+| `potongan-peta` | `assets/peta/<nama potongan>.png`, satu per potongan, nama sesuai daftar di `data/map.json` (per dunia), misalnya `assets/peta/potongan-01.png` | PNG | 1080 × 1440 | 3 : 4 (tegak) | tidak transparan | 150 KB per potongan | Peta, layar utama: potongan-potongan latar yang disambung dari atas ke bawah |
 | `lokasi` | `assets/lokasi/<ID wilayah>.png`, satu per wilayah, misalnya `assets/lokasi/B06.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 40 KB | Peta: ikon lokasi (gedung, toko, stasiun, …) satu per wilayah |
 | `jalur` (opsional) | `assets/peta/jalur.png` | PNG | 64 × 64, ubin berulang | 1 : 1 | **transparan** | 10 KB | Peta: motif jalur antar lokasi |
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
@@ -85,21 +85,25 @@ strukturnya, bukan tata letaknya.
 
 Peta adalah **susunan potongan gambar tegak yang disambung dari atas ke bawah** dan digulir ke bawah di ponsel. Setiap
 potongan memuat dua atau tiga lokasi. Menambah bab berarti menambah satu potongan di bawah; potongan yang sudah ada
-tidak perlu digambar ulang.
+tidak perlu digambar ulang. **Setiap dunia punya peta sendiri** (D-117): Dunia 1 (初級I, bab 1–25) dan Dunia 2
+(初級II, bab 26–50). Peta Dunia 2 baru dibutuhkan saat materi bab 26 ke atas ada.
 
 - **Ukuran setiap potongan sama: 1080 × 1440 (3 : 4), tidak transparan, maks 150 KB.** Lebar 1080 mengikuti standar
   karakter: di ponsel 375 piksel peta tampil ±343 piksel lebarnya, dan 1080 cukup tajam untuk layar berkerapatan 3×.
   Tinggi 1440 memberi tempat untuk dua atau tiga lokasi. Satu layar ponsel memperlihatkan kira-kira dua potongan,
   jadi dua potongan × 150 KB tetap di bawah anggaran ±500 KB layar pertama. Potongan yang jauh dari layar baru
   diunduh ketika pemain menggulir mendekatinya.
-- **Urutan potongan ada di `data/map.json`**, dari atas ke bawah:
-  `{ "segments": ["potongan-01", "potongan-02"] }`. Nama di daftar adalah nama berkas tanpa `.png`. Dua potongan
-  di daftar sekarang menampung bab 1–5, satu-satunya materi yang sudah ada (tiga lokasi per potongan, D-110).
+- **Urutan potongan ada di `data/map.json`**, per dunia, dari atas ke bawah:
+  `{ "worlds": [ { "world": 1, "segments": ["potongan-01", "potongan-02"] } ] }`. Nama di daftar adalah nama berkas
+  tanpa `.png`, dan satu nama hanya boleh dipakai satu dunia. Dua potongan Dunia 1 sekarang menampung bab 1–5,
+  satu-satunya materi yang sudah ada (tiga lokasi per potongan, D-110). Untuk Dunia 2, tambahkan
+  `{ "world": 2, "segments": ["d2-potongan-01"] }` di daftar `worlds` dan simpan `assets/peta/d2-potongan-01.png`.
   **Potongan berikutnya digambar bersama babnya**, bukan sebelumnya.
 - **Menambah potongan:** gambar potongan baru, simpan sebagai `assets/peta/potongan-03.png`, lalu tambahkan
-  `"potongan-03"` di akhir daftar `data/map.json`.
+  `"potongan-03"` di akhir daftar `segments` dunia itu di `data/map.json`.
 - **Posisi lokasi diisi tim konten di tab `wilayah`**, tiga kolom sekaligus: `pin_segment` (nomor potongan, 1 untuk
-  yang paling atas), `pin_x` dan `pin_y` (persen lebar dan tinggi **potongan itu**, bukan seluruh peta). Contoh:
+  yang paling atas), `pin_x` dan `pin_y` (persen lebar dan tinggi **potongan itu**, bukan seluruh peta). Nomor potongan dihitung di
+  peta dunia wilayah itu: wilayah bab 26 di potongan `1` berarti potongan teratas peta Dunia 2. Contoh:
   titik tengah potongan 2 adalah `2`, `50`, `50`. Setelah potongan jadi, beri tim konten posisi setiap lokasi.
   Usahakan `pin_y` di antara 15 dan 85 supaya lokasi tidak terbelah sambungan.
 - **Setiap lokasi menempati sekitar 90 × 110 piksel di layar** (ikon, nama bab, dan persentase), yaitu kira-kira

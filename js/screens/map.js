@@ -17,12 +17,17 @@
 // information for screen readers and small screens.
 //
 // #/region/B06 shows the same map with the region's sheet over it.
+//
+// Every world has its own map (D-117). #/dunia/2 shows world 2; #/ shows the
+// world the player looked at last, so "back to the map" returns there. When
+// the material has more than one world, tabs above the map switch worlds;
+// worlds open freely.
 
 import { h } from "../dom.js";
 import { APP_TITLE } from "../config.js";
-import { columnPoint, placeLocations } from "../map-layout.js";
-import { nodeStatuses, regionSummary } from "../progression.js";
-import { storageUsage } from "../state.js";
+import { columnPoint, placeLocations, segmentsOf } from "../map-layout.js";
+import { currentWorld, nodeStatuses, worldSummary } from "../progression.js";
+import { saveProgress, storageUsage } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
 import { exploration, levelOf, xpOf } from "../xp.js";
 import { recordScore } from "../leaderboard.js";
@@ -55,7 +60,7 @@ function scrollTarget(summaries, sheetRegion) {
  * its brief: file name, size, the locations it holds and its neighbours,
  * whose edges it must meet (ASSETS.md).
  */
-function segmentBox(app, { name, n, count, chapters, temporary, observer }) {
+function segmentBox(app, { world, name, n, count, chapters, temporary, observer }) {
   const slot = app.assets?.get("potongan-peta");
   const path = name && slot?.pattern ? slot.pattern.replace("{segment}", name) : null;
   const box = h("div", { class: "map-segment", style: slot ? `aspect-ratio: ${slot.width} / ${slot.height}` : "aspect-ratio: 3 / 4" });
@@ -67,7 +72,7 @@ function segmentBox(app, { name, n, count, chapters, temporary, observer }) {
         h(
           "span",
           { class: "map-segment__brief" },
-          h("span", { class: "map-segment__title" }, `Potongan peta ${n} dari ${count}`),
+          h("span", { class: "map-segment__title" }, `Dunia ${world}: potongan peta ${n} dari ${count}`),
         h("span", {}, path ?? "belum terdaftar di data/map.json"),
         slot ? h("span", {}, `${slot.width} × ${slot.height} ${slot.format}, tidak transparan, maks ${slot.maxKB} KB`) : null,
         h("span", {}, chapters.length ? `Lokasi: ${chapters.map((c) => `Bab ${c}`).join(", ")}${temporary ? " (posisi sementara)" : ""}` : "Belum ada lokasi"),
@@ -150,10 +155,44 @@ function levelBar(app) {
   );
 }
 
-export function mapScreen(app, { sheetRegion = null } = {}) {
+/** The world the map shows, remembered so that links back to the map return to it. */
+function shownWorld(app, sheetRegion, number) {
   const { model, progress } = app;
+  const region = sheetRegion ? model.regions.find((r) => r.id === sheetRegion) : null;
+  const wanted = region ? region.world : number;
+  const world = model.worlds.find((w) => w.number === wanted) ?? currentWorld(model, progress);
+  if (progress.world !== world.number) {
+    progress.world = world.number;
+    saveProgress(progress);
+  }
+  return world;
+}
+
+/** Tabs between worlds, only when the material has more than one (D-117). */
+function worldTabs(app, shown, statuses) {
+  const { model, progress } = app;
+  if (model.worlds.length < 2) return null;
+  return h(
+    "nav",
+    { class: "world-tabs", "aria-label": "Dunia" },
+    model.worlds.map((world) => {
+      const summary = worldSummary(model, progress, world, statuses);
+      return h(
+        "a",
+        { class: "world-tabs__tab", href: `#/dunia/${world.number}`, "aria-current": world === shown ? "page" : null },
+        h("span", { class: "world-tabs__name" }, `Dunia ${world.number}${summary.complete ? " ✓" : ""}`),
+        h("span", { class: "world-tabs__book" }, world.book)
+      );
+    })
+  );
+}
+
+export function mapScreen(app, { sheetRegion = null, world: worldNumber = null } = {}) {
+  const { model, progress } = app;
+  const world = shownWorld(app, sheetRegion, worldNumber);
   const statuses = nodeStatuses(model, progress);
-  const summaries = model.regions.map((region) => regionSummary(model, progress, region, statuses));
+  const worldInfo = worldSummary(model, progress, world, statuses);
+  const summaries = worldInfo.regions;
   const usage = storageUsage();
   const explored = exploration(model, progress);
   const mode = currentMode(app);
@@ -162,7 +201,8 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
   const { xp } = xpOf(model, progress);
   recordScore(mode, { playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
 
-  const { places, segmentCount } = placeLocations(model.regions, app.mapLayout);
+  const segmentNames = segmentsOf(app.mapLayout, world.number);
+  const { places, segmentCount } = placeLocations(world.regions, segmentNames);
   const points = places.map((p) => columnPoint(p, segmentCount));
   const target = scrollTarget(summaries, sheetRegion);
   // Segments more than one screen away from the view load later (D-108).
@@ -182,7 +222,8 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
   const segments = Array.from({ length: segmentCount }, (_, i) => {
     const here = summaries.filter((s, j) => places[j].segment === i + 1);
     return segmentBox(app, {
-      name: app.mapLayout.segments[i],
+      world: world.number,
+      name: segmentNames[i],
       n: i + 1,
       count: segmentCount,
       chapters: here.map((s) => s.region.chapter),
@@ -219,18 +260,20 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
       levelBar(app),
       h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), `Eksplorasi seluruh peta: ${explored}%`)
     ),
+    worldTabs(app, world, statuses),
+    worldInfo.complete ? h("p", { class: "notice notice--success" }, `✓ Dunia ${world.number} tamat.`) : null,
     app.notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, n.text)),
     usage.warning
       ? h("p", { class: "notice notice--warning", role: "alert" }, "⚠ Penyimpanan perangkat hampir penuh. Minta petugas mengekspor dan mengosongkan log di Pengaturan.")
       : null,
     h(
       "div",
-      { class: "map", role: "group", "aria-label": "Peta wilayah" },
+      { class: "map", role: "group", "aria-label": `Peta Dunia ${world.number}` },
       segments,
       h("div", { class: "map__layer" }, paths(app, points), pins)
     ),
     leaderboardAvailable(mode) ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
-    h("h2", { class: "map-list__title" }, "Wilayah"),
+    h("h2", { class: "map-list__title" }, `Wilayah Dunia ${world.number} · ${world.book}`),
     h(
       "ul",
       { class: "map-list" },
@@ -250,7 +293,7 @@ export function mapScreen(app, { sheetRegion = null } = {}) {
               h(
                 "span",
                 { class: "map-list__meta" },
-                `${state.text} · ${s.passed} dari ${s.total} quest (${s.percent}%) · `,
+                `${state.text} · ${s.passed} dari ${s.total} misi (${s.percent}%) · `,
                 uiLabel(app, "review", { gloss: false }),
                 s.reviewPassed ? " ✓" : " belum"
               )

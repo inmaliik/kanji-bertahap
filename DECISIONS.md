@@ -617,6 +617,8 @@ dibedakan. **Alternatif ditolak:** Kotoba disarangkan di dalam kanji seperti di 
 ditulis dua kali); relasi kanji–kotoba diisi manual; kotoba dirujuk dengan tulisannya (homograf tidak bisa dibedakan).
 
 ### D-58 · Cakupan materi bab 1–12 dan aturan bab
+*Cakupan bab 1–12 digantikan oleh D-117 (bab 1–50 dalam dua dunia); aturan bab kotoba = bab wilayah dan
+`sentenceChapter` tetap berlaku.*
 **Tanggal:** 2026-09-29. **Keputusan:** Bab wilayah dan bab kotoba harus 1–12 (**error** jika di luar). Bab kotoba
 quest harus sama dengan bab wilayahnya (**error**). `sentenceChapter` kini dimiliki setiap **percakapan** dan
 dibandingkan dengan **bab wilayah**, bukan bab kotoba (**peringatan** jika lebih tinggi, seperti D-48). Kotoba yang
@@ -1304,6 +1306,41 @@ dari referensi. Keputusan yang diambil:
 - **Menu bawah** lima pintu (Index, Kucing, Cerita, Kana, Pengaturan), sama persis di semua mode.
 
 **Alasan:** Lihat laporan rancangan; alasan per bagian dicatat lagi di keputusan masing-masing tahap saat diterapkan.
+
+### D-117 · Tahap 2: dunia di atas wilayah, dibuka bebas, peta per dunia
+**Tanggal:** 2026-10-13. **Keputusan:** Menerapkan bagian dunia dari D-116.
+- **Daftar dunia tetap di kode** (`js/worlds.js`): Dunia 1 = 初級I bab 1–25, Dunia 2 = 初級II bab 26–50. Dunia sebuah
+  wilayah diturunkan dari babnya, tidak ditulis di spreadsheet. **D-58 digantikan:** bab wilayah dan kotoba harus
+  1–50 (error di luar itu, pesannya menyebut rentang tiap dunia). Aturan bab kotoba quest = bab wilayah tetap.
+- **Urutan berlaku per dunia.** Wilayah pertama setiap dunia terbuka sejak awal; di dalam dunia, wilayah berikutnya
+  terbuka setelah ulangan wilayah sebelumnya tuntas (D-55). Ulangan wilayah mengambil bagian "wilayah sebelumnya"
+  hanya dari dunia yang sama.
+- **Kotoba dunia lain tidak dianggap sudah aman.** Validator menghitung pengecoh cara baca otomatis (D-84) hanya dari
+  kotoba bab sebelumnya di dunia yang sama, dan peringatan `OTHER_QUEST_KOTOBA_IN_LINE` (D-79) kini juga berlaku untuk
+  kotoba quest dunia lain. Aplikasi sendiri sudah memeriksa per pemain (kotoba yang sudah diperkenalkan dan dikuasai),
+  sehingga tidak berubah.
+- **Dunia tamat** (`worldSummary`) hanya jika semua bab dalam rentangnya ada di materi dan semua wilayahnya tuntas
+  termasuk ulangan. Dunia yang tamat diberi ✓; adegan penutupnya menunggu tahap 5.
+- **Peta per dunia.** `data/map.json` menjadi `{ "worlds": [ { "world": 1, "segments": [...] } ] }`; nomor
+  `pin_segment` dihitung di peta dunia wilayah itu. Satu nama potongan hanya untuk satu dunia. Dunia bermateri yang
+  belum punya daftar potongan tampil dengan satu kotak keterangan, dan halaman pemeriksaan aset menyebutnya.
+- **Pilihan dunia** berupa dua tombol di atas peta, hanya jika materi punya lebih dari satu dunia; alamatnya
+  `#/dunia/N`. Dunia yang terakhir dilihat disimpan di progres (`progress.world`), sehingga `#/` dan semua tombol
+  "kembali ke peta" kembali ke dunia itu tanpa mengubah setiap tautan. Reset progres melupakannya.
+- **Disclaimer dihitung dari materi:** buku dan bab per dunia ("みんなの日本語初級I bab 1–5"), dengan label baru
+  `bookTitle2` di `data/ui.json` untuk 初級II.
+- **"Quest" menjadi "Misi"** di semua teks layar pemain dan halaman pratinjau validator. Nama tab spreadsheet, kolom,
+  ID (`Q-…`), alamat (`#/quest/…`), kolom log, dan pesan pemeriksa materi tetap memakai "quest", karena itu bahasa
+  kerja tim konten dan data yang sudah terkumpul.
+
+**Alasan:** Menurunkan dunia dari bab menjaga prinsip satu fakta ditulis sekali (D-59). Dunia dibuka bebas karena
+mahasiswa 初級II tidak boleh dipaksa menuntaskan 初級I di aplikasi; konsekuensinya, materi dunia lain tidak bisa
+dianggap sudah dipelajari, sehingga pemeriksaan urutan dibatasi per dunia. Menyimpan dunia terakhir di progres lebih
+kecil dan lebih aman daripada mengubah belasan tautan "kembali ke peta". Menampilkan pilihan dunia hanya jika ada dua
+dunia menjaga tampilan sekarang (materi bab 1–12 saja) tetap sederhana. **Alternatif ditolak:** Kolom `dunia` di tab
+wilayah (fakta ganda yang bisa bertentangan dengan bab); membuka Dunia 2 setelah Dunia 1 tamat (Dunia 1 tidak akan
+tamat selama materinya baru sebagian); satu peta panjang untuk semua dunia (peta Dunia 2 harus menunggu peta Dunia 1
+selesai digambar); mempertahankan format lama `data/map.json` sebagai Dunia 1 (dua format untuk satu berkas).
 
 ---
 

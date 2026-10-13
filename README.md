@@ -147,7 +147,7 @@ data/ui.json                label antarmuka berbahasa Jepang, berfurigana (復�
 data/kana.json              tabel hiragana dan katakana untuk panduan kana
 data/characters.json        karakter pemain dan lawan bicara, dengan kotak potong potret
 data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
-data/map.json               urutan potongan peta dari atas ke bawah (D-108)
+data/map.json               urutan potongan peta setiap dunia dari atas ke bawah (D-108, D-117)
 assets/                     gambar: potongan peta, ikon lokasi dan menu (PLACEHOLDER), karakter Hana dan Kazu, ilustrasi adegan; lihat ASSETS.md
 
 js/main.js                  bootstrap aplikasi, routing antar layar
@@ -284,11 +284,11 @@ Satu baris = satu bab = satu wilayah di peta. Wilayah selalu diurutkan menurut n
 
 | Kolom | Isi | Contoh |
 |---|---|---|
-| `chapter` | Nomor bab Minna, **1–12**. Satu bab hanya boleh satu baris. | `6` |
+| `chapter` | Nomor bab Minna, **1–50** (1–25 masuk Dunia 1 = 初級I, 26–50 masuk Dunia 2 = 初級II). Satu bab hanya boleh satu baris. | `6` |
 | `title` | Nama wilayah yang tampil di peta | `Wilayah Bab 6` |
 | `intro_summary` | Ringkasan bab untuk jendela pengantar: apa yang dipelajari di bab ini (bahasa Indonesia) | |
 | `intro_points` | *Daftar, boleh kosong.* Poin-poin tambahan jendela pengantar | |
-| `pin_segment`, `pin_x`, `pin_y` | *Boleh kosong, tetapi diisi bertiga.* Posisi lokasi di peta: nomor **potongan peta** (1 = paling atas, urutan di `data/map.json`), lalu posisi dalam **persen** lebar dan tinggi potongan itu (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah potongan peta jadi; selama kosong, lokasi ditaruh di posisi sementara, tiga per potongan. | `2` · `42,5` · `30` |
+| `pin_segment`, `pin_x`, `pin_y` | *Boleh kosong, tetapi diisi bertiga.* Posisi lokasi di peta: nomor **potongan peta** di peta dunianya (1 = paling atas, urutan di `data/map.json`), lalu posisi dalam **persen** lebar dan tinggi potongan itu (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah potongan peta jadi; selama kosong, lokasi ditaruh di posisi sementara, tiga per potongan. | `2` · `42,5` · `30` |
 
 ### Tab `kanji`
 
@@ -324,7 +324,7 @@ Satu baris = satu kotoba. Kotoba masuk ke wilayah bab yang sama dengan kolom `ch
 | `reading_type` | `kunyomi`, `onyomi`, atau `special` (jukujikun seperti 今日, atau bacaan yang tidak bisa dipisah per kanji) | `kunyomi` |
 | `pos` | `verb`, `noun`, `i-adj`, `na-adj`, `adverb`, `other` | `verb` |
 | `meaning` | Arti kotoba | `makan` |
-| `chapter` | Bab Minna tempat kotoba ini diajarkan, **1–12**. Kotoba quest wajib punya bab. Kotoba khusus index (bukan quest) boleh `-` untuk "di luar buku". | `6` |
+| `chapter` | Bab Minna tempat kotoba ini diajarkan, **1–50**. Kotoba quest wajib punya bab. Kotoba khusus index (bukan quest) boleh `-` untuk "di luar buku". | `6` |
 | `note` | *Boleh kosong.* Catatan untuk umpan balik, misalnya perubahan bunyi | |
 | `reading_distractors` | *Daftar, boleh kosong.* Pengecoh cara baca **sejenis** buatan tim | `くべます;のべます;しらべます` |
 | `reading_distractors_cross` | *Daftar, boleh kosong.* Pengecoh cara baca **lintas jenis** (lihat [Menulis pengecoh](#menulis-pengecoh)) | `しょくべます` |
@@ -658,10 +658,19 @@ Daftar ini disalin manual dari `data/content.json`. Perbarui setiap kali wilayah
 
 ## Cakupan bab dan urutan wilayah
 
-- **Materi dibatasi bab 1–12** みんなの日本語初級I. Wilayah atau kotoba dengan bab di luar itu adalah **error**.
-  Materi yang terpaksa keluar dicatat di `arsip/`, tidak dihapus tanpa jejak.
-- **Satu wilayah = satu bab.** Urutan wilayah = urutan bab. Wilayah berikutnya terbuka setelah wilayah sebelumnya
-  tuntas.
+- **Dua dunia di atas wilayah** (D-117): **Dunia 1** = みんなの日本語初級I bab 1–25, **Dunia 2** = 初級II bab 26–50.
+  Dunia tidak ditulis di spreadsheet: wilayah masuk dunia yang rentangnya memuat babnya. Wilayah atau kotoba dengan
+  bab di luar 1–50 adalah **error**. Materi yang terpaksa keluar dicatat di `arsip/`, tidak dihapus tanpa jejak.
+- **Dunia dibuka bebas**, karena mahasiswa 初級II harus bisa langsung masuk Dunia 2. Dunia tanpa materi tidak
+  ditampilkan; selama materi hanya punya satu dunia, peta tampil tanpa pilihan dunia.
+- **Satu wilayah = satu bab.** Di dalam satu dunia, urutan wilayah = urutan bab, dan wilayah berikutnya terbuka setelah
+  wilayah sebelumnya dan ulangannya tuntas. Wilayah pertama setiap dunia terbuka sejak awal. Ulangan wilayah mengambil
+  soal dari wilayah sebelumnya **di dunia yang sama** saja.
+- **Dunia tamat** hanya jika semua bab dalam rentangnya ada di materi dan tuntas. Selama materi Dunia 1 baru bab 1–12,
+  Dunia 1 belum bisa tamat; adegan penutupnya (tahap 5) belum akan diputar.
+- **Kotoba dunia lain tidak dianggap sudah dikenal.** Pemeriksa materi menghitung pengecoh cara baca otomatis hanya dari
+  kotoba bab sebelumnya di dunia yang sama, dan memperingatkan baris percakapan uji yang memuat kotoba quest dunia lain
+  (furigananya disembunyikan sampai pemain menguasainya, seperti kotoba quest bab yang sama atau sesudahnya).
 - **Isi wilayah = kotoba bab itu yang dipilih tim**, bukan semua kanji di kosakata bab tersebut. Urutan tidak lagi
   mengikuti mata kuliah Hyouki (keputusan lama D-39 dibalik oleh D-55; lihat alasannya di `DECISIONS.md`).
 - **Kotoba harus berada di wilayah babnya sendiri** (error jika berbeda). Kotoba yang babnya belum punya wilayah
@@ -1288,7 +1297,9 @@ di Chrome.
 
 **Peta (layar utama) sebagai kota** (D-103). Latar peta adalah **potongan-potongan gambar tegak yang disambung dari atas
 ke bawah** dan digulir (D-108): urutannya di `data/map.json`, berkasnya `assets/peta/<nama>.png`, dua atau tiga lokasi
-per potongan. Saat dibuka, peta menggulir sendiri ke lokasi yang sedang dikerjakan; potongan yang jauh dari layar
+per potongan. **Setiap dunia punya petanya sendiri** (D-117). Jika materi punya lebih dari satu dunia, tombol
+"Dunia 1 · 初級I" dan "Dunia 2 · 初級II" di atas peta berpindah dunia (alamat `#/dunia/2`); `#/` dan semua tombol
+"kembali ke peta" membuka dunia yang terakhir dilihat pemain. Dunia yang tamat diberi tanda ✓. Saat dibuka, peta menggulir sendiri ke lokasi yang sedang dikerjakan; potongan yang jauh dari layar
 baru diunduh saat didekati; bilah level dan lencana eksplorasi tetap terlihat saat menggulir. Potongan yang belum
 digambar tampil sebagai kotak keterangan (nama berkas, ukuran, lokasi, sambungan). Setiap wilayah
 adalah **satu lokasi** dengan ikonnya sendiri (`assets/lokasi/<ID wilayah>.png`). Di bawah ikon tertulis bab dan
@@ -1366,9 +1377,9 @@ ada (D-66); jika kelak diisi, berkas KanjiVG maupun gambar tim masuk lewat field
 tombol untuk beralih antara hiragana dan katakana. Hanya rujukan: tidak dicatat dan tidak menuntaskan apa pun.
 
 **Sambutan dan disclaimer.** Pemain baru (termasuk setelah reset) pertama kali melihat layar sambutan dengan
-disclaimer: materi mengikuti cakupan みんなの日本語初級I bab 1–12, dan semua kalimat serta percakapan ditulis tim
-pengembang. Disclaimer yang sama ada di **Tentang aplikasi** (tautan di bawah peta dan di Pengaturan). Judul buku
-diambil dari `data/ui.json`.
+disclaimer: materi mengikuti cakupan buku dan bab **yang ada di materi**, dihitung otomatis per dunia (misalnya
+"みんなの日本語初級I bab 1–5"), dan semua kalimat serta percakapan ditulis tim pengembang. Disclaimer yang sama ada di **Tentang aplikasi** (tautan di bawah peta dan di Pengaturan). Judul buku
+diambil dari `data/ui.json` (`bookTitle` untuk 初級I, `bookTitle2` untuk 初級II).
 
 **Label antarmuka berbahasa Jepang** (復習, dan kelak 画数, 熟語, dan lainnya) ada di `data/ui.json`, ditulis
 dengan sintaks furigana yang sama, selalu tampil berfurigana apa pun setelan pemain, dan boleh punya padanan

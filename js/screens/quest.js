@@ -61,7 +61,7 @@ export function questScreen(app, regionKey, position) {
   const region = findRegion(app, regionKey);
   const index = Number(position) - 1;
   const quest = region && Number.isInteger(index) ? region.quests[index] : undefined;
-  if (!quest) return messageScreen("Quest tidak ditemukan", "#/", h("p", {}, "Quest ini tidak ada di materi saat ini."));
+  if (!quest) return messageScreen("Misi tidak ditemukan", "#/", h("p", {}, "Misi ini tidak ada di materi saat ini."));
   const statuses = nodeStatuses(app.model, app.progress);
   if (statuses.get(region.id) === STATUS.LOCKED) {
     return messageScreen("Wilayah terkunci", "#/", h("p", {}, `Selesaikan wilayah sebelumnya beserta ulangannya untuk membuka Bab ${region.chapter}.`));
@@ -80,7 +80,7 @@ export function questScreen(app, regionKey, position) {
   return sessionScreen(app, {
     region,
     isReview: false,
-    title: `Bab ${region.chapter} · Quest ${index + 1}`,
+    title: `Bab ${region.chapter} · Misi ${index + 1}`,
     incomplete: isIncompleteQuest(modelQuest), // draft only (D-92)
     levelId: quest.id,
     items: buildQuestItems(model, modelQuest),
@@ -102,7 +102,7 @@ export function reviewScreen(app, regionKey) {
     return messageScreen(
       "Ulangan belum terbuka",
       regionHref(region),
-      h("p", {}, "Ulangan wilayah terbuka setelah semua quest di wilayah ini tuntas.")
+      h("p", {}, "Ulangan wilayah terbuka setelah semua misi di wilayah ini tuntas.")
     );
   }
   // Consent before the first game (D-50); in research mode also the participant code (D-112).
@@ -153,10 +153,10 @@ function questDoneView(app, region, step) {
   return h(
     "section",
     { class: "result result--passed" },
-    h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Quest tuntas"),
+    h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Misi tuntas"),
     h("p", {}, `Semua ${step.total} item sudah dikuasai dan kalimatmu sudah dikirim.`),
     nextIndex !== -1
-      ? h("a", { class: "button button--primary button--block", href: questHref(region, nextIndex) }, `Lanjut ke Quest ${nextIndex + 1}`)
+      ? h("a", { class: "button button--primary button--block", href: questHref(region, nextIndex) }, `Lanjut ke Misi ${nextIndex + 1}`)
       : h("a", { class: "button button--primary button--block", href: reviewHref(region) }, "Lanjut ke ", uiLabel(app, "review")),
     back
   );
@@ -271,7 +271,7 @@ function sessionScreen(app, cfg) {
       ),
       phase ? h("p", { class: "play-header__stage" }, h("span", {}, stepLabel(phase, stage, isReview))) : null,
       cfg.incomplete
-        ? h("p", { class: "notice notice--warning play-header__incomplete" }, "⚠ Quest belum lengkap: belum ada uji konteks, jadi langkah itu dilewati.")
+        ? h("p", { class: "notice notice--warning play-header__incomplete" }, "⚠ Misi belum lengkap: belum ada uji konteks, jadi langkah itu dilewati.")
         : null,
       progress
         ? h(
@@ -452,7 +452,7 @@ function sessionScreen(app, cfg) {
 
   show();
   if (cfg.resuming) {
-    root.firstChild.after(h("p", { class: "notice notice--info", role: "status" }, isReview ? "Melanjutkan ulangan dari titik terakhir." : "Melanjutkan quest dari titik terakhir."));
+    root.firstChild.after(h("p", { class: "notice notice--info", role: "status" }, isReview ? "Melanjutkan ulangan dari titik terakhir." : "Melanjutkan misi dari titik terakhir."));
   }
   return root;
 }

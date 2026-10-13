@@ -35,6 +35,10 @@
     "bookTitle": {
       "ja": "みんなの[日本語|にほんご][初級|しょきゅう]I",
       "id": "Minna no Nihongo Shokyu I"
+    },
+    "bookTitle2": {
+      "ja": "みんなの[日本語|にほんご][初級|しょきゅう]II",
+      "id": "Minna no Nihongo Shokyu II"
     }
   }
 }

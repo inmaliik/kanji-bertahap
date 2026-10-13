@@ -3,8 +3,9 @@
 **Kanji Bertahap** adalah web game untuk belajar kanji dan kotoba tingkat N5 (kemudian N4), bagi mahasiswa
 semester 1 Pendidikan Bahasa Jepang yang memakai みんなの日本語初級I. Produk ini dikembangkan untuk mata kuliah
 教材開発, akan divalidasi ahli, direvisi dua putaran, dipamerkan, dan menjadi bahan skripsi. Pemain memilih karakter
-lalu menjelajahi **peta kota**: setiap bab Minna (1–12) adalah satu lokasi. Di setiap lokasi ada beberapa **quest**;
-satu quest mengajarkan satu kotoba lewat percakapan pengantar, lalu melatih bentuk kanji, cara baca, kotoba dalam
+lalu memilih **dunia** (Dunia 1 = 初級I, Dunia 2 = 初級II) dan menjelajahi **peta kota**-nya: setiap bab Minna
+adalah satu lokasi. Di setiap lokasi ada beberapa **misi** (di spreadsheet dan data tetap disebut quest);
+satu misi mengajarkan satu kotoba lewat percakapan pengantar, lalu melatih bentuk kanji, cara baca, kotoba dalam
 percakapan uji, dan menulis kalimat sendiri. Setiap bab ditutup 復習 (ulangan). Jawaban dapat direkam untuk
 penelitian, hanya jika peserta menyetujuinya.
 **Status saat ini: aplikasinya sudah selesai dibangun, tetapi materi dan asetnya belum.** Pengerjaan fitur berhenti;

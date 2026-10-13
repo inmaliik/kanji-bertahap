@@ -182,7 +182,7 @@ function kanjiBlock(model, char, quest) {
           type === "kunyomi" ? " · " : "",
         ])
       ),
-      reading ? h("p", { class: "muted" }, "Bacaan di kotoba quest ini: ", ja("span", {}, reading)) : null
+      reading ? h("p", { class: "muted" }, "Bacaan di kotoba misi ini: ", ja("span", {}, reading)) : null
     )
   );
 }
@@ -212,7 +212,7 @@ function questSection(app, ctx, region, quest, n) {
   const kanjiBlocks = quest.targetKanji.map((char) => {
     const seen = kanjiSeenAt.get(char);
     if (seen) return h("p", { class: "muted" }, "Data kanji ", ja("strong", {}, char), `: lihat ${seen}.`);
-    kanjiSeenAt.set(char, `Bab ${region.chapter} Quest ${n}`);
+    kanjiSeenAt.set(char, `Bab ${region.chapter} Misi ${n}`);
     return [kanjiBlock(model, char, quest), flags(issuesAt(`kanji[${ctx.kanjiIndex.get(char)}]`))];
   });
   return h(
@@ -221,7 +221,7 @@ function questSection(app, ctx, region, quest, n) {
     h(
       "h4",
       { class: "preview-quest__title" },
-      `Quest ${n} · `,
+      `Misi ${n} · `,
       kotoba ? ja("span", {}, kotoba.word) : quest.kotoba,
       h("span", { class: "muted" }, ` · ${quest.id}`),
       !quest.tests.length ? h("span", { class: "script__flag" }, " · belum ada percakapan uji") : null
@@ -239,7 +239,7 @@ function questSection(app, ctx, region, quest, n) {
     h(
       "div",
       { class: "validator-notes print-only" },
-      h("p", {}, `Catatan validator — Bab ${region.chapter}, Quest ${n} (`, kotoba ? ja("span", {}, kotoba.word) : quest.kotoba, "):")
+      h("p", {}, `Catatan validator — Bab ${region.chapter}, Misi ${n} (`, kotoba ? ja("span", {}, kotoba.word) : quest.kotoba, "):")
     )
   );
 }
@@ -254,7 +254,7 @@ function regionSection(app, ctx, region) {
     h(
       "header",
       { class: "preview-region__head" },
-      h("p", { class: "preview-region__number" }, `${region.id} · ${region.quests.length} quest`),
+      h("p", { class: "preview-region__number" }, `${region.id} · ${region.quests.length} misi`),
       h("h2", { id: `region-title-${region.id}` }, `Bab ${region.chapter} — ${region.title}`),
       h("p", {}, region.intro.summary),
       region.intro.points.length ? h("ul", {}, region.intro.points.map((p) => h("li", {}, p))) : null,
@@ -282,7 +282,7 @@ function indexOnlySection(app, model) {
       ? h("p", { class: "draft-inline", role: "note" }, `DRAF — BELUM DIVERIFIKASI · revisi ${app.content.contentRevision}`)
       : null,
     h("h2", {}, `Kotoba yang hanya muncul di index (${rest.length})`),
-    h("p", { class: "muted" }, "Tidak diujikan; tampil di index setelah semua quest kanji-nya tuntas."),
+    h("p", { class: "muted" }, "Tidak diujikan; tampil di index setelah semua misi kanji-nya tuntas."),
     rest.map(kotobaBlock),
     h("div", { class: "validator-notes print-only" }, h("p", {}, "Catatan validator untuk kotoba index:"))
   );
@@ -295,7 +295,7 @@ function summaryTable(model, issuesAt, regionPath) {
     h(
       "table",
       { class: "summary-table" },
-      h("thead", {}, h("tr", {}, ["Bab", "Wilayah", "Quest", "Kanji target", "Percakapan uji", "Catatan otomatis"].map((t) => h("th", { scope: "col" }, t)))),
+      h("thead", {}, h("tr", {}, ["Bab", "Wilayah", "Misi", "Kanji target", "Percakapan uji", "Catatan otomatis"].map((t) => h("th", { scope: "col" }, t)))),
       h(
         "tbody",
         {},
@@ -355,7 +355,7 @@ export function previewScreen(app, which) {
       h(
         "p",
         { class: "muted" },
-        "Saat dicetak, setiap bab dimulai di halaman baru. Setiap quest diakhiri kotak catatan validator; ",
+        "Saat dicetak, setiap bab dimulai di halaman baru. Setiap misi diakhiri kotak catatan validator; ",
         "kotak catatan pemeriksaan otomatis menunjukkan bagian yang masih ditunggu dari tim."
       ),
       h("section", { class: "card preview-summary" }, h("h2", {}, `Ringkasan (${model.regions.length} bab)`), summaryTable(model, issuesAt, regionPath)),

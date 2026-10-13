@@ -207,6 +207,45 @@ test("automatic reading distractors come only from settled kotoba (D-84)", async
   assert.match(thin.message, /otomatis 0/);
 });
 
+test("an earlier world is not sure to be played: reading distractors and kotoba in lines count only the same world (D-117)", () => {
+  // 飲みます gets its own region; 食べます's test line names it.
+  const split = (nomuChapter, taberuChapter) => {
+    const data = clone(loadSampleContent());
+    const [tabemasu, nomimasu] = data.regions[0].quests;
+    data.regions = [
+      { ...clone(data.regions[0]), chapter: nomuChapter, title: "Wilayah A", quests: [nomimasu] },
+      { ...clone(data.regions[0]), chapter: taberuChapter, title: "Wilayah B", quests: [tabemasu] },
+    ];
+    data.kotoba.find((k) => k.id === "nomimasu").chapter = nomuChapter;
+    const taberu = data.kotoba.find((k) => k.id === "tabemasu");
+    taberu.chapter = taberuChapter;
+    taberu.readingDistractors = [];
+    taberu.readingDistractorsCross = [];
+    tabemasu.tests[0].lines[0].ja = "[毎晩|まいばん]お[茶|ちゃ]を[飲|の]みます。レストランで[晩|ばん]ごはんを[食|た]べます。";
+    const result = validateContent(data);
+    assert.deepEqual(result.errors, []);
+    return {
+      thin: result.warnings.find((w) => w.code === "READING_DISTRACTORS_TOO_FEW" && w.path === "kotoba[0]"),
+      leak: codes(result.warnings).includes("OTHER_QUEST_KOTOBA_IN_LINE"),
+    };
+  };
+  const sameWorld = split(5, 6);
+  assert.match(sameWorld.thin.message, /otomatis 1/, "bab 5 of the same world is settled first");
+  assert.equal(sameWorld.leak, false);
+  const otherWorld = split(5, 26);
+  assert.match(otherWorld.thin.message, /otomatis 0/, "bab 5 is in Dunia 1, which a Dunia 2 player may skip");
+  assert.equal(otherWorld.leak, true);
+});
+
+test("the disclaimer counts the chapters in the material, per book (D-117)", async () => {
+  const { disclaimerScope } = await import(jsModule("screens/about.js"));
+  assert.deepEqual(disclaimerScope(buildModel(loadSampleContent())), [{ bookLabel: "bookTitle", chapters: "6" }]);
+  assert.deepEqual(disclaimerScope(regionsAt([1, 2, 3, 5, 26])), [
+    { bookLabel: "bookTitle", chapters: "1–3, 5" },
+    { bookLabel: "bookTitle2", chapters: "26" },
+  ]);
+});
+
 test("data/kana.json covers hiragana and katakana with romaji in every cell", () => {
   const { sections } = JSON.parse(readFileSync(join(ROOT, "data/kana.json"), "utf8"));
   let cells = 0;
@@ -305,22 +344,34 @@ test("exhibition leaderboard: off by default, per device, numbered players, surv
   }
 });
 
-test("map segments (D-108): the list in data/map.json, pins per segment, temporary places", async () => {
+test("map segments (D-108, D-117): one list per world in data/map.json, pins per segment, temporary places", async () => {
   const L = await import(jsModule("map-layout.js"));
   const layout = JSON.parse(readFileSync(join(ROOT, "data/map.json"), "utf8"));
   assert.deepEqual(L.validateMapLayout(layout), [], "data/map.json is valid");
-  assert.equal(L.validateMapLayout({ segments: [] }).length, 1, "empty list");
-  assert.equal(L.validateMapLayout({ segments: ["potongan-01", "potongan-01"] }).length, 1, "duplicate");
-  assert.equal(L.validateMapLayout({ segments: ["Potongan 1.png"] }).length, 1, "file name without spaces or extension");
+  const one = (segments) => ({ worlds: [{ world: 1, segments }] });
+  assert.equal(L.validateMapLayout(one([])).length, 1, "empty list");
+  assert.equal(L.validateMapLayout(one(["potongan-01", "potongan-01"])).length, 1, "duplicate");
+  assert.equal(L.validateMapLayout(one(["Potongan 1.png"])).length, 1, "file name without spaces or extension");
+  assert.equal(L.validateMapLayout({ segments: ["potongan-01"] }).length, 1, "the old single list is rejected with the new shape");
+  assert.equal(L.validateMapLayout({ worlds: [{ world: 3, segments: ["a"] }] }).length, 1, "unknown world");
+  assert.equal(
+    L.validateMapLayout({ worlds: [{ world: 1, segments: ["a"] }, { world: 2, segments: ["a"] }] }).length,
+    1,
+    "a file name is used by one world only"
+  );
+  const two = { worlds: [{ world: 1, segments: ["a", "b"] }, { world: 2, segments: ["d2-a"] }] };
+  assert.deepEqual(L.validateMapLayout(two), []);
+  assert.deepEqual(L.segmentsOf(two, 2), ["d2-a"]);
+  assert.deepEqual(L.segmentsOf(one(["a"]), 2), [], "a world not listed yet has no segments");
 
-  const regions = [1, 2, 3, 4, 5].map((chapter) => ({ id: `B0${chapter}`, chapter, pin: null }));
+  const regions = [1, 2, 3, 4, 5].map((chapter) => ({ id: `B0${chapter}`, chapter, world: 1, pin: null }));
   regions[4].pin = { segment: 6, x: 50, y: 50 };
-  const { places, segmentCount } = L.placeLocations(regions, { segments: ["a", "b"] });
+  const { places, segmentCount } = L.placeLocations(regions, ["a", "b"]);
   assert.deepEqual(places.slice(0, 4).map((p) => p.segment), [1, 1, 1, 2], "three temporary places per segment");
   assert.ok(places.slice(0, 4).every((p) => p.temporary));
   assert.equal(segmentCount, 6, "a pin below the list still gets a (placeholder) segment");
   assert.deepEqual(L.columnPoint({ segment: 2, x: 40, y: 50 }, 4), { x: 40, y: 37.5 }, "half of segment 2 of 4");
-  assert.deepEqual(L.unlistedSegments(regions, { segments: ["a", "b"] }).map((u) => u.segment), [6]);
+  assert.deepEqual(L.unlistedSegments(regions, two).map((u) => u.segment), [6]);
 });
 
 test("a pin names its segment (D-108)", () => {
@@ -331,4 +382,90 @@ test("a pin names its segment (D-108)", () => {
     content.regions[0].pin = pin;
     assert.ok(validateContent(content).errors.length, `rejects ${JSON.stringify(pin)}`);
   }
+});
+
+/** Content with one region per chapter, each with one quest; not validated, only for the model and progression. */
+function regionsAt(chapters) {
+  const content = clone(loadSampleContent());
+  const base = content.regions[0].quests[1];
+  const kotoba = content.kotoba.find((k) => k.id === base.kotoba);
+  content.regions = chapters.map((chapter) => {
+    const quest = clone(base);
+    Object.assign(quest, { id: `Q-${chapter}`, kotoba: `k${chapter}` });
+    quest.intro.id = `C-${chapter}-intro`;
+    quest.tests[0].id = `C-${chapter}-test`;
+    content.kotoba.push({ ...kotoba, id: `k${chapter}`, chapter });
+    return { chapter, title: `Wilayah Bab ${chapter}`, intro: { summary: "x", points: [] }, pin: null, quests: [quest] };
+  });
+  return buildModel(content);
+}
+
+const finish = (progress, chapter) => {
+  pass(progress, `Q-${chapter}`);
+  progress.quests[`REV-B${String(chapter).padStart(2, "0")}`] = { status: "passed" };
+};
+
+test("worlds (D-117): regions belong to the world of their chapter; a world without material is not shown", async () => {
+  const W = await import(jsModule("worlds.js"));
+  assert.deepEqual([1, 25, 26, 50, 51, 0].map((c) => W.worldOf(c)?.number ?? null), [1, 1, 2, 2, null, null]);
+  assert.equal(W.chapterRanges([5, 1, 2, 3, 7, 8, 3]), "1–3, 5, 7–8");
+
+  const sample = buildModel(loadSampleContent());
+  assert.deepEqual(sample.worlds.map((w) => w.number), [1], "the sample has only bab 6, so only Dunia 1");
+  const model = regionsAt([6, 7, 26, 27]);
+  assert.deepEqual(model.worlds.map((w) => [w.number, w.regions.map((r) => r.id)]), [[1, ["B06", "B07"]], [2, ["B26", "B27"]]]);
+  assert.deepEqual(model.regions.map((r) => r.world), [1, 1, 2, 2]);
+});
+
+test("worlds open freely; regions inside a world open one after another (D-117)", () => {
+  const model = regionsAt([6, 7, 26, 27]);
+  const progress = S.createProgress();
+  const status = () => Object.fromEntries(P.nodeStatuses(model, progress));
+  assert.deepEqual(status(), {
+    B06: "available", "REV-B06": "locked", B07: "locked", "REV-B07": "locked",
+    B26: "available", "REV-B26": "locked", B27: "locked", "REV-B27": "locked",
+  });
+  finish(progress, 26);
+  assert.equal(status().B27, "available", "Dunia 2 goes on without Dunia 1");
+  assert.equal(status().B07, "locked");
+});
+
+test("a region review samples earlier regions of its own world only (D-117)", () => {
+  const model = regionsAt([6, 26, 27]);
+  const b27 = P.sampleRegionReview(model, model.regions[2], seededRandom(3), 10);
+  assert.ok(b27.length);
+  assert.ok(b27.every((item) => model.quests.get(item.questId).region.world === 2), "nothing from bab 6");
+  assert.ok(b27.some((item) => item.questId === "Q-26"), "bab 26 fills the earlier share");
+  const b26 = P.sampleRegionReview(model, model.regions[1], seededRandom(3), 10);
+  assert.ok(b26.every((item) => item.questId === "Q-26"), "the first region of a world has no earlier region");
+});
+
+test("a world is complete only when every chapter of its range is in the material and done (D-116)", () => {
+  const book1 = Array.from({ length: 25 }, (_, i) => i + 1);
+  const full = regionsAt([...book1, 26]);
+  const progress = S.createProgress();
+  book1.forEach((c) => finish(progress, c));
+  finish(progress, 26);
+  const [world1, world2] = full.worlds.map((w) => P.worldSummary(full, progress, w));
+  assert.equal(world1.complete, true);
+  assert.equal(world1.done, 25);
+  assert.equal(world2.complete, false, "Dunia 2 has only bab 26 in the material");
+  assert.equal(world2.missing.length, 24);
+
+  const partial = regionsAt([1, 2, 3]);
+  const p2 = S.createProgress();
+  [1, 2, 3].forEach((c) => finish(p2, c));
+  const summary = P.worldSummary(partial, p2, partial.worlds[0]);
+  assert.equal(summary.done, summary.total, "every region in the material is done");
+  assert.equal(summary.complete, false, "but bab 4–25 are not in the material yet");
+});
+
+test("the map shows the world looked at last; progress remembers it and a reset forgets it (D-117)", () => {
+  const model = regionsAt([6, 26]);
+  const progress = S.createProgress();
+  assert.equal(progress.world, null);
+  assert.equal(P.currentWorld(model, progress).number, 1, "first world with material by default");
+  progress.world = 2;
+  assert.equal(P.currentWorld(model, progress).number, 2);
+  assert.equal(P.currentWorld(buildModel(loadSampleContent()), progress).number, 1, "a world without material falls back");
 });

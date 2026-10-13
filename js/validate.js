@@ -20,15 +20,21 @@ import {
 } from "./jp-text.js";
 import { DISTRACTORS_NEEDED, readingDistractorPool, blankDistractorPool } from "./distractors.js";
 import { kotobaParts, regionId } from "./model.js";
+import { WORLDS, worldOf } from "./worlds.js";
 
 export const SCHEMA_VERSION = 2;
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"];
 export const READING_TYPES = ["kunyomi", "onyomi", "special"];
 export const PARTS_OF_SPEECH = ["verb", "noun", "i-adj", "na-adj", "adverb", "other"];
 
-/** Material scope: みんなの日本語初級I bab 1–12 (D-58). Regions and kotoba outside it are errors. */
-export const SCOPE_CHAPTER_MIN = 1;
-export const SCOPE_CHAPTER_MAX = 12;
+/**
+ * Material scope: the chapters of every world (D-117, replacing D-58's bab
+ * 1–12). A region or kotoba chapter belongs to the world whose range holds
+ * it; chapters outside every world are errors.
+ */
+export const SCOPE_CHAPTER_MIN = WORLDS[0].from;
+export const SCOPE_CHAPTER_MAX = WORLDS.at(-1).to;
+const WORLD_RANGES = WORLDS.map((w) => `Dunia ${w.number} = ${w.book} bab ${w.from}–${w.to}`).join(", ");
 /** A sentence may still need a later chapter (warning only), so its range is wider. */
 export const SENTENCE_CHAPTER_MAX = 50;
 
@@ -196,7 +202,7 @@ function scopeChapter(obj, key, ctx, report, what) {
       ctx.field(key),
       "CHAPTER_OUT_OF_SCOPE",
       `Bab ${value} di luar cakupan materi. ${what} hanya boleh dari bab ${SCOPE_CHAPTER_MIN}–${SCOPE_CHAPTER_MAX} ` +
-        "Minna no Nihongo Shokyu I. Pindahkan ke catatan terpisah jika ingin disimpan.",
+        `(${WORLD_RANGES}). Pindahkan ke catatan terpisah jika ingin disimpan.`,
       { prominent: true }
     );
     return undefined;
@@ -1135,7 +1141,9 @@ function checkOtherQuestKotoba(data, kotoba, root, report) {
           return;
         }
         for (const other of quests) {
-          if (other === own || !(other.chapter >= own.chapter) || !plain.includes(other.word)) continue;
+          // Only an earlier chapter of the same world is sure to be played first; worlds open freely (D-117).
+          const playedFirst = other.chapter < own.chapter && worldOf(other.chapter) === worldOf(own.chapter);
+          if (other === own || playedFirst || !plain.includes(other.word)) continue;
           report.warn(
             root.child(`${own.path}.${key}.lines[${n}].ja`, `quest ${own.quest.id} › percakapan "${conversation.id}" › baris ${n + 1}`),
             "OTHER_QUEST_KOTOBA_IN_LINE",
@@ -1215,9 +1223,12 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
       continue;
     }
     if (typeof entry.reading !== "string") continue;
-    // Only kotoba of earlier chapters are sure to be settled when this quest is
-    // played; same-chapter quests may still be ahead (D-84).
-    const settled = allKotoba.filter((k) => Number.isInteger(k.chapter) && Number.isInteger(entry.chapter) && k.chapter < entry.chapter);
+    // Only kotoba of earlier chapters of the same world are sure to be settled
+    // when this quest is played; same-chapter quests may still be ahead (D-84),
+    // and an earlier world may not have been played at all (D-117).
+    const settled = allKotoba.filter(
+      (k) => Number.isInteger(k.chapter) && Number.isInteger(entry.chapter) && k.chapter < entry.chapter && worldOf(k.chapter) === worldOf(entry.chapter)
+    );
     const { cross, manual, auto } = readingDistractorPool(settled, entry);
     const total = cross.length + manual.length + auto.length;
     if (total < DISTRACTORS_NEEDED) {
@@ -1226,7 +1237,7 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
         "READING_DISTRACTORS_TOO_FEW",
         `Soal cara baca "${entry.word}" hanya punya ${total} pengecoh (manual ${cross.length + manual.length}, ` +
           `otomatis ${auto.length}); seharusnya ${DISTRACTORS_NEEDED}. Pengecoh otomatis hanya diambil dari kotoba bab ` +
-          "sebelumnya, karena bacaan kotoba quest yang belum dimainkan tidak boleh tampil. Soal tetap bisa dimainkan " +
+          "sebelumnya di dunia yang sama, karena bacaan kotoba quest yang belum dimainkan tidak boleh tampil. Soal tetap bisa dimainkan " +
           "dengan pilihan lebih sedikit. Tambahkan pengecoh di kolom reading_distractors."
       );
     }
