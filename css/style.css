@@ -5,6 +5,15 @@
    The pastels reach only 1.0–1.7:1 against white, so they never carry text
    or lines themselves; tests/contrast.test.mjs checks every pair in use.
 
+   Blue is the dominant colour (D-118), as a scale made from the team's blue:
+     blue-50   page background
+     blue-100  headers, bars and fields (the team's macaron blue)
+     blue-200  what is selected: the current world tab, the open menu door
+   On blue screens the primary button is filled with ink and white text, the
+   only fill that stands out from every blue; white or blue fills sink.
+   The blue roles are used on the map and the world tabs now, on every other
+   screen in stage 6 (D-116).
+
    Roles:
      blue    navigation and main actions (menu, primary buttons, player's speech)
      yellow  highlight: the target kotoba in a conversation, the blank (a marker pen)
@@ -48,6 +57,17 @@
   --success: var(--ink);
   --success-soft: var(--macaron-mint);
   --highlight: var(--macaron-yellow);
+
+  /* Blue scale (D-118): only tints of the team's blue, all at AA for ink and secondary text. */
+  --blue-50: #ecf6ff;
+  --blue-100: var(--macaron-blue);
+  --blue-200: #9dd2fa;
+  /* Roles on blue screens */
+  --page-blue: var(--blue-50); /* page background */
+  --band: var(--blue-100); /* headers, sticky bars, fields */
+  --selected: var(--blue-200); /* the selected tab or door */
+  --action: var(--ink); /* fill of the primary button */
+  --on-action: var(--macaron-white); /* text on the primary button: 10.7:1 */
 
   --radius: 12px;
   --gutter: 16px;
@@ -2760,7 +2780,18 @@ mark.highlight {
   margin-inline: calc(-1 * var(--gutter));
   padding: 0.5rem var(--gutter);
   border-bottom: var(--line) solid var(--border);
-  background: var(--bg);
+  background: var(--band);
+}
+
+/* Blue screens (D-118): the map, with its region sheet, and the world tabs. */
+body.page--blue {
+  background: var(--page-blue);
+}
+
+.page--blue .button--primary {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--on-action);
 }
 
 /* Tabs between worlds, only when the material has more than one (D-117). */
@@ -2783,7 +2814,8 @@ mark.highlight {
 }
 
 .world-tabs__tab[aria-current="page"] {
-  background: var(--nav);
+  background: var(--selected);
+  border-width: 3px;
 }
 
 .world-tabs__name {
@@ -3012,7 +3044,7 @@ mark.highlight {
 }
 
 .menu__door[aria-current="page"] {
-  background: var(--nav);
+  background: var(--selected);
   border-width: 3px;
 }
 

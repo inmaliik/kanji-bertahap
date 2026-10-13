@@ -60,7 +60,7 @@ Hanya **enam butir situs** ditambah satu berkas kecil:
 | Terbit | Tidak pernah terbit |
 |---|---|
 | `index.html`, `css/`, `js/`, `data/`, `assets/`, `tools/` | `README.md`, `MULAI-DI-SINI.md`, `DECISIONS.md`, `BLOCKERS.md`, `ASSETS.md` |
-| `build.json` (dibuat saat terbit: kode commit yang diterbitkan) | `tests/`, `arsip/`, `netlify.toml`, `terbitkan.sh` |
+| `build.json` (dibuat saat terbit: kode commit yang diterbitkan) | `tests/`, `arsip/`, `netlify.toml`, `terbitkan.sh`, `NOTICE` |
 | | `sumber/`, `tmp/`, file ekspor log (tidak ada di git sama sekali) |
 
 Aturannya ada di `netlify.toml`: Netlify menjalankan `terbitkan.sh`, yang **hanya menyalin** enam butir itu ke folder
@@ -133,6 +133,16 @@ Berikan tautan langsung ke pratinjau. Alamatnya **tidak** ditautkan dari dalam a
 `draft-…`, halaman itu bertanda DRAF dan **tidak boleh** dikirim ke validator.
 
 Situs dapat dibuka siapa pun yang mengetahui tautannya. Jangan pernah menaruh data jawaban peserta di repo.
+
+---
+
+## Hak cipta
+
+Kode, materi, ilustrasi, dan suara dalam proyek ini milik **«NAMA-TIM»** dan tidak boleh dipakai ulang tanpa izin.
+Repo di GitHub terbuka untuk dibaca, tetapi **tidak memakai lisensi sumber terbuka apa pun**: terbuka untuk dibaca
+tidak sama dengan boleh dipakai. Pernyataan lengkapnya ada di berkas [`NOTICE`](NOTICE) di akar repo. `NOTICE` tidak
+ikut terbit ke Netlify. Jika kelompok memutuskan membuka kodenya dengan lisensi tertentu, keputusan itu dicatat
+terpisah.
 
 ---
 
@@ -216,6 +226,7 @@ tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 tests/                      uji otomatis logika inti, sintaks semua skrip, dan isi terbitan Netlify (lihat "Uji otomatis")
 arsip/                      materi yang keluar dari data aktif dan contoh versi level; tidak dibaca aplikasi, tidak terbit
 netlify.toml                pengaturan Netlify: hanya folder _situs yang terbit
+NOTICE                      pernyataan hak cipta «NAMA-TIM» (tanpa lisensi sumber terbuka); tidak terbit
 terbitkan.sh                perintah terbit Netlify: menyalin enam butir situs ke _situs dan menulis build.json
 MULAI-DI-SINI.md            titik masuk: arahan per peran
 ASSETS.md                   spesifikasi setiap slot aset gambar, untuk pembuat aset
@@ -1298,7 +1309,8 @@ di Chrome.
 **Peta (layar utama) sebagai kota** (D-103). Latar peta adalah **potongan-potongan gambar tegak yang disambung dari atas
 ke bawah** dan digulir (D-108): urutannya di `data/map.json`, berkasnya `assets/peta/<nama>.png`, dua atau tiga lokasi
 per potongan. **Setiap dunia punya petanya sendiri** (D-117). Jika materi punya lebih dari satu dunia, tombol
-"Dunia 1 · Shokyu I" dan "Dunia 2 · Shokyu II" di atas peta berpindah dunia (alamat `#/dunia/2`); `#/` dan semua tombol
+"Dunia 1" dan "Dunia 2" di atas peta berpindah dunia (alamat `#/dunia/2`); di bawah nomornya tampil judul buku dari
+`data/ui.json` dengan furigana (みんなの日本語初級I / II); `#/` dan semua tombol
 "kembali ke peta" membuka dunia yang terakhir dilihat pemain. Dunia yang tamat diberi tanda ✓. Saat dibuka, peta menggulir sendiri ke lokasi yang sedang dikerjakan; potongan yang jauh dari layar
 baru diunduh saat didekati; bilah level dan lencana eksplorasi tetap terlihat saat menggulir. Potongan yang belum
 digambar tampil sebagai kotak keterangan (nama berkas, ukuran, lokasi, sambungan). Setiap wilayah

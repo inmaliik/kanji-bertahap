@@ -137,6 +137,8 @@ function render() {
   // Room at the bottom for the fixed menu bar (D-69), and no page scroll behind an open sheet.
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
+  // Blue page for the screens already in the blue palette (D-118); the rest follow in stage 6.
+  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen")));
 }
 
 function refreshBadge() {

@@ -181,7 +181,8 @@ function worldTabs(app, shown, statuses) {
         "a",
         { class: "world-tabs__tab", href: `#/dunia/${world.number}`, "aria-current": world === shown ? "page" : null },
         h("span", { class: "world-tabs__name" }, `Dunia ${world.number}${summary.complete ? " ✓" : ""}`),
-        h("span", { class: "world-tabs__book" }, world.book)
+        // The book title from data/ui.json, with furigana like every Japanese label (D-76).
+        h("span", { class: "world-tabs__book" }, uiLabel(app, world.bookLabel, { gloss: false }))
       );
     })
   );
@@ -273,7 +274,7 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
       h("div", { class: "map__layer" }, paths(app, points), pins)
     ),
     leaderboardAvailable(mode) ? h("a", { class: "button button--block", href: "#/peringkat" }, "🏆 Papan peringkat") : null,
-    h("h2", { class: "map-list__title" }, `Wilayah Dunia ${world.number} · ${world.book}`),
+    h("h2", { class: "map-list__title" }, `Wilayah Dunia ${world.number} · `, uiLabel(app, world.bookLabel, { gloss: false })),
     h(
       "ul",
       { class: "map-list" },
