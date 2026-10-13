@@ -3,6 +3,8 @@
 
 import { h } from "../dom.js";
 import { checkAssets } from "../assets.js";
+import { combinationCount, layerFiles, usesColors } from "../layers.js";
+import { catLayerProblems } from "../cats.js";
 import { unknownSpeakers } from "../cast.js";
 import { segmentsOf, unlistedSegments } from "../map-layout.js";
 import { backLink, issueList } from "./common.js";
@@ -14,6 +16,47 @@ const ASSET_STATE = {
   problem: { icon: "✗", text: "Perlu diperbaiki", cls: "error" },
 };
 
+/** Pattern values of the cat layer slots, from the files data/layers.json lists. */
+function catLayerIds(layers) {
+  const ids = { catBody: [], catPattern: [], catAccessory: [] };
+  const prefix = { catBody: "assets/kucing/tubuh/", catPattern: "assets/kucing/corak/", catAccessory: "assets/kucing/aksesori/" };
+  const key = { "tubuh (isi)": "catBody", "tubuh (garis)": "catBody", corak: "catPattern", aksesori: "catAccessory" };
+  for (const { kind, path } of layerFiles(layers)) {
+    const k = key[kind];
+    if (path.startsWith(prefix[k]) && path.endsWith(".png")) ids[k].push(path.slice(prefix[k].length, -4));
+  }
+  return ids;
+}
+
+/** The cat layers (D-121): file problems, how many cats they allow, and which drawings exist. */
+function catSection(app) {
+  const parts = [];
+  for (const p of app.layerProblems) parts.push(h("p", { class: "notice notice--error" }, `✗ ${p}`));
+  for (const w of app.layerWarnings) parts.push(h("p", { class: "notice notice--warning" }, `⚠ ${w}`));
+  if (app.layers && app.model) {
+    const missions = [...app.model.quests.values()];
+    const withCat = missions.filter((q) => q.cat);
+    const files = layerFiles(app.layers);
+    const drawn = files.filter((f) => app.layerFiles.has(f.path)).length;
+    parts.push(
+      h(
+        "p",
+        {},
+        `${combinationCount(app.layers)} kombinasi kucing tersedia (${usesColors(app.layers) ? "warna bulu dari data" : "warna digambar di tubuh"}); ` +
+          `${withCat.length} dari ${missions.length} misi sudah punya kucing.`
+      ),
+      h("p", {}, `${drawn} dari ${files.length} berkas lapisan sudah ada; sisanya tampil dengan gambar pengganti buatan kode.`)
+    );
+    const unknown = catLayerProblems(app.content, app.layers);
+    parts.push(
+      unknown.length
+        ? unknown.map((u) => h("p", { class: "notice notice--error" }, `✗ ${u.message}`))
+        : h("p", {}, "✓ Semua lapisan yang disebut misi ada di data/layers.json.")
+    );
+  }
+  return h("section", { class: "card", "aria-labelledby": "cats-title" }, h("h2", { id: "cats-title" }, "Lapisan kucing (data/layers.json)"), parts);
+}
+
 function assetSection(app) {
   const list = h("ul", { class: "asset-checks", "aria-live": "polite" }, h("li", { class: "muted" }, "Memeriksa aset…"));
   const summary = h("p", {});
@@ -21,6 +64,7 @@ function assetSection(app) {
     const ids = {
       segment: app.mapLayout.worlds.flatMap((w) => w.segments),
       ...(app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {}),
+      ...(app.layers ? catLayerIds(app.layers) : {}),
     };
     checkAssets(app.assets, ids).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;
@@ -134,6 +178,7 @@ export function contentCheckScreen(app) {
         : h("p", {}, "✓ Semua label lengkap dan berfurigana.")
     ),
     charactersSection(app),
+    catSection(app),
     mapSection(app),
     assetSection(app)
   );

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Templat kanvas lapisan kucing Kanji Bertahap (D-121): tubuh (isi dan garis) dan corak.
+  Kanvas 512 x 512 piksel, latar transparan. Lapisan "PANDUAN" hanya untuk menggambar:
+  sembunyikan atau hapus sebelum mengekspor. Penjelasan lengkap: ASSETS.md, bagian "Kucing".
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="512" height="512" viewBox="0 0 512 512">
+  <g id="PANDUAN-kisi" inkscape:groupmode="layer" inkscape:label="PANDUAN – kisi 32 px" opacity="0.35">
+    <path d="M32 0V512M64 0V512M96 0V512M128 0V512M160 0V512M192 0V512M224 0V512M288 0V512M320 0V512M352 0V512M384 0V512M416 0V512M448 0V512M480 0V512
+             M0 32H512M0 64H512M0 96H512M0 128H512M0 160H512M0 192H512M0 224H512M0 256H512M0 288H512M0 320H512M0 352H512M0 384H512M0 416H512M0 448H512"
+          fill="none" stroke="#9dd2fa" stroke-width="1"/>
+  </g>
+  <g id="PANDUAN-batas" inkscape:groupmode="layer" inkscape:label="PANDUAN – batas kanvas, batas aman, zona tubuh">
+    <rect x="1" y="1" width="510" height="510" fill="none" stroke="#403c3c" stroke-width="2"/>
+    <rect x="24" y="24" width="464" height="464" fill="none" stroke="#ffb3ba" stroke-width="2" stroke-dasharray="8 6"/>
+    <text x="30" y="20" font-family="sans-serif" font-size="12" fill="#403c3c">BATAS AMAN 24 px: tidak ada gambar di luar garis pink</text>
+    <rect x="40" y="32" width="432" height="448" rx="24" fill="#bae1ff" fill-opacity="0.18" stroke="#78b7f6" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="48" y="54" font-family="sans-serif" font-size="12" fill="#403c3c">ZONA TUBUH (x 40–472, y 32–480): corak menutupi seluruh zona ini</text>
+  </g>
+  <g id="PANDUAN-sumbu" inkscape:groupmode="layer" inkscape:label="PANDUAN – titik tengah dan garis dasar">
+    <path d="M256 24V488" stroke="#403c3c" stroke-width="2" stroke-dasharray="10 6"/>
+    <text x="262" y="72" font-family="sans-serif" font-size="12" fill="#403c3c">TITIK TENGAH x = 256</text>
+    <path d="M24 480H488" stroke="#e5484d" stroke-width="3"/>
+    <text x="30" y="500" font-family="sans-serif" font-size="12" font-weight="bold" fill="#403c3c">GARIS DASAR y = 480: telapak kaki menyentuh garis ini</text>
+  </g>
+  <g id="PANDUAN-contoh" inkscape:groupmode="layer" inkscape:label="PANDUAN – contoh posisi tubuh duduk (boleh dihapus)" opacity="0.5">
+    <g fill="none" stroke="#78b7f6" stroke-width="3" stroke-dasharray="6 5">
+      <polygon points="163,124 176,36 236,94"/><polygon points="349,124 336,36 276,94"/>
+      <ellipse cx="256" cy="172" rx="106" ry="92"/><ellipse cx="256" cy="372" rx="124" ry="108"/>
+    </g>
+    <circle cx="256" cy="86" r="7" fill="#ffffba" stroke="#403c3c" stroke-width="2"/>
+    <text x="268" y="90" font-family="sans-serif" font-size="12" fill="#403c3c">jangkar "kepala" (256, 86)</text>
+    <circle cx="256" cy="262" r="7" fill="#ffffba" stroke="#403c3c" stroke-width="2"/>
+    <text x="268" y="266" font-family="sans-serif" font-size="12" fill="#403c3c">jangkar "leher" (256, 262)</text>
+  </g>
+  <g id="PANDUAN-garis" inkscape:groupmode="layer" inkscape:label="PANDUAN – contoh tebal garis">
+    <path d="M360 430H468" stroke="#403c3c" stroke-width="6" stroke-linecap="round"/>
+    <text x="360" y="420" font-family="sans-serif" font-size="12" fill="#403c3c">garis tinta 6 px, #403C3C</text>
+  </g>
+  <g id="GAMBAR" inkscape:groupmode="layer" inkscape:label="GAMBAR – gambar di sini (satu lapisan per berkas)"/>
+</svg>

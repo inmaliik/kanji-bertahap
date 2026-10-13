@@ -39,6 +39,10 @@
     "bookTitle2": {
       "ja": "みんなの[日本語|にほんご][初級|しょきゅう]II",
       "id": "Minna no Nihongo Shokyu II"
+    },
+    "exploration": {
+      "ja": "[探検|たんけん]",
+      "id": "Eksplorasi"
     }
   }
 }

@@ -7,10 +7,27 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { validateContent } from "../js/validate.js";
+import { catLayerIssues } from "../js/cats.js";
+import { validateLayers } from "../js/layers.js";
 import { describeJsonError } from "../js/content.js";
 import { printIssues, printSummary, red } from "./lib/print-issues.mjs";
 
 const file = resolve(process.argv[2] ?? "data/content.json");
+
+/** The cats' layer ids against data/layers.json (D-121). */
+function layerIssues(content) {
+  let layers;
+  try {
+    layers = JSON.parse(readFileSync(new URL("../data/layers.json", import.meta.url), "utf8"));
+  } catch (err) {
+    return [{ severity: "error", code: "LAYERS_UNREADABLE", where: "data/layers.json", path: "", message: `data/layers.json tidak bisa dibaca: ${err.message}`, prominent: true }];
+  }
+  const { problems } = validateLayers(layers);
+  if (problems.length) {
+    return problems.map((message) => ({ severity: "error", code: "INVALID_LAYERS", where: "data/layers.json", path: "", message, prominent: false }));
+  }
+  return catLayerIssues(content, layers);
+}
 
 let text;
 try {
@@ -29,6 +46,7 @@ try {
 }
 
 const { errors, warnings, notes } = validateContent(data);
+errors.push(...layerIssues(data));
 console.log(`Memeriksa ${file}\n`);
 printIssues([...errors, ...warnings, ...notes]);
 if (!errors.length) {

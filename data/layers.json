@@ -1,0 +1,35 @@
+{
+  "canvas": { "width": 512, "height": 512 },
+  "cat": {
+    "bodies": [
+      {
+        "id": "duduk",
+        "fill": "assets/kucing/tubuh/duduk-isi.png",
+        "line": "assets/kucing/tubuh/duduk-garis.png",
+        "anchors": { "kepala": [256, 86], "leher": [256, 262] }
+      },
+      {
+        "id": "rebah",
+        "fill": "assets/kucing/tubuh/rebah-isi.png",
+        "line": "assets/kucing/tubuh/rebah-garis.png",
+        "anchors": { "kepala": [170, 216], "leher": [214, 368] }
+      }
+    ],
+    "patterns": [
+      { "id": "polos", "image": null },
+      { "id": "belang", "image": "assets/kucing/corak/belang.png" },
+      { "id": "totol", "image": "assets/kucing/corak/totol.png" }
+    ],
+    "accessories": [
+      { "id": "tanpa", "image": null },
+      { "id": "pita", "image": "assets/kucing/aksesori/pita.png", "anchor": "leher" },
+      { "id": "lonceng", "image": "assets/kucing/aksesori/lonceng.png", "anchor": "leher" },
+      { "id": "bunga", "image": "assets/kucing/aksesori/bunga.png", "anchor": "kepala" }
+    ],
+    "colors": [
+      { "id": "krem", "hex": "#F7E4C8" },
+      { "id": "abu", "hex": "#DCD8D4" },
+      { "id": "jingga", "hex": "#F9C99B" }
+    ]
+  }
+}

@@ -19,6 +19,7 @@ export const UI_LABEL_FALLBACKS = Object.freeze({
   example: "Contoh kalimat",
   bookTitle: "Minna no Nihongo Shokyu I",
   bookTitle2: "Minna no Nihongo Shokyu II",
+  exploration: "Eksplorasi",
 });
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

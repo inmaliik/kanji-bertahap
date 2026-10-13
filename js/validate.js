@@ -64,7 +64,9 @@ const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "koto
 const REGION_KEYS = ["chapter", "title", "intro", "pin", "quests"];
 const REGION_INTRO_KEYS = ["summary", "points"];
 const PIN_KEYS = ["segment", "x", "y"];
-const QUEST_KEYS = ["id", "kotoba", "targetKanji", "productionPrompt", "intro", "tests"];
+const QUEST_KEYS = ["id", "kotoba", "targetKanji", "productionPrompt", "intro", "tests", "cat"];
+const CAT_KEYS = ["name", "body", "pattern", "accessory", "color"];
+const LAYER_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const CONVERSATION_KEYS = ["id", "scene", "sentenceChapter", "isPlaceholder", "lines"];
 const LINE_KEYS = ["speaker", "ja", "translation", "highlight", "blank", "distractors"];
 const KANJI_KEYS = ["char", "meaning", "jlptLevel", "strokeCount", "bushu", "bushuOptions", "readings", "strokes"];
@@ -267,6 +269,7 @@ export function validateContent(data) {
   const kotoba = validateKotobaTable(data.kotoba, kanji, root, report);
   const usage = validateRegions(data.regions, { kanji, kotoba }, root, report);
   if (usage) checkUsage(data, { kanji, kotoba, usage }, root, report);
+  checkCats(data, kotoba, root, report);
   checkPlaceholders(data, root, report);
 
   return report.result();
@@ -1245,6 +1248,106 @@ function checkUsage(data, { kanji, kotoba, usage }, root, report) {
 }
 
 // Every string in the content is scanned for placeholders (D-91).
+// ---------------------------------------------------------------------------
+// Cats (D-121)
+
+/**
+ * Every mission frees one cat. Checked here: the cat is filled in, its layer
+ * ids are well formed, no two missions share the same layers, and its name
+ * gives nothing away (D-79). Whether the layer ids exist in data/layers.json
+ * is checked next to this by catLayerProblems() (js/cats.js).
+ *
+ * A cat is shown, in the collection and on the map, once its mission is
+ * passed. By then every mission of the earlier regions of the same world is
+ * passed too, but missions of the same region may not be: the name may hold
+ * the kotoba of its own mission and of earlier regions of its world only.
+ */
+function checkCats(data, kotoba, root, report) {
+  if (!Array.isArray(data.regions)) return;
+  const byKey = new Map();
+  const missions = [];
+  data.regions.forEach((region, i) => {
+    if (!isPlainObject(region) || !Array.isArray(region.quests)) return;
+    region.quests.forEach((quest, j) => {
+      if (!isPlainObject(quest)) return;
+      const ctx = root.child(`regions[${i}].quests[${j}]`, `Wilayah bab ${region.chapter} › quest ${quest.id}`);
+      missions.push({ region, quest, ctx });
+      const cat = quest.cat;
+      const cctx = ctx.field("cat");
+      if (cat === undefined || cat === null) {
+        report.incomplete(cctx, "CAT_MISSING", "Kucing misi ini belum diisi (kolom cat_name, cat_body, cat_pattern, cat_accessory, cat_color di tab quest).");
+        return;
+      }
+      if (!isPlainObject(cat)) {
+        report.error(cctx, "INVALID_CAT", `Harus berupa objek { "name", "body", "pattern", "accessory", "color" }, ditemukan ${show(cat)}.`);
+        return;
+      }
+      checkKeys(cat, CAT_KEYS, cctx, report);
+      requireString(cat, "name", cctx, report);
+      let complete = true;
+      for (const key of ["body", "pattern", "accessory"]) {
+        const value = requireString(cat, key, cctx, report);
+        if (value === undefined) complete = false;
+        else if (!LAYER_ID_PATTERN.test(value)) {
+          report.error(cctx.field(key), "INVALID_CAT_LAYER", `"${value}" harus ID lapisan dari data/layers.json: huruf kecil latin, angka, dan "-".`);
+          complete = false;
+        }
+      }
+      if (cat.color !== null && cat.color !== undefined && (typeof cat.color !== "string" || !LAYER_ID_PATTERN.test(cat.color))) {
+        report.error(cctx.field("color"), "INVALID_CAT_LAYER", `Harus ID warna dari data/layers.json, atau null. Ditemukan ${show(cat.color)}.`);
+        complete = false;
+      }
+      if (!complete) return;
+      const key = [cat.body, cat.pattern, cat.accessory, cat.color ?? ""].join(" / ");
+      if (byKey.has(key)) {
+        report.warn(
+          cctx,
+          "CAT_DUPLICATE",
+          `Kucing misi ${quest.id} tersusun dari lapisan yang sama dengan kucing misi ${byKey.get(key)} (${key}). ` +
+            "Setiap misi sebaiknya membebaskan kucing yang berbeda: ganti tubuh, corak, aksesori, atau warnanya."
+        );
+      } else {
+        byKey.set(key, quest.id);
+      }
+    });
+  });
+
+  // D-79: what the name may show.
+  const worldNumber = (chapter) => worldOf(chapter)?.number ?? null;
+  for (const { region, quest, ctx } of missions) {
+    const name = quest.cat?.name;
+    if (typeof name !== "string" || !name) continue;
+    const ahead = missions.filter(
+      (m) =>
+        m.quest !== quest &&
+        !(worldNumber(m.region.chapter) === worldNumber(region.chapter) && m.region.chapter < region.chapter)
+    );
+    for (const other of ahead) {
+      const k = kotoba.get(other.quest.kotoba)?.entry;
+      if (!k) continue;
+      const found = [k.word, k.reading].filter((v) => typeof v === "string" && v).find((g) => name.includes(g));
+      if (found) {
+        report.error(
+          ctx.child("cat.name", "cat.name"),
+          "CAT_NAME_LEAKS_KOTOBA",
+          `Nama kucing "${name}" memuat "${found}", kotoba (atau cara baca kotoba) quest ${other.quest.id}. Kucing ini tampil ` +
+            "di koleksi sebelum pengantar quest itu pasti sudah dilewati. Pilih nama tanpa kotoba itu (D-79)."
+        );
+        continue;
+      }
+      const kanji = (Array.isArray(other.quest.targetKanji) ? other.quest.targetKanji : []).filter((ch) => typeof ch === "string" && name.includes(ch));
+      if (kanji.length) {
+        report.warn(
+          ctx.child("cat.name", "cat.name"),
+          "CAT_NAME_SHOWS_KANJI",
+          `Nama kucing "${name}" memuat kanji sasaran ${kanji.join(", ")} (quest ${other.quest.id}), yang mungkin belum diperkenalkan. ` +
+            "Pastikan nama itu tidak memberi petunjuk jawaban."
+        );
+      }
+    }
+  }
+}
+
 function checkPlaceholders(data, root, report) {
   const walk = (value, path) => {
     if (typeof value === "string") {

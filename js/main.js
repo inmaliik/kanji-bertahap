@@ -1,6 +1,8 @@
 // App bootstrap and hash routing.
 
-import { ASSETS_URL, BUILD_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
+import { ASSETS_URL, BUILD_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, LAYERS_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
+import { loadLayers } from "./layers.js";
+import { catsScreen } from "./screens/cats.js";
 import { loadBuildId } from "./build.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
@@ -56,6 +58,10 @@ const app = {
   characterProblems: [],
   mapLayout: FALLBACK_LAYOUT, // data/map.json: segments per world (D-108, D-117)
   mapProblems: [],
+  layers: null, // data/layers.json (D-121)
+  layerFiles: new Set(), // layer drawings that exist; the rest are stand-ins
+  layerProblems: [],
+  layerWarnings: [],
   kanaError: null,
   notices: [], // { kind, text } shown on the home screen
   render,
@@ -68,6 +74,7 @@ const ROUTES = [
   { pattern: /^#\/dunia\/(\d+)$/, screen: (n) => mapScreen(app, { world: Number(n) }) },
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
   { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
+  { pattern: /^#\/kucing$/, screen: () => catsScreen(app) },
   // The research link shared with participants; replaced by #/ once the player is in research mode (D-112).
   { pattern: /^#\/penelitian$/, screen: () => researchLinkScreen(app, () => location.replace("#/")) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
@@ -138,7 +145,7 @@ function render() {
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
   // Blue page for the screens already in the blue palette (D-118); the rest follow in stage 6.
-  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen")));
+  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen, .cats-screen")));
 }
 
 function refreshBadge() {
@@ -156,7 +163,7 @@ function navigate() {
 
 async function boot() {
   root.replaceChildren(h("p", { class: "loading" }, "Memuat materi…"));
-  const [result, consent, ui, assets, kana, characters, map] = await Promise.all([
+  const [result, consent, ui, assets, kana, characters, map, , layers] = await Promise.all([
     loadContent(CONTENT_URL),
     loadConsentText(CONSENT_URL),
     loadUiLabels(UI_LABELS_URL),
@@ -165,7 +172,12 @@ async function boot() {
     loadCharacters(CHARACTERS_URL),
     loadMapLayout(MAP_URL),
     loadBuildId(BUILD_URL), // before any row can be logged (D-115)
+    loadLayers(LAYERS_URL),
   ]);
+  app.layers = layers.layers;
+  app.layerFiles = layers.available;
+  app.layerProblems = layers.problems;
+  app.layerWarnings = layers.warnings;
   app.mapLayout = map.layout;
   app.mapProblems = map.problems;
   app.characters = characters.characters;

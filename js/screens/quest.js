@@ -28,6 +28,8 @@ import { renderTest } from "../stages/test.js";
 import { renderProduction } from "../stages/production.js";
 import { backLink, LABELS } from "./common.js";
 import { gateScreen } from "./research.js";
+import { rescueDue } from "../cats.js";
+import { rescueMoment } from "./cats.js";
 
 export const questHref = (region, index) => `#/quest/${region.id}/${index + 1}`;
 export const reviewHref = (region) => `#/review/${region.id}`;
@@ -89,7 +91,7 @@ export function questScreen(app, regionKey, position) {
     intro: !entry.introDone && !alreadyPassed ? modelQuest : null,
     resuming,
     questOf: () => modelQuest,
-    doneView: (step) => questDoneView(app, region, step),
+    doneView: (step) => questDoneView(app, region, step, quest),
   });
 }
 
@@ -143,23 +145,29 @@ export function reviewScreen(app, regionKey) {
   });
 }
 
-function questDoneView(app, region, step) {
+function questDoneView(app, region, step, quest) {
   const back = h("a", { class: "button button--block", href: regionHref(region) }, `Kembali ke Bab ${region.chapter}`);
   if (!step.passed) {
     // Only reachable if content changed while the quest was open.
     return h("section", { class: "result" }, h("h2", { tabindex: "-1" }, "Sesi selesai"), h("p", {}, `Item dikuasai: ${step.mastered} dari ${step.total}.`), back);
   }
   const nextIndex = region.quests.findIndex((q) => !questPassed(app.progress, q));
-  return h(
+  const heading = h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Misi tuntas");
+  const result = h(
     "section",
     { class: "result result--passed" },
-    h("h2", { tabindex: "-1" }, h("span", { "aria-hidden": "true" }, "✓ "), "Misi tuntas"),
+    heading,
     h("p", {}, `Semua ${step.total} item sudah dikuasai dan kalimatmu sudah dikirim.`),
     nextIndex !== -1
       ? h("a", { class: "button button--primary button--block", href: questHref(region, nextIndex) }, `Lanjut ke Misi ${nextIndex + 1}`)
       : h("a", { class: "button button--primary button--block", href: reviewHref(region) }, "Lanjut ke ", uiLabel(app, "review")),
     back
   );
+  // The mission's cat is free: a short rescue moment over the result, once (D-121).
+  if (quest && rescueDue(app.progress, quest)) {
+    result.append(rescueMoment(app, quest, region, () => heading.focus({ preventScroll: true })));
+  }
+  return result;
 }
 
 function reviewDoneView(app, region, step) {

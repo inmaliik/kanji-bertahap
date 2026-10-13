@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Templat kanvas aksesori kucing Kanji Bertahap (D-121). Kanvas 256 x 256 piksel, latar
+  transparan, setengah ukuran kanvas tubuh: aksesori digambar dengan skala yang sama.
+  Titik tengah kanvas (128, 128) ditaruh aplikasi tepat di titik jangkar tubuh
+  ("kepala" atau "leher"). Sembunyikan lapisan PANDUAN sebelum mengekspor.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="256" height="256" viewBox="0 0 256 256">
+  <g id="PANDUAN-batas" inkscape:groupmode="layer" inkscape:label="PANDUAN – batas kanvas dan batas aman">
+    <rect x="1" y="1" width="254" height="254" fill="none" stroke="#403c3c" stroke-width="2"/>
+    <rect x="12" y="12" width="232" height="232" fill="none" stroke="#ffb3ba" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="16" y="28" font-family="sans-serif" font-size="10" fill="#403c3c">BATAS AMAN 12 px</text>
+  </g>
+  <g id="PANDUAN-jangkar" inkscape:groupmode="layer" inkscape:label="PANDUAN – titik jangkar di tengah">
+    <path d="M128 40V216M40 128H216" stroke="#403c3c" stroke-width="2" stroke-dasharray="8 5"/>
+    <circle cx="128" cy="128" r="8" fill="#ffffba" stroke="#403c3c" stroke-width="2"/>
+    <text x="140" y="120" font-family="sans-serif" font-size="10" fill="#403c3c">TITIK JANGKAR (128, 128)</text>
+    <text x="40" y="236" font-family="sans-serif" font-size="10" fill="#403c3c">garis tinta 3 px (setengah dari 6 px tubuh, karena kanvas setengah)</text>
+  </g>
+  <g id="GAMBAR" inkscape:groupmode="layer" inkscape:label="GAMBAR – gambar aksesori di sini"/>
+</svg>

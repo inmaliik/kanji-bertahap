@@ -1,4 +1,4 @@
-// The map menu: Index, kana guide, Settings (D-69). Shown on every screen
+// The map menu: Index, cat collection, kana guide, Settings (D-69, D-121). Shown on every screen
 // outside quests and reviews, never inside them, so the furigana setting and
 // the index cannot be used in the middle of a question.
 
@@ -7,6 +7,7 @@ import { assetImage } from "../assets.js";
 
 const DOORS = [
   { key: "index", href: "#/index", label: "Index", asset: "menu-index" },
+  { key: "cats", href: "#/kucing", label: "Kucing", asset: "menu-kucing" },
   { key: "kana", href: "#/kana", label: "Panduan kana", asset: "menu-kana" },
   { key: "settings", href: "#/settings", label: "Pengaturan", asset: "menu-pengaturan" },
 ];

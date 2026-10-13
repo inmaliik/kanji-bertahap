@@ -44,7 +44,7 @@ test("reading alignment follows okurigana and hides ruby on request", () => {
   assert.deepEqual(splitReadingNotation("た(べる)"), { kanjiPart: "た", okurigana: "べる" });
 });
 
-test("sample content passes; its warnings are the placeholders, the missing pin and one sentence ahead of its region", () => {
+test("sample content passes; its warnings are the placeholders (conversations, cat names), the missing pin and one sentence ahead of its region", () => {
   const { errors, warnings, notes } = validateContent(loadSampleContent());
   assert.deepEqual(errors, []);
   assert.deepEqual(notes, []);
@@ -54,6 +54,8 @@ test("sample content passes; its warnings are the placeholders, the missing pin 
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
+    "PLACEHOLDER_TEXT", // «BELUM DIISI: nama kucing», twice (D-121)
+    "PLACEHOLDER_TEXT",
     "SENTENCE_AHEAD_OF_REGION",
   ]);
   assert.equal(warnings[0].code, "PLACEHOLDER_CONVERSATION", "placeholder warnings are listed first");

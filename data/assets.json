@@ -47,6 +47,17 @@
       "placeholderSha256": "09d6db470099ec6f6a4084a54c6cdb3b00212d420ce455eb11b9ff87c62affa8"
     },
     {
+      "id": "menu-kucing",
+      "path": "assets/ui/menu-kucing.png",
+      "format": "PNG",
+      "width": 192,
+      "height": 192,
+      "transparent": true,
+      "maxKB": 30,
+      "screen": "Menu: tombol Kucing (koleksi kucing)",
+      "placeholderSha256": "338518b49d981d15767786bd06f8e5ab35e35ea74741a1180a79e54951ec8eb9"
+    },
+    {
       "id": "menu-kana",
       "path": "assets/ui/menu-kana.png",
       "format": "PNG",
@@ -101,6 +112,39 @@
       "maxKB": 150,
       "screen": "Pemilihan karakter dan potret pembicara di percakapan: karakter pemain Kazu",
       "placeholderSha256": null
+    },
+    {
+      "id": "kucing-tubuh",
+      "pattern": "assets/kucing/tubuh/{catBody}.png",
+      "format": "PNG",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "maxKB": 40,
+      "screen": "Kucing: satu tubuh = dua berkas, <id>-isi.png (bentuk saja) dan <id>-garis.png (garis tinta dan bayangan). Didaftar di data/layers.json",
+      "optional": true
+    },
+    {
+      "id": "kucing-corak",
+      "pattern": "assets/kucing/corak/{catPattern}.png",
+      "format": "PNG",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "maxKB": 40,
+      "screen": "Kucing: corak bulu, menutupi seluruh zona tubuh di templat; dipotong otomatis mengikuti tubuh. Didaftar di data/layers.json",
+      "optional": true
+    },
+    {
+      "id": "kucing-aksesori",
+      "pattern": "assets/kucing/aksesori/{catAccessory}.png",
+      "format": "PNG",
+      "width": 256,
+      "height": 256,
+      "transparent": true,
+      "maxKB": 20,
+      "screen": "Kucing: aksesori; titik tengah kanvas ditaruh di titik jangkar tubuh (kepala atau leher). Didaftar di data/layers.json",
+      "optional": true
     }
   ]
 }
