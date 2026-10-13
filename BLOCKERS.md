@@ -38,6 +38,12 @@ Ditandai `«BELUM DIISI: …»` (peringatan selama draf, error saat rilis):
 - satu percakapan pengantar, satu deskripsi adegan, dan satu kalimat yang harus ditulis ulang
   (`«TULIS ULANG: …»`).
 
+### 2a. Kucing setiap misi — **Terbuka**
+Setiap misi butuh satu kucing: nama buatan tim dan susunan lapisannya (kolom `cat_name`, `cat_body`, `cat_pattern`,
+`cat_accessory`, `cat_color` di tab quest, D-121). Untuk 40 misi bab 1–5 belum ada satu pun; pemeriksa materi
+memperingatkannya selama draf dan menolaknya saat rilis. Nama kucing tidak boleh memuat kotoba misi lain di bab yang
+sama atau sesudahnya (D-79).
+
 ### 3. Percakapan uji untuk semua quest — **Terbuka**
 Tidak ada di dokumen tim, dan pengembang tidak menulisnya (semua percakapan ditulis tim). Selama draf, quest bisa
 dimainkan tanpa langkah uji dan bertanda belum lengkap (D-92). Setiap quest butuh minimal satu percakapan uji dengan
@@ -76,7 +82,9 @@ Karakter Hana dan Kazu sudah ada (1080×1080, D-107). Yang masih placeholder ata
 - **potongan peta** `assets/peta/potongan-01.png` … (1080×1440, maks 150 KB; dua potongan untuk bab 1–5, D-110;
   panduan sambungan antarpotongan, D-108);
 - ikon lokasi per wilayah (`assets/lokasi/B01.png` …);
-- ikon menu (tiga);
+- ikon menu (empat: Index, Kucing, Panduan kana, Pengaturan);
+- **lapisan kucing**: 2 tubuh (isi dan garis), 2 corak, 3 aksesori, 9 berkas; templat dan aturannya di `templat/` dan
+  `ASSETS.md` bagian Kucing (D-121); sampai berkasnya ada, kucing tampil dengan gambar pengganti buatan kode;
 - ilustrasi adegan per percakapan (`assets/adegan/<ID percakapan>.png`), opsional tetapi ditunggu;
 - motif jalur (opsional).
 Setelah potongan peta jadi, tim konten mengisi posisi setiap lokasi (`pin_segment`, `pin_x`, `pin_y`).

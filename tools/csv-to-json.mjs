@@ -13,6 +13,8 @@
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { validateContent } from "../js/validate.js";
+import { catLayerIssues } from "../js/cats.js";
+import { validateLayers } from "../js/layers.js";
 import { convertCsvFilesToContent, csvLocation, rowLabel } from "../js/csv-content.js";
 import { printIssues, printSummary, red, green } from "./lib/print-issues.mjs";
 
@@ -73,6 +75,13 @@ function main() {
   }
 
   const { errors, warnings, notes } = validateContent(content);
+  // The cats' layer ids against data/layers.json (D-121).
+  try {
+    const layers = JSON.parse(readFileSync(new URL("../data/layers.json", import.meta.url), "utf8"));
+    if (!validateLayers(layers).problems.length) errors.push(...catLayerIssues(content, layers));
+  } catch {
+    // Without a readable layers file the app shows stand-in cats; the content check page reports it.
+  }
   printIssues([...errors, ...warnings, ...notes], (issue) => csvLocation(rowMap, issue));
   printSummary(errors, warnings);
 

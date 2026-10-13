@@ -729,7 +729,8 @@ Pengaturan. Ketiganya bisa dibuka dari mana pun di luar quest dan 復習 (peta, 
 tidak tersedia di dalam quest atau 復習. Pemain selalu punya jalan keluar yang jelas dari quest ke peta; keluar di
 tengah quest mengikuti aturan sesi yang belum selesai (progres tersimpan, quest bisa dilanjutkan). Ikon ketiga tombol
 termasuk slot aset (D-70). **Alasan:** Satu quest selalu dikerjakan dalam satu kondisi furigana, sehingga data tidak
-tercampur; index tidak bisa dipakai di tengah soal. **Diterapkan:** langkah 3.
+tercampur; index tidak bisa dipakai di tengah soal. **Diterapkan:** langkah 3. *Diperbarui oleh D-121: pintu keempat
+**Kucing** (koleksi kucing), dengan aturan yang sama: tidak ada di dalam misi dan 復習.*
 
 ### D-70 · Kontrak aset
 **Tanggal:** 2026-09-29. **Keputusan:** (1) `ASSETS.md` mendaftar setiap slot aset dalam satu tabel untuk anggota tim
@@ -1396,6 +1397,53 @@ tidak ada push paksa (D-113). (5) Dokumen proyek (README, `MULAI-DI-SINI.md`, `A
 **Alasan:** Galat T-19 lolos karena suntingan terjadi setelah uji browser; uji yang gagal di `main` atau di cabang yang
 akan digabung membuat setiap uji berikutnya kehilangan arti.
 
+
+### D-121 · Tahap 3: kucing dari lapisan, satu per misi tuntas
+**Tanggal:** 2026-10-13. **Keputusan:** Menerapkan bagian kucing dari D-116.
+- **Lapisan di `data/layers.json`**, satu kanvas untuk semua (512 × 512; aksesori 256 × 256): tubuh (berkas **isi**
+  berisi bentuk saja dan berkas **garis** berisi garis tinta, wajah, dan bayangan, ditambah titik jangkar `kepala` dan
+  `leher`), corak, aksesori, dan **warna bulu dari data** (krem, abu, jingga). Penumpukan dari bawah: isi yang dicat warna
+  bulu lewat mask CSS dengan bentuknya sendiri, corak yang dipotong mask yang sama (satu corak cocok untuk setiap tubuh),
+  garis, lalu aksesori yang titik tengahnya ditaruh di titik jangkar. `polos` dan `tanpa` adalah pilihan tanpa berkas.
+  Sekarang 9 berkas untuk 72 kombinasi (2 × 3 × 4 × 3). Jika tim aset menolak pewarnaan oleh kode, daftar `colors`
+  dihapus dan isi tubuh tampil sebagaimana digambar (pilihan 12 berkas, 50 kombinasi); peralihannya hanya perubahan
+  data, dijaga uji. Warna bulu yang membuat garis tinta di bawah 3:1 diperingatkan.
+- **Gambar pengganti buatan kode** (`js/cat-placeholders.js`, SVG di kanvas yang sama) dipakai untuk setiap berkas yang
+  belum ada; saat aplikasi dibuka, keberadaan setiap berkas diperiksa. Templat kanvas untuk tim aset ada di `templat/`
+  (SVG berlapis dan PNG), dijelaskan di `ASSETS.md`.
+- **Kolom kucing di tab `quest`:** `cat_name`, `cat_body`, `cat_pattern`, `cat_accessory`, `cat_color`. Kolomnya
+  **boleh tidak ada** di baris judul, supaya spreadsheet lama (termasuk materi impor bab 1–5) tetap bisa dikonversi;
+  misi tanpa kucing diperingatkan selama draf dan menjadi error saat rilis.
+- **Validator:** kombinasi lapisan kembar antar misi diperingatkan; ID lapisan harus berbentuk benar; **D-79 untuk nama
+  kucing**: nama hanya boleh memuat kotoba (atau cara bacanya) dari misinya sendiri dan dari wilayah sebelumnya di dunia
+  yang sama, karena kucing tampil setelah misinya tuntas, saat misi lain di wilayah yang sama belum tentu dimainkan
+  (error); kanji sasaran misi yang belum tentu dimainkan diperingatkan. Keberadaan ID lapisan di `data/layers.json`
+  diperiksa alat terminal, konverter, dan halaman pemeriksaan konten (error), dan di aplikasi kucing tetap tampil
+  dengan gambar pengganti.
+- **Kucing yang bebas dihitung dari misi yang tuntas** (seperti XP, D-105), tidak disimpan. Yang disimpan hanya misi yang
+  momen penyelamatannya sudah tampil (`progress.rescuesShown`), dan reset menghapusnya.
+- **Momen penyelamatan** tepat setelah misi tuntas, sekali: kucing muncul dengan efek kecil dari CSS, nama, dan "masuk
+  ke koleksi kucing"; tanpa suara; menutup sendiri setelah 2,6 detik atau dengan satu ketukan; tanpa gerakan jika
+  ponsel disetel "kurangi gerakan".
+- **Koleksi kucing** di `#/kucing`, pintu keempat menu: per dunia dan bab; kucing yang belum bebas tampil sebagai
+  **bayangan bentuk tubuh saja**, tanpa nama, corak, atau aksesori, berwarna `--silhouette` (biru tingkat 200).
+- **Di peta:** paling banyak 3 kucing bebas di samping lokasinya, ditambah lencana 🐾 bebas/total.
+- Kucing **sama di semua mode sesi**, termasuk penelitian: kucing bagian dari permainan yang diuji, sama untuk semua
+  peserta; berbeda dengan hadiah fisik (tahap 4), yang merupakan insentif dari luar.
+
+**Alasan:** Lapisan yang ditumpuk kode membuat 40 kucing berbeda dari 9 gambar; memotong corak dengan mask
+menghindari menggambar ulang corak per tubuh. Menurunkan kucing bebas dari progres menjaga satu sumber kebenaran.
+Kolom opsional menghindari memaksa tim mengubah spreadsheet yang sudah ada. **Alternatif ditolak:** Menggambar setiap
+kucing utuh (40 gambar, kombinasi tidak bisa dicek otomatis); corak per tubuh (±18 berkas); menyimpan daftar kucing
+bebas (bisa melenceng dari progres); memeriksa ID lapisan di validator utama (validator tidak membaca
+`data/layers.json`, sama seperti pembicara percakapan).
+
+### D-122 · Lencana eksplorasi per dunia
+**Tanggal:** 2026-10-13. **Keputusan:** Lencana eksplorasi di peta menjadi "🧭 探検 Eksplorasi Dunia 1: n%" dan
+dihitung dari misi dan 復習 di dunia yang sedang tampil saja. Labelnya diambil dari `data/ui.json` (`exploration`,
+探検 berfurigana dengan glos "Eksplorasi"), seperti label Jepang lain. **Alasan:** Lencana menempel di peta, dan peta
+hanya menampilkan satu dunia; persentase gabungan semua dunia membingungkan begitu dunia lain punya sebagian materi.
+**Alternatif ditolak:** Persentase gabungan semua dunia (perilaku tahap 2).
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

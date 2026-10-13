@@ -158,6 +158,7 @@ data/kana.json              tabel hiragana dan katakana untuk panduan kana
 data/characters.json        karakter pemain dan lawan bicara, dengan kotak potong potret
 data/assets.json            daftar slot aset gambar (dipakai aplikasi dan pemeriksa aset)
 data/map.json               urutan potongan peta setiap dunia dari atas ke bawah (D-108, D-117)
+data/layers.json            lapisan kucing: tubuh, corak, aksesori, warna bulu, titik jangkar (D-121)
 assets/                     gambar: potongan peta, ikon lokasi dan menu (PLACEHOLDER), karakter Hana dan Kazu, ilustrasi adegan; lihat ASSETS.md
 
 js/main.js                  bootstrap aplikasi, routing antar layar
@@ -174,7 +175,11 @@ js/map-layout.js            potongan peta: daftar, posisi lokasi per potongan, p
 js/event-log.js             satu-satunya jalur penulisan log quest dan peristiwa (pembukaan index)
 js/session-mode.js          mode sesi umum / pameran / penelitian: semua aturan yang berbeda antarmode
 js/cast.js                  karakter: nama dan potret pembicara, data karakter
-js/xp.js                    level, XP, dan eksplorasi, dihitung dari progres
+js/xp.js                    level, XP, dan eksplorasi per dunia, dihitung dari progres
+js/layers.js                lapisan kucing (data/layers.json): pemeriksaan, jumlah kombinasi, berkas mana yang sudah ada
+js/cat-placeholders.js      gambar pengganti lapisan kucing buatan kode, sampai gambar tim datang
+js/cat-figure.js            penumpuk lapisan: isi bertopeng berwarna, corak, garis, aksesori, atau siluet
+js/cats.js                  kucing per misi: mana yang bebas, momen penyelamatan, ID lapisan yang tidak dikenal
 js/leaderboard.js           setelan perangkat (mode pameran) dan papan peringkat per perangkat
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
@@ -207,9 +212,10 @@ js/screens/region.js        jendela bab: ringkasan, daftar quest, 復習
 js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
 js/screens/kana.js          panduan kana (data/kana.json)
 js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan disclaimer
-js/screens/menu.js          menu tiga pintu di luar quest
+js/screens/menu.js          menu empat pintu di luar misi (Index, Kucing, Panduan kana, Pengaturan)
 js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
+js/screens/cats.js          koleksi kucing dan momen penyelamatan
 js/screens/content-check.js pemeriksaan konten, karakter, potongan peta, dan aset (halaman tim)
 js/screens/preview.js       pratinjau dan cetak materi untuk validator (halaman tim)
 js/screens/settings.js      pengaturan: mode sesi, reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
@@ -227,6 +233,7 @@ tests/                      uji otomatis logika inti, sintaks semua skrip, dan i
 arsip/                      materi yang keluar dari data aktif dan contoh versi level; tidak dibaca aplikasi, tidak terbit
 netlify.toml                pengaturan Netlify: hanya folder _situs yang terbit
 NOTICE                      pernyataan hak cipta «NAMA-TIM» (tanpa lisensi sumber terbuka); tidak terbit
+templat/                    templat kanvas lapisan kucing untuk tim aset (SVG dan PNG); tidak terbit
 terbitkan.sh                perintah terbit Netlify: menyalin enam butir situs ke _situs dan menulis build.json
 MULAI-DI-SINI.md            titik masuk: arahan per peran
 ASSETS.md                   spesifikasi setiap slot aset gambar, untuk pembuat aset
@@ -356,6 +363,14 @@ Quest di dalam satu wilayah boleh dikerjakan dalam urutan bebas.
 | `intro_conversation` | ID percakapan pengantar (tepat satu) | `C-tabemasu-pengantar` |
 | `test_conversations` | *Daftar.* ID percakapan uji, minimal satu | `C-tabemasu-uji-1` |
 | `production_prompt` | Instruksi menulis kalimat sendiri di akhir quest | `Buat satu kalimat memakai kotoba ini.` |
+| `cat_name` | *Boleh kosong selama draf.* Nama kucing yang dibebaskan misi ini, buatan tim. **Tidak boleh memuat kotoba atau cara baca misi lain di bab yang sama atau bab sesudahnya** (D-79): kucing tampil di koleksi sebelum pengantar misi-misi itu pasti sudah dilewati. Kotoba misinya sendiri dan kotoba bab sebelumnya di dunia yang sama boleh. | `Momo` |
+| `cat_body`, `cat_pattern`, `cat_accessory` | *Boleh kosong selama draf.* Lapisan kucing: ID tubuh, corak, dan aksesori dari `data/layers.json`. `polos` = tanpa corak, `tanpa` = tanpa aksesori. | `duduk` · `belang` · `pita` |
+| `cat_color` | *Boleh kosong selama draf.* ID warna bulu dari `data/layers.json` (`krem`, `abu`, `jingga`). | `krem` |
+
+Kelima kolom kucing (D-121) **boleh tidak ada** di baris judul spreadsheet lama; misinya hanya belum punya kucing
+(peringatan selama draf, error saat rilis). Dua misi dengan susunan lapisan yang persis sama diperingatkan, karena setiap
+misi sebaiknya membebaskan kucing yang berbeda. ID lapisan yang tidak ada di `data/layers.json` adalah error di pemeriksa
+materi. Daftar lapisan dan cara menggambarnya ada di [`ASSETS.md`](ASSETS.md), bagian Kucing.
 
 ### Tab `percakapan`
 
@@ -1342,9 +1357,26 @@ berdampingan). Sampel dan streak-nya disimpan di entri 復習 sendiri, sehingga 
 item yang sama, dan salah menjawab di 復習 tidak mengubah penguasaan di quest asalnya. Di log: `levelId` =
 `REV-B06`, `isReview` = 1, `questStep` = `review`, dan `questId` = quest asal item.
 
-**Menu tiga pintu**: **Index**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah layar**. Ada di peta,
-index, panduan kana, papan peringkat, dan Pengaturan; **tidak ada** di dalam quest dan 復習 (D-69). Ikonnya slot aset
-(lihat [`ASSETS.md`](ASSETS.md)).
+**Menu empat pintu**: **Index**, **Kucing**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah layar**. Ada
+di peta, index, koleksi kucing, panduan kana, papan peringkat, dan Pengaturan; **tidak ada** di dalam misi dan 復習
+(D-69). Ikonnya slot aset (lihat [`ASSETS.md`](ASSETS.md)).
+
+**Kucing** (D-121). **Setiap misi yang tuntas membebaskan satu kucing**; kucing tidak bergantung pada XP atau level, dan
+kucing yang bebas dihitung dari misi yang tuntas (tidak disimpan sebagai angka tersendiri). Kucing digambar dari
+lapisan (tubuh, corak, aksesori, warna bulu) yang disebut misi di tab `quest`; selama gambar tim belum ada, aplikasi
+memakai gambar pengganti buatan kode.
+- **Momen penyelamatan:** tepat setelah misi tuntas, sekali per kucing: kucing muncul dengan efek kecil, namanya, dan
+  "masuk ke koleksi kucing". Tanpa suara; menutup sendiri setelah sekitar 2,6 detik, atau diketuk untuk langsung
+  lanjut. Jika ponsel disetel "kurangi gerakan", efeknya tidak bergerak.
+- **Koleksi kucing** (`#/kucing`, pintu Kucing di menu): semua kucing per dunia dan bab. Kucing yang bebas tampil utuh
+  dengan namanya; yang belum bebas tampil sebagai **bayangan tanpa nama**, hanya dengan "Bab 3 · Misi 2".
+- **Di peta:** kucing yang bebas tampil di samping lokasinya, **paling banyak 3**, ditambah lencana 🐾 jumlah kucing
+  bebas dari semua kucing wilayah itu. Daftar wilayah di bawah peta juga menyebut jumlahnya.
+- Kucing sama di semua mode sesi, termasuk mode penelitian: kucing bagian dari produk yang diuji, bukan hadiah dari
+  luar (bandingkan hadiah di tahap 4).
+
+**Lencana eksplorasi** (D-122) menghitung misi dan 復習 yang tuntas **di dunia yang sedang tampil saja**, dengan label
+dari `data/ui.json` (探検 · Eksplorasi): misalnya "Eksplorasi Dunia 1: 40%".
 
 **Level dan XP** (D-105). XP **dihitung dari progres**, tidak disimpan sebagai angka tersendiri: 10 XP per item
 yang dikuasai, 20 XP per quest tuntas, 50 XP per 復習 tuntas (konstanta di `js/state.js`, bersama ambang setiap
@@ -1444,9 +1476,10 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini (69 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
-(sesi quest, pemantapan, kunci wilayah, 復習), materi yang tidak boleh tampil sebelum diperkenalkan, peta
-(potongan, posisi lokasi), XP dan papan peringkat, mode sesi (pameran tanpa log, kode peserta wajib di mode
+Uji ini (90 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+(sesi quest, pemantapan, kunci wilayah, 復習), dunia (dibuka bebas, urutan per dunia), materi yang tidak boleh tampil
+sebelum diperkenalkan, peta (potongan, posisi lokasi), XP, eksplorasi per dunia dan papan peringkat, kucing (lapisan,
+kombinasi kembar, nama kucing menurut D-79, kolom CSV lama), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
 penelitian), kontras palet warna, kontrak aset, log (penyimpanan penuh, kolom, antrean pengiriman, CSV, `buildId`),
 alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), **isi terbitan Netlify** (hanya enam butir
 situs dan `build.json`), **sintaks setiap skrip**, dan bahwa tidak ada materi bahasa Jepang yang ditulis langsung di

@@ -25,11 +25,15 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 | `lokasi` | `assets/lokasi/<ID wilayah>.png`, satu per wilayah, misalnya `assets/lokasi/B06.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 40 KB | Peta: ikon lokasi (gedung, toko, stasiun, …) satu per wilayah |
 | `jalur` (opsional) | `assets/peta/jalur.png` | PNG | 64 × 64, ubin berulang | 1 : 1 | **transparan** | 10 KB | Peta: motif jalur antar lokasi |
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
+| `menu-kucing` | `assets/ui/menu-kucing.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Kucing (koleksi kucing) |
 | `menu-kana` | `assets/ui/menu-kana.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Panduan kana |
 | `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Pengaturan |
 | `karakter-hana`, `karakter-kazu` | `assets/karakter/hana.png`, `assets/karakter/kazu.png` | PNG | 1080 × 1080 | 1 : 1 | **transparan** | 150 KB | Pemilihan karakter; potret pembicara di percakapan |
 | potret (opsional) | `assets/karakter/<id>-potret.png`, misalnya `assets/karakter/hana-potret.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 60 KB | Menggantikan potongan otomatis di potret percakapan |
 | `adegan` | `assets/adegan/<ID percakapan>.png`, satu per percakapan, misalnya `assets/adegan/C-B01-01-pengantar.png` | PNG | 960 × 640 | 3 : 2 (mendatar) | tidak transparan | 150 KB | Di atas percakapan pengantar dan percakapan uji |
+| `kucing-tubuh` | `assets/kucing/tubuh/<id>-isi.png` dan `assets/kucing/tubuh/<id>-garis.png`, dua berkas per tubuh, misalnya `assets/kucing/tubuh/duduk-isi.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 40 KB | Kucing di koleksi, di peta, dan di momen penyelamatan (lihat [Kucing](#kucing-assetskucing-dan-datalayersjson)) |
+| `kucing-corak` | `assets/kucing/corak/<id>.png`, misalnya `assets/kucing/corak/belang.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 40 KB | Corak bulu, dipotong otomatis mengikuti tubuh |
+| `kucing-aksesori` | `assets/kucing/aksesori/<id>.png`, misalnya `assets/kucing/aksesori/pita.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 20 KB | Aksesori di kepala atau leher kucing |
 
 Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan akan didaftarkan di tabel ini.
 
@@ -43,6 +47,7 @@ Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan ak
 | Motif jalur | Lencana persentase, lencana eksplorasi, gembok, tanda centang |
 | Ilustrasi adegan | Keadaan terkunci lokasi (dipucatkan dan diberi gembok) |
 | Ikon menu | Bilah menu di bawah layar |
+| Lapisan kucing (tubuh, corak, aksesori) | Penumpukan lapisan, warna bulu, bayangan siluet, efek kecil saat kucing bebas |
 
 **Alasannya:** elemen antarmuka berbentuk gambar memberatkan ponsel kelas bawah, buram di ukuran layar tertentu, dan
 teks di dalamnya tidak bisa dibaca pembaca layar. Jadi jangan menggambar tombol, panel, atau bilah; cukup gambar yang
@@ -176,7 +181,79 @@ dengan huruf awal nama. Namanya masih penanda `«NAMA-…»` sampai tim mengisin
 
 - 192 × 192, transparan, tampil sekitar 40 × 40 piksel di layar. Buat bentuk sederhana yang tetap jelas pada
   ukuran kecil; detail halus akan hilang.
-- Ketiga ikon sebaiknya satu gaya.
+- Keempat ikon (Index, Kucing, Panduan kana, Pengaturan) sebaiknya satu gaya.
+
+## Kucing (`assets/kucing/` dan `data/layers.json`)
+
+Setiap misi yang tuntas membebaskan satu kucing (DECISIONS D-121). Kucing **tidak digambar utuh satu per satu**:
+aplikasi menumpuk beberapa **lapisan** yang digambar sekali, sehingga 9 berkas cukup untuk 72 kucing berbeda.
+
+### Templat kanvas
+
+Mulai dari templat di folder `templat/` di repo (minta berkasnya ke pengelola aplikasi jika tidak membuka GitHub):
+
+| Berkas | Untuk | Cara pakai |
+|---|---|---|
+| `templat/kucing-tubuh-corak.svg` | tubuh dan corak | Buka langsung di Inkscape, Adobe Illustrator, atau Affinity Designer. Lapisan bernama **PANDUAN …** hanya untuk menggambar; gambar di lapisan **GAMBAR**. |
+| `templat/kucing-tubuh-corak.png` | tubuh dan corak, untuk aplikasi yang tidak membuka SVG (Procreate, ibisPaint, Krita, MediBang) | Buat kanvas **512 × 512 piksel**, impor PNG ini sebagai lapisan paling atas, turunkan opasitasnya, lalu gambar di lapisan di bawahnya. |
+| `templat/kucing-aksesori.svg` dan `.png` | aksesori | Sama, dengan kanvas **256 × 256 piksel**. |
+
+**Sebelum mengekspor, sembunyikan atau hapus semua lapisan panduan.** Ekspor PNG dengan latar transparan, ukuran
+persis 512 × 512 (tubuh, corak) atau 256 × 256 (aksesori). Boleh menggambar di kanvas 1024 × 1024 (atau 512 untuk
+aksesori) asalkan semua ukuran di bawah dikali dua, lalu ekspor setengahnya.
+
+### Aturan yang sama untuk semua lapisan
+
+- **Garis dasar y = 480:** telapak kaki setiap tubuh menyentuh garis merah di templat. Kucing berdiri di tempat yang
+  sama di setiap kartu koleksi.
+- **Titik tengah x = 256:** badan kucing berada di tengah kanvas (garis putus-putus hitam). Ekor dan telinga boleh keluar
+  dari tengah.
+- **Batas aman 24 px:** tidak ada bagian gambar di luar garis pink.
+- **Garis tinta 6 px, warna `#403C3C`**, sama dengan garis karakter Hana dan Kazu. Di kanvas aksesori 256 px, garisnya
+  3 px supaya tampil sama tebal.
+- **Gaya warna datar** dengan garis tebal, seperti karakter. Bayangan ada di lapisan garis, bukan di lapisan isi.
+- Tidak ada teks di gambar, dan tidak ada kanji atau kotoba (gambar kucing tampil di luar misi).
+
+### Aturan tiap lapisan
+
+| Lapisan | Berkas | Isi | Aturan |
+|---|---|---|---|
+| **Isi tubuh** | `assets/kucing/tubuh/<id>-isi.png` | **Bentuk** tubuh saja: seluruh siluet kucing (kepala, telinga, badan, kaki, ekor) diwarnai penuh, **tanpa garis, tanpa bayangan, tanpa wajah** | Warnanya tidak penting: aplikasi memakai bentuk ini sebagai cetakan dan mengecatnya dengan warna bulu dari data. Bentuk ini juga menjadi bayangan siluet kucing yang belum bebas. Tepinya harus rapi, tanpa piksel setengah transparan di luar garis. |
+| **Garis tubuh** | `assets/kucing/tubuh/<id>-garis.png` | Garis tinta, wajah (mata, hidung, mulut, kumis), garis kaki, dan **bayangan** (abu-abu atau tinta transparan) | Bagian dalamnya **transparan**, supaya warna bulu dan corak terlihat. Garis harus tepat menutupi tepi bentuk isi. |
+| **Corak** | `assets/kucing/corak/<id>.png` | Belang, totol, bercak, dan sejenisnya | Gambar corak **menutupi seluruh zona tubuh** (kotak biru di templat), bukan hanya satu bentuk tubuh: aplikasi memotongnya otomatis mengikuti bentuk isi, sehingga satu corak cocok untuk semua tubuh. Pakai warna tinta atau gelap yang **agak transparan** (misalnya 20–30%), supaya cocok di atas setiap warna bulu. |
+| **Aksesori** | `assets/kucing/aksesori/<id>.png` | Pita, lonceng, bunga, topi, dan sejenisnya | Titik tengah kanvas aksesori (128, 128) ditaruh aplikasi tepat di **titik jangkar** tubuh: `kepala` atau `leher`. Gambar aksesori dengan titik itu sebagai pusatnya. |
+
+**Titik jangkar** ditulis per tubuh di `data/layers.json`, dalam piksel kanvas 512: misalnya untuk tubuh duduk,
+`"kepala": [256, 86]` (puncak kepala, di antara telinga) dan `"leher": [256, 262]`. Saat menggambar tubuh baru,
+catat dua titik itu dari templat dan kirimkan bersama berkasnya.
+
+### Warna bulu dan jumlah kombinasi
+
+Warna bulu ditulis di `data/layers.json` (`"colors"`), bukan digambar. Sekarang: krem `#F7E4C8`, abu `#DCD8D4`,
+jingga `#F9C99B`; tim boleh menggantinya. Warna yang terlalu gelap ditandai pemeriksa, karena garis tinta tidak terlihat
+di atasnya. Jumlah kucing berbeda = tubuh × (corak + polos) × (aksesori + tanpa) × warna:
+
+| Pilihan | Berkas | Kombinasi |
+|---|---|---|
+| **Sekarang** (warna dari data): 2 tubuh, 2 corak, 3 aksesori, 3 warna | 9 | 2 × 3 × 4 × 3 = **72** |
+| Tanpa warna dari data: tubuh digambar berwarna, 2 tubuh, 4 corak, 4 aksesori | 12 | 2 × 5 × 5 = **50** |
+
+Pilihan kedua dipakai jika tim aset lebih suka mewarnai sendiri: lapisan isi lalu digambar berwarna, dan daftar
+`"colors"` dihapus dari `data/layers.json`. Kode tidak perlu diubah.
+
+### Cara menyerahkan
+
+1. Beri nama berkas **persis** seperti di `data/layers.json`, misalnya `duduk-isi.png`, `duduk-garis.png`,
+   `belang.png`, `pita.png`. Tubuh, corak, atau aksesori **baru** juga boleh: sertakan namanya (huruf kecil, tanpa spasi,
+   misalnya `berdiri`) dan, untuk tubuh, kedua titik jangkarnya.
+2. Kirim semua berkas ke pengelola aplikasi (misalnya lewat Google Drive), yang menaruhnya di `assets/kucing/tubuh/`,
+   `assets/kucing/corak/`, atau `assets/kucing/aksesori/` dan menambahkan pilihan baru ke `data/layers.json`.
+3. Periksa hasilnya di halaman **Pemeriksaan konten** (alamatnya di `MULAI-DI-SINI.md`): bagian **Lapisan kucing**
+   menyebut berapa berkas yang sudah ada, dan pemeriksa aset menandai berkas yang ukuran pikselnya atau beratnya salah.
+   Selama berkas belum ada, aplikasi menampilkan gambar pengganti buatan kode di tempatnya.
+
+Kombinasi setiap misi dan nama kucingnya ditulis tim konten di tab `quest` (README, Kolom spreadsheet), bukan oleh
+tim aset.
 
 ## Mengembalikan placeholder
 

@@ -14,7 +14,9 @@
         {
           "id": "Q-tabemasu",
           "kotoba": "tabemasu",
-          "targetKanji": ["食"],
+          "targetKanji": [
+            "食"
+          ],
           "productionPrompt": "Buat satu kalimat memakai kotoba ini.",
           "intro": {
             "id": "C-tabemasu-pengantar",
@@ -42,16 +44,29 @@
                   "ja": "レストランで[晩|ばん]ごはんを[食|た]べます。",
                   "translation": "Saya makan malam di restoran.",
                   "blank": "食べます",
-                  "distractors": ["飲みます", "読みます", "書きます"]
+                  "distractors": [
+                    "飲みます",
+                    "読みます",
+                    "書きます"
+                  ]
                 }
               ]
             }
-          ]
+          ],
+          "cat": {
+            "name": "«BELUM DIISI: nama kucing»",
+            "body": "duduk",
+            "pattern": "belang",
+            "accessory": "pita",
+            "color": "krem"
+          }
         },
         {
           "id": "Q-nomimasu",
           "kotoba": "nomimasu",
-          "targetKanji": ["飲"],
+          "targetKanji": [
+            "飲"
+          ],
           "productionPrompt": "Buat satu kalimat memakai kotoba ini.",
           "intro": {
             "id": "C-nomimasu-pengantar",
@@ -79,11 +94,22 @@
                   "ja": "[朝|あさ]、[牛乳|ぎゅうにゅう]を[飲|の]みます。",
                   "translation": "Pagi hari saya minum susu.",
                   "blank": "飲みます",
-                  "distractors": ["食べます", "読みます", "聞きます"]
+                  "distractors": [
+                    "食べます",
+                    "読みます",
+                    "聞きます"
+                  ]
                 }
               ]
             }
-          ]
+          ],
+          "cat": {
+            "name": "«BELUM DIISI: nama kucing»",
+            "body": "rebah",
+            "pattern": "totol",
+            "accessory": "lonceng",
+            "color": "jingga"
+          }
         }
       ]
     }
@@ -94,9 +120,29 @@
       "meaning": "makan",
       "jlptLevel": "N5",
       "strokeCount": 9,
-      "bushu": { "char": "食", "name": "shoku", "meaning": "makan / makanan", "variants": ["飠"] },
-      "bushuOptions": ["食", "人", "米", "皿"],
-      "readings": { "kunyomi": ["た(べる)", "く(う)"], "onyomi": ["ショク"] },
+      "bushu": {
+        "char": "食",
+        "name": "shoku",
+        "meaning": "makan / makanan",
+        "variants": [
+          "飠"
+        ]
+      },
+      "bushuOptions": [
+        "食",
+        "人",
+        "米",
+        "皿"
+      ],
+      "readings": {
+        "kunyomi": [
+          "た(べる)",
+          "く(う)"
+        ],
+        "onyomi": [
+          "ショク"
+        ]
+      },
       "strokes": null
     },
     {
@@ -104,9 +150,28 @@
       "meaning": "minum",
       "jlptLevel": "N5",
       "strokeCount": 12,
-      "bushu": { "char": "飠", "name": "shokuhen", "meaning": "makan / makanan", "variants": ["食"] },
-      "bushuOptions": ["飠", "欠", "氵", "口"],
-      "readings": { "kunyomi": ["の(む)"], "onyomi": ["イン"] },
+      "bushu": {
+        "char": "飠",
+        "name": "shokuhen",
+        "meaning": "makan / makanan",
+        "variants": [
+          "食"
+        ]
+      },
+      "bushuOptions": [
+        "飠",
+        "欠",
+        "氵",
+        "口"
+      ],
+      "readings": {
+        "kunyomi": [
+          "の(む)"
+        ],
+        "onyomi": [
+          "イン"
+        ]
+      },
       "strokes": null
     }
   ],
@@ -121,8 +186,14 @@
       "meaning": "makan",
       "chapter": 6,
       "note": "",
-      "readingDistractors": ["くべます", "のべます", "しらべます"],
-      "readingDistractorsCross": ["しょくべます"]
+      "readingDistractors": [
+        "くべます",
+        "のべます",
+        "しらべます"
+      ],
+      "readingDistractorsCross": [
+        "しょくべます"
+      ]
     },
     {
       "id": "nomimasu",
@@ -134,8 +205,14 @@
       "meaning": "minum",
       "chapter": 6,
       "note": "",
-      "readingDistractors": ["たみます", "くみます", "よみます"],
-      "readingDistractorsCross": ["いんみます"]
+      "readingDistractors": [
+        "たみます",
+        "くみます",
+        "よみます"
+      ],
+      "readingDistractorsCross": [
+        "いんみます"
+      ]
     }
   ]
 }

@@ -9,6 +9,7 @@ export const ASSETS_URL = "data/assets.json";
 export const KANA_URL = "data/kana.json";
 export const CHARACTERS_URL = "data/characters.json";
 export const MAP_URL = "data/map.json";
+export const LAYERS_URL = "data/layers.json"; // cat layers (D-121)
 export const BUILD_URL = "build.json"; // written by terbitkan.sh on Netlify only (D-115)
 
 // Remote answer log: a Google Apps Script Web App (README "Pengiriman log").

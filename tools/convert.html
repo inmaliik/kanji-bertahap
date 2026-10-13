@@ -57,6 +57,8 @@
     // Same conversion and validation modules as tools/csv-to-json.mjs and the app.
     import { convertCsvFilesToContent, csvLocation, rowLabel } from "../js/csv-content.js";
     import { validateContent } from "../js/validate.js";
+    import { catLayerIssues } from "../js/cats.js";
+    import { validateLayers } from "../js/layers.js";
     import { h } from "../js/dom.js";
     import { issueList } from "../js/screens/common.js";
 
@@ -128,6 +130,14 @@
       }
 
       const { errors, warnings, notes } = validateContent(content);
+      // The cats' layer ids against the site's data/layers.json (D-121).
+      try {
+        const response = await fetch("../data/layers.json", { cache: "no-cache" });
+        const layers = response.ok ? await response.json() : null;
+        if (layers && !validateLayers(layers).problems.length) errors.push(...catLayerIssues(content, layers));
+      } catch {
+        // Unreadable layers file: the app shows stand-in cats and the content check page reports it.
+      }
       const locate = (issue) => csvLocation(rowMap, issue);
       const ok = errors.length === 0;
       show(

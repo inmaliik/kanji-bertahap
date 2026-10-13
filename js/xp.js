@@ -22,12 +22,15 @@ export function levelOf(xp) {
   return { level: index + 1, floor: LEVEL_THRESHOLDS[index], next: LEVEL_THRESHOLDS[index + 1] ?? null };
 }
 
-/** Share of the whole map explored: passed quests and reviews over all of them. */
-export function exploration(model, progress) {
-  const quests = [...model.quests.values()];
+/**
+ * Share of a map explored: passed quests and reviews over all of them. The map
+ *  shows one world, so its badge counts that world's regions only (D-122).
+ */
+export function exploration(model, progress, regions = model.regions) {
+  const quests = regions.flatMap((r) => r.quests);
   const done =
     quests.filter((q) => progress.quests[q.id]?.status === STATUS.PASSED).length +
-    model.regions.filter((r) => progress.quests[reviewId(r.chapter)]?.status === STATUS.PASSED).length;
-  const total = quests.length + model.regions.length;
+    regions.filter((r) => progress.quests[reviewId(r.chapter)]?.status === STATUS.PASSED).length;
+  const total = quests.length + regions.length;
   return total ? Math.round((done / total) * 100) : 0;
 }

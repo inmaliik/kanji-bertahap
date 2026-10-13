@@ -16,8 +16,8 @@ titik berhenti untuk ditinjau:
 | Tahap | Isi | Status |
 |---|---|---|
 | 1 | Deploy otomatis ke Netlify, `buildId` di log | ✓ Selesai |
-| 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai, menunggu tinjauan |
-| 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | Menunggu persetujuan |
+| 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai |
+| 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | ✓ Selesai, menunggu tinjauan; templat untuk tim aset di `templat/` |
 | 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | Belum |
 | 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | Belum |
 | 6 | Pemolesan antarmuka dari referensi tim, warna biru di semua layar | Belum |
@@ -50,7 +50,7 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 5. Setiap nomor bab dan jumlah guratan yang Anda periksa dicentang di
    [Yang harus diverifikasi terhadap buku](README.md#yang-harus-diverifikasi-terhadap-buku).
 
-## Saya pembuat aset (menggambar peta, ikon, karakter)
+## Saya pembuat aset (menggambar peta, ikon, karakter, kucing)
 
 1. Baca [`ASSETS.md`](ASSETS.md): daftar setiap gambar yang dibutuhkan, dengan nama berkas persis, ukuran,
    format, dan batas ukuran berkas. Peta digambar sebagai **potongan tegak 1080 × 1440 yang disambung dari atas ke
@@ -61,6 +61,10 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
    Periksa hasilnya di halaman **Pemeriksaan konten dan aset** (alamatnya di bagian
    [Alamat halaman untuk tim](#alamat-halaman-untuk-tim-tidak-ditautkan-dari-aplikasi)).
 4. Jangan menaruh kanji atau kotoba yang diajarkan di dalam gambar: peta dan menu tampil sebelum quest dimainkan.
+5. **Kucing** digambar sebagai lapisan (tubuh, corak, aksesori), bukan kucing utuh. Mulai dari templat di folder
+   `templat/` (SVG untuk Inkscape, Illustrator, Affinity; PNG untuk Procreate, ibisPaint, Krita) dan baca
+   [`ASSETS.md`, bagian Kucing](ASSETS.md#kucing-assetskucing-dan-datalayersjson): garis dasar, titik tengah, tebal
+   garis, aturan tiap lapisan, dan cara menyerahkan berkasnya.
 
 ## Saya yang menjalankan aplikasi (pengelola, koordinator data, penjaga stan)
 

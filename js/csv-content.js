@@ -22,7 +22,10 @@ export const TABS = Object.freeze({
     "kotoba_id", "word", "word_ruby", "reading", "reading_type", "pos", "meaning", "chapter", "note",
     "reading_distractors", "reading_distractors_cross",
   ],
-  quest: ["quest_id", "chapter", "kotoba_id", "target_kanji", "intro_conversation", "test_conversations", "production_prompt"],
+  quest: [
+    "quest_id", "chapter", "kotoba_id", "target_kanji", "intro_conversation", "test_conversations", "production_prompt",
+    "cat_name", "cat_body", "cat_pattern", "cat_accessory", "cat_color",
+  ],
   percakapan: [
     "conversation_id", "line_no", "speaker", "ja", "translation", "highlight", "blank", "distractors",
     "sentence_chapter", "scene", "placeholder",
@@ -31,6 +34,13 @@ export const TABS = Object.freeze({
 
 /** Download order used in README and in the converter page. */
 export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan"];
+
+/**
+ * Columns a tab may leave out of its header row: added after the team's
+ * spreadsheets were made, so older files still convert (an absent column is an
+ * empty one). The cat columns came with the cats (D-121).
+ */
+export const OPTIONAL_COLUMNS = Object.freeze({ quest: ["cat_name", "cat_body", "cat_pattern", "cat_accessory", "cat_color"] });
 
 // A column that exists in exactly one tab identifies the file.
 const SIGNATURE = { wilayah: "intro_summary", kanji: "bushu_char", kotoba: "word_ruby", quest: "quest_id", percakapan: "conversation_id" };
@@ -197,7 +207,7 @@ function readTab(file) {
   }
   const columns = TABS[tab];
   const unknown = header.filter((h) => h && !columns.includes(h));
-  const missing = columns.filter((c) => !header.includes(c));
+  const missing = columns.filter((c) => !header.includes(c) && !(OPTIONAL_COLUMNS[tab] ?? []).includes(c));
   if (unknown.length || missing.length) {
     const parts = [];
     if (missing.length) parts.push(`Kolom yang tidak ditemukan: ${missing.join(", ")}.`);
@@ -223,6 +233,19 @@ function readTab(file) {
 
 // ---------------------------------------------------------------------------
 // Rows → content
+
+/** The cat a mission frees (D-121), or null while all its columns are empty. */
+function catOf(cells) {
+  const columns = OPTIONAL_COLUMNS.quest.map((c) => cells[c] ?? "");
+  if (columns.every((v) => v === "")) return null;
+  return {
+    name: cells.cat_name ?? "",
+    body: cells.cat_body ?? "",
+    pattern: cells.cat_pattern ?? "",
+    accessory: cells.cat_accessory ?? "",
+    color: cells.cat_color ? cells.cat_color : null,
+  };
+}
 
 function buildKanji(rows, problems, rowMap) {
   const seen = new Map();
@@ -418,6 +441,7 @@ function buildRegions(wilayahRows, questRows, conversations, problems, rowMap) {
       productionPrompt: cells.production_prompt,
       intro: intro?.conversation ?? null,
       tests: tests.map((t) => t.conversation),
+      cat: catOf(cells),
     });
     target.questRows.push({ row, intro, tests });
   }

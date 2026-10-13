@@ -34,6 +34,8 @@ import { recordScore } from "../leaderboard.js";
 import { currentMode } from "../event-log.js";
 import { leaderboardAvailable } from "../session-mode.js";
 import { menuBar } from "./menu.js";
+import { regionCats } from "../cats.js";
+import { catFigure } from "../cat-figure.js";
 import { regionHref } from "./quest.js";
 import { regionSheet } from "./region.js";
 
@@ -92,6 +94,20 @@ function segmentBox(app, { world, name, n, count, chapters, temporary, observer 
   if (observer) observer.observe(box);
   else box.load();
   return box;
+}
+
+/** Cats shown next to a location (D-121): free cats only, at most this many, then a count. */
+export const CATS_ON_MAP = 3;
+
+/** The free cats of a region beside its location, with a count of free cats over all its cats. */
+function locationCats(app, free, total) {
+  if (!free.length) return null;
+  return h(
+    "span",
+    { class: "location__cats", "aria-hidden": "true" },
+    h("span", { class: "location__cat-row" }, free.slice(-CATS_ON_MAP).map((c) => catFigure(app, c.cat, { className: "location__cat" }))),
+    h("span", { class: "location__cat-count" }, `🐾 ${free.length}/${total}`)
+  );
 }
 
 /** Icon of a location: assets/lokasi/<region id>.png, or a drawn disc until the team supplies it. */
@@ -195,7 +211,8 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
   const worldInfo = worldSummary(model, progress, world, statuses);
   const summaries = worldInfo.regions;
   const usage = storageUsage();
-  const explored = exploration(model, progress);
+  // The badge counts the world on screen only (D-122).
+  const explored = exploration(model, progress, world.regions);
   const mode = currentMode(app);
 
   // Exhibition mode keeps this player's score on the device board (D-106).
@@ -235,6 +252,8 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
   const pins = summaries.map((s, i) => {
     const { x, y } = points[i];
     const state = STATE[s.state];
+    const cats = regionCats(progress, s.region);
+    const free = cats.filter((c) => c.free);
     return h(
       "a",
       {
@@ -242,10 +261,13 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
         href: regionHref(s.region),
         style: `left: ${x}%; top: ${y}%`,
         "data-scroll-target": s === target ? "" : null,
-        "aria-label": `Bab ${s.region.chapter}, ${s.region.title}, ${state.text}, ${s.percent} persen`,
+        "aria-label":
+          `Bab ${s.region.chapter}, ${s.region.title}, ${state.text}, ${s.percent} persen` +
+          (free.length ? `, ${free.length} dari ${cats.length} kucing bebas` : ""),
       },
       h("span", { class: "location__badge", "aria-hidden": "true" }, state.icon),
       locationIcon(app, s.region),
+      locationCats(app, free, cats.length),
       h("span", { class: "location__name", "aria-hidden": "true" }, `Bab ${s.region.chapter}`),
       h("span", { class: "location__percent", "aria-hidden": "true" }, `${s.percent}%`)
     );
@@ -259,7 +281,7 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
       "div",
       { class: "map-top" },
       levelBar(app),
-      h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), `Eksplorasi seluruh peta: ${explored}%`)
+      h("p", { class: "map__explored" }, h("span", { "aria-hidden": "true" }, "🧭 "), uiLabel(app, "exploration"), ` Dunia ${world.number}: ${explored}%`)
     ),
     worldTabs(app, world, statuses),
     worldInfo.complete ? h("p", { class: "notice notice--success" }, `✓ Dunia ${world.number} tamat.`) : null,
@@ -296,7 +318,11 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
                 { class: "map-list__meta" },
                 `${state.text} · ${s.passed} dari ${s.total} misi (${s.percent}%) · `,
                 uiLabel(app, "review", { gloss: false }),
-                s.reviewPassed ? " ✓" : " belum"
+                s.reviewPassed ? " ✓" : " belum",
+                (() => {
+                  const cats = regionCats(progress, s.region);
+                  return cats.length ? ` · 🐾 ${cats.filter((c) => c.free).length}/${cats.length}` : null;
+                })()
               )
             )
           )
