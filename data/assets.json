@@ -87,7 +87,7 @@
       "height": 192,
       "transparent": true,
       "maxKB": 30,
-      "screen": "Menu di peta dan layar lain di luar quest: tombol Pengaturan",
+      "screen": "Menu di peta dan layar lain di luar quest: tombol Setelan",
       "placeholderSha256": "71b75424aad515aff45ab9fcf1d1ba0ff4b4b88672a3f0a6dd342c903dffb6ad"
     },
     {
@@ -161,11 +161,11 @@
       "id": "panel-cerita",
       "pattern": "assets/cerita/{scenePanel}.jpg",
       "format": "JPEG",
-      "width": 1080,
-      "height": 1440,
+      "width": 1600,
+      "height": 1200,
       "transparent": false,
       "maxKB": 150,
-      "screen": "Adegan cerita: satu gambar per panel, assets/cerita/<ID adegan>/<panel>.jpg. Didaftar di tab naskah (panel_image)",
+      "screen": "Adegan cerita: satu gambar per halaman (mendatar 4:3, boleh berisi beberapa panel), assets/cerita/<ID adegan>/<halaman>.jpg. Didaftar di tab naskah (panel_image)",
       "optional": true
     }
   ]

@@ -162,6 +162,8 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   const rewardShown = [];
   const sceneFlow = [];
   const rewardHidden = [];
+  const labelProblems = [];
+  const labelsSeen = new Set();
 
   const waitForScreen = async () => {
     for (let i = 0; i < 80; i++) {
@@ -182,6 +184,32 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
     visited.push(label);
     const line = text.split("\n").find((l) => LEAK.test(l));
     if (line) leaks.push(`${label}: "${line.trim().slice(0, 140)}"`);
+    // Menu labels are whole: no soft hyphen or CSS hyphenation, no word split over two lines, nothing cut off.
+    const labels = await evaluate(`(() => [...document.querySelectorAll(".menu__label")].map((el) => {
+      const node = el.firstChild;
+      const text = el.textContent;
+      const split = [...text.matchAll(/\\S+/g)].filter((m) => {
+        const range = document.createRange();
+        range.setStart(node, m.index);
+        range.setEnd(node, m.index + m[0].length);
+        return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1;
+      }).map((m) => m[0]);
+      const box = el.getBoundingClientRect();
+      const door = el.closest("a, button")?.getBoundingClientRect() ?? box;
+      return {
+        text,
+        soft: text.includes("\\u00AD"),
+        hyphens: getComputedStyle(el).hyphens === "auto",
+        split,
+        overflow: el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
+        outside: box.left < door.left - 1 || box.right > door.right + 1,
+      };
+    }))()`);
+    for (const l of labels) {
+      labelsSeen.add(l.text);
+      const wrong = [l.soft && "tanda pemenggalan", l.hyphens && "hyphens:auto", l.split.length && `kata terbelah: ${l.split.join(", ")}`, l.overflow && "terpotong", l.outside && "keluar dari pintunya"].filter(Boolean);
+      if (wrong.length) labelProblems.push(`${label} "${l.text}": ${wrong.join("; ")}`);
+    }
     const reward = text.split("\n").find((l) => REWARD_WORDS.test(l));
     if (label.startsWith("penelitian") && reward) researchLeaks.push(`${label}: "${reward.trim().slice(0, 140)}"`);
     return text;
@@ -275,6 +303,11 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
     // Exhibition mode: no consent screen, the leaderboard.
     await start(states.playing, { exhibitionMode: true });
     await visit("pameran", ["#/", "#/peringkat", "#/settings", "#/consent", "#/quest/B06/2"]);
+
+    // The narrowest phone still in use: the five menu doors at 320 px.
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 640, deviceScaleFactor: 1, mobile: true });
+    await start(states.playing);
+    await visit("320px", ["#/", "#/kucing", "#/cerita", "#/settings"]);
   } finally {
     browser.close();
     server.close();
@@ -283,6 +316,8 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   assert.ok(visited.length > 60, `${visited.length} screens visited`);
   assert.deepEqual(errors, [], "no uncaught errors in the browser");
   assert.deepEqual(leaks, [], "screens showing an empty value as text");
+  assert.deepEqual([...labelsSeen].sort(), ["Cerita", "Index", "Kucing", "Panduan kana", "Setelan"], "the five doors were checked");
+  assert.deepEqual(labelProblems, [], "menu labels are whole: not hyphenated, not split, not cut off");
   assert.deepEqual(rewardShown, [true], "outside research mode the earned reward is on the map");
   assert.deepEqual(sceneFlow, [true, true], "the opening scene plays after character selection, then the map shows");
   assert.deepEqual(researchLeaks, [], "research mode never mentions rewards");

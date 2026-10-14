@@ -19,8 +19,8 @@ titik berhenti untuk ditinjau:
 | 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai |
 | 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | ✓ Selesai; templat untuk tim aset di `templat/` |
 | 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | ✓ Selesai; tonggak dan teks hadiah menunggu tim |
-| 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | ✓ Selesai, menunggu tinjauan; naskah, panel, dan suara menunggu tim |
-| 6 | Pemolesan antarmuka dari referensi tim, warna biru di semua layar | Belum |
+| 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | Menunggu tinjauan; prolog Dunia 1 memakai 9 halaman tim (D-125); naskah, transkrip, dan suara menunggu tim |
+| 6 | Pemolesan antarmuka dengan arah visual baru (lihat [Rencana tahap 6](#rencana-tahap-6-pemolesan-antarmuka)) | Belum |
 
 Di samping itu, materi dan aset dari tim masih ditunggu. Materi bab 1–5 dari dokumen tim sudah diimpor ke format
 spreadsheet, tetapi masih menunggu nama tokoh, terjemahan, arti, dan seluruh percakapan uji
@@ -30,6 +30,44 @@ spreadsheet, tetapi masih menunggu nama tokoh, terjemahan, arti, dan seluruh per
 > buku. Selama status ini belum dinaikkan, halaman pratinjau materi bertanda **DRAF** dan **tidak boleh dikirim ke
 > validator ahli**. Selain itu, teks layar persetujuan peserta masih sementara, sehingga aplikasi **tidak mengirim
 > satu pun data jawaban** ke server. Keduanya disengaja, sampai daftar periksa di README selesai.
+
+## Rencana tahap 6: pemolesan antarmuka
+
+Belum dimulai. Arah ini ditetapkan 2026-10-14 dan menggantikan "warna biru di semua layar" sebagai satu-satunya arah.
+
+**Kosakata visual game kasual Jepang yang boleh dipakai** (referensi tim di `sumber/referensi/`, tidak masuk repo):
+langit gradasi lembut; panel kertas buku bergaris kotak dengan lubang spiral; kepala panel berbentuk pita; tombol pil
+mengilap; ikon stiker bulat berbingkai putih; bayangan lembut, sudut membulat, sentuhan maskot kucing; ilustrasi latar dari
+aset tim. **Tetap tidak diambil dari referensi:** logo, lencana bertelinga kucing, ikon barang, ilustrasi, dan komposisi
+persisnya.
+
+**Penyesuaian:**
+- **Tombol utama: pil biru dan pil kuning bertulisan tinta** di atas panel kertas putih. Isian muda saja tidak cukup
+  berbeda dari kertas putih (biru `#BAE1FF` 1,37 : 1, kuning `#FFE27A` 1,28 : 1), jadi usulan tepi tombol tanpa garis tinta
+  tebal: **tepi 2 piksel dengan warna tua sewarna** (biru `#2F78C4`, 4,56 : 1 terhadap putih; kuning `#A86B00`, 4,40 : 1)
+  ditambah **bibir bawah 3–4 piksel** dengan warna yang sama, yang sekaligus memberi kesan tombol game mengilap. Kilau
+  berupa gradasi putih di setengah atas isian. Tulisan tinta `#403c3c` di isian: 7,93 : 1 (biru) dan 8,51 : 1 (kuning).
+  Angka akhirnya diperiksa uji kontras.
+- **Ornamen boleh gambar dari tim**, tetapi teks di atasnya tetap teks sungguhan (D-104).
+- **Di 1024 piksel ke atas: dua kolom**, peta di satu sisi dan panel wilayah di sisi lain; di ponsel tetap satu kolom.
+- Semua layar lolos uji kontras dan uji semua layar (T-20, T-21).
+
+**Cara kerja tahap 6:** sebelum membangun, usulan per layar dengan pratinjau ponsel dan laptop berdampingan dengan
+referensinya, untuk disetujui; baru kemudian dikerjakan.
+
+**Peta dari tim** (temuan 2026-10-14; berkasnya di `sumber/map/`, rincian di BLOCKERS butir 6):
+- Satu peta Jepang utuh, **1536 × 2048, rasio 3 : 4 sama dengan potongan 1080 × 1440**, sehingga bisa dipakai sebagai satu
+  potongan tegak. Mentahnya 348–423 KB; diekspor 1080 × 1440 menjadi ±275 KB sebagai PNG (melebihi batas 150 KB) atau
+  ±75 KB sebagai JPEG kualitas 70, jadi format potongan peta perlu diputuskan di tahap ini.
+- **Ada versi terang dan gelap** (terbuka dan terkunci) dari gambar tim, dengan garis pantai yang identik di keenam
+  berkas. Keadaan terkunci memakai versi gelap tim, **bukan penggelapan oleh kode**.
+- **Panduan sambungan tidak berlaku**: tidak ada potongan yang disambung, semuanya satu kanvas.
+- **Tiga bagian, materi lima bab:** bab 1–3 di peta tim, **bab 4–5 tetap di potongan placeholder**; materi tidak diubah.
+  Usulan lokasi pin (persen gambar, titik tengah daratan setiap bagian): barat x 34, y 75; Honshu tengah–timur x 67,
+  y 55; Hokkaido x 74, y 21. Urutan bab ke bagian belum ditentukan tim.
+- Berkas 33 % dan 66 % menyalakan bagian secara berurutan (barat, lalu Honshu, lalu Hokkaido). Jika wilayah boleh
+  dituntaskan tidak berurutan, perlu satu lapisan terang per bagian (diekspor dari berkas induk yang sama, tanpa
+  menggambar ulang).
 
 Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca bergantung pada peran Anda.
 
@@ -54,10 +92,11 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 
 1. Penulis naskah: baca README [Tab `cerita` dan `naskah`](README.md#tab-cerita-dan-naskah-opsional-berdua) dan
    [Menulis naskah adegan cerita](README.md#menulis-naskah-adegan-cerita): satu baris per ketukan, subtitle paling
-   banyak 120 karakter, baris pemain tanpa suara, dan tidak mendahului pelajaran (D-79). Mulai dari
-   `tools/templates/cerita.csv` dan `naskah.csv`.
+   banyak 120 karakter, baris pemain tanpa suara, dan tidak mendahului pelajaran (D-79). Halaman berpanel ditulis
+   satu panel naskah per kotak (`panel_box`), dan setiap teks yang tergambar ditranskripsi di `panel_text` (D-125).
+   Mulai dari `tools/templates/cerita.csv` dan `naskah.csv`.
 2. Pengisi suara dan ilustrator panel: baca [`ASSETS.md`, bagian Adegan cerita](ASSETS.md#adegan-cerita-assetscerita-dan-assetssuara):
-   format MP3 dan JPEG, batas ukuran, dan cara menyerahkan berkas.
+   format MP3 dan JPEG, halaman mendatar 4 : 3 yang boleh berisi beberapa panel, batas ukuran, dan cara menyerahkan berkas.
 
 ## Saya pembuat aset (menggambar peta, ikon, karakter, kucing)
 

@@ -3056,6 +3056,19 @@ body.page--blue {
   height: 32px;
 }
 
+/* The narrowest phones (320 px): five doors of about 59 px, so every label fits whole. */
+@media (max-width: 359px) {
+  .menu {
+    gap: 0.25rem;
+    padding-inline: 0.25rem;
+  }
+
+  .menu__door {
+    padding-inline: 0.0625rem;
+    font-size: 0.75rem;
+  }
+}
+
 /* Region sheet sliding up from the bottom (D-103) ---------------------------------------- */
 
 body.sheet-open {
@@ -3606,8 +3619,10 @@ input[type="radio"] {
 }
 
 /* Story scenes (D-124) ---------------------------------------------------------
-   A still panel (3:4) with the figures over it, the subtitle below. The player's
-   lines use the blue of the player's speech (D-101); narration has no name plate. */
+   A portrait frame (3:4) with the page in it and the figures over it, the
+   subtitle below. A landscape page shows whole, letterboxed, then zooms to each
+   panel's box (D-125). The player's lines use the blue of the player's speech
+   (D-101); narration has no name plate. */
 
 .scene__bar {
   display: flex;
@@ -3652,12 +3667,35 @@ input[type="radio"] {
   cursor: pointer;
 }
 
-.scene__panel,
+.scene__frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Width and transform are set by the player (fitBox); hidden until placed. */
 .scene__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  height: auto;
+  transform-origin: 0 0;
+  opacity: 0;
+}
+
+.scene__img--ready {
+  opacity: 1;
+}
+
+.scene__img--moving {
+  transition: transform 450ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene__img--moving {
+    transition: none;
+  }
 }
 
 .scene__placeholder {
@@ -3718,6 +3756,11 @@ input[type="radio"] {
   border: var(--line) solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+}
+
+/* A panel without lines: only the count, so the layout does not jump. */
+.scene__subtitle--silent {
+  padding-block: 0.25rem;
 }
 
 .scene__subtitle--player {

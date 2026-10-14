@@ -49,11 +49,23 @@ Hadiah kartu fisik (D-123) sudah dibangun dengan tonggak bawaan B01–B05, tetap
 diskon) masih penanda `«BELUM DIISI: …»`. Tim memutuskan tonggak dan teksnya di tab `hadiah` spreadsheet. Penanda itu
 diperingatkan selama draf dan menjadi error saat rilis.
 
-### 2c. Naskah, panel, dan suara adegan cerita — **Terbuka**
-Pemutar adegan cerita (D-124) sudah dibangun. Naskah pembuka dan penutup Dunia 1 masih kerangka penanda
-`«BELUM DIISI: …»` di `tools/templates/naskah.csv`; bahasa naskah (subtitle Indonesia, kalimat Jepang, atau keduanya)
-belum diputuskan tim. Gambar panel (`assets/cerita/`) dan berkas suara (`assets/suara/`) belum ada; selama itu panel
-tampil sebagai kotak keterangan dan baris tampil tanpa suara. Adegan penutup Dunia 1 baru diputar saat Dunia 1 tamat.
+### 2c. Naskah, panel, dan suara adegan cerita — **Sebagian**
+Pemutar adegan cerita (D-124) sudah dibangun, dan memutar **9 halaman prolog Dunia 1 dari tim** (D-125,
+`assets/cerita/S-D1-pembuka/01.jpg` … `09.jpg`). Yang masih ditunggu dari tim:
+- **Naskah** pembuka dan penutup Dunia 1: masih penanda `«BELUM DIISI: …»` di `tools/templates/naskah.csv`; bahasa
+  naskah (subtitle Indonesia, kalimat Jepang, atau keduanya) belum diputuskan.
+- **Transkrip teks yang tergambar** di setiap halaman (kolom `panel_text`), karena pemeriksa tidak bisa membaca gambar.
+  Yang terlihat di gambar: tulisan tangan berbahasa Indonesia ("Imutnya…" di halaman 02) dan bunyi atau seruan ("meow",
+  "~meow~", "heh?", "!??", "o O"); sebagian besar balon kosong.
+- **Urutan baca.** Tim menyebut "dibaca dari kanan ke kiri". Yang diterapkan sekarang: antarhalaman 01 → 09 (urutan
+  nomor berkas, yang alurnya runtut), dan di halaman 05 (tiga panel) kanan → tengah → kiri. Tetapi panah ⇒ di halaman 06
+  dan 07 menunjuk ke kanan. Perlu dipastikan: "kanan ke kiri" berlaku untuk urutan antarhalaman, panel di dalam halaman,
+  atau keduanya? Urutannya cukup diubah di naskah.
+- **Tokoh perempuan berambut bob** di halaman 01, 05, dan 08 (dari belakang, dari depan, dan mata berbintang). Ia bisa
+  terbaca sebagai karakter pemain, padahal pemain memilih Hana atau Kazu. Belum diputuskan: apakah ia pemain, tokoh lain,
+  atau prolog ini hanya untuk satu karakter.
+- Berkas suara (`assets/suara/`) dan gambar adegan penutup belum ada; selama itu baris tampil tanpa suara dan panel
+  penutup tampil sebagai kotak keterangan. Adegan penutup Dunia 1 baru diputar saat Dunia 1 tamat.
 
 ### 3. Percakapan uji untuk semua quest — **Terbuka**
 Tidak ada di dokumen tim, dan pengembang tidak menulisnya (semua percakapan ditulis tim). Selama draf, quest bisa
@@ -93,12 +105,19 @@ Karakter Hana dan Kazu sudah ada (1080×1080, D-107). Yang masih placeholder ata
 - **potongan peta** `assets/peta/potongan-01.png` … (1080×1440, maks 150 KB; dua potongan untuk bab 1–5, D-110;
   panduan sambungan antarpotongan, D-108);
 - ikon lokasi per wilayah (`assets/lokasi/B01.png` …);
-- ikon menu (empat: Index, Kucing, Panduan kana, Pengaturan);
+- ikon menu (lima: Index, Kucing, Cerita, Panduan kana, Setelan);
 - **lapisan kucing**: 2 tubuh (isi dan garis), 2 corak, 3 aksesori, 9 berkas; templat dan aturannya di `templat/` dan
   `ASSETS.md` bagian Kucing (D-121); sampai berkasnya ada, kucing tampil dengan gambar pengganti buatan kode;
 - ilustrasi adegan per percakapan (`assets/adegan/<ID percakapan>.png`), opsional tetapi ditunggu;
 - motif jalur (opsional).
 Setelah potongan peta jadi, tim konten mengisi posisi setiap lokasi (`pin_segment`, `pin_x`, `pin_y`).
+
+**Peta dari tim (2026-10-14, di `sumber/map/`, belum dipakai):** satu peta Jepang utuh, bukan potongan bersambung,
+dalam enam berkas PNG 1536 × 2048 (3 : 4 tegak, 348–423 KB). Wilayah terang adalah wilayah terbuka, gelap terkunci, dalam
+tiga bagian: barat (Kyushu, Shikoku, Chugoku, Kansai), Honshu tengah dan timur sampai Tohoku, dan Hokkaido. Berkasnya:
+`0persen` dan `100persen` (semua gelap / semua terang, latar transparan), `0persenbg` dan `100persenbg` (sama, dengan
+laut biru), `33persen` dan `66persen` (barat terang / barat dan Honshu terang, dengan laut). Garis pantai di keenamnya
+segaris. Materi punya 5 bab, peta 3 bagian. Cara memakainya dirancang di tahap 6 (lihat `MULAI-DI-SINI.md`).
 
 ### 7. Urutan guratan — **Terbuka** (menunggu D-66)
 Tempat untuk urutan guratan sudah disiapkan, tetapi **tidak ada data guratan di repo** sampai lisensinya diputuskan.

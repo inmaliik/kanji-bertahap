@@ -44,7 +44,7 @@ test("reading alignment follows okurigana and hides ruby on request", () => {
   assert.deepEqual(splitReadingNotation("た(べる)"), { kanjiPart: "た", okurigana: "べる" });
 });
 
-test("sample content passes; its warnings are the placeholders (conversations, cat names, reward, story script), the unreachable default reward, the missing pin and one sentence ahead of its region", () => {
+test("sample content passes; its warnings are the placeholders (conversations, cat names, reward, story script), the unreachable default reward, the missing pin, the closing panel's missing transcript and one sentence ahead of its region", () => {
   const { errors, warnings, notes } = validateContent(loadSampleContent());
   assert.deepEqual(errors, []);
   assert.deepEqual(notes, []);
@@ -55,6 +55,7 @@ test("sample content passes; its warnings are the placeholders (conversations, c
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
     "REWARD_UNREACHABLE", // the default milestone B01–B05 is not in the sample, which is B06 only
+    "SCENE_DRAWN_TEXT_MISSING", // the closing scene's panel is not drawn yet, so nobody can say what text is on it (D-125)
     "SENTENCE_AHEAD_OF_REGION",
   ]);
   // «BELUM DIISI: …» left for the team: cat names (D-121), the reward (D-123), the story script (D-124).

@@ -80,7 +80,8 @@ function sceneSection(app) {
       scenes.map(async (scene) => {
         const lines = sceneLines(scene);
         const voices = [...new Set(lines.map(({ line }) => voicePath(scene, line, app.characters?.players?.[0]?.id)).filter(Boolean))];
-        const panels = scene.panels.map((p) => panelPath(scene, p));
+        // A page with several panels (D-125) is one file, counted once.
+        const panels = [...new Set(scene.panels.map((p) => panelPath(scene, p)))];
         const [panelSizes, voiceSizes] = await Promise.all([Promise.all(panels.map(size)), Promise.all(voices.map(size))]);
         const kb = (n) => Math.ceil(n / 1024);
         const total = [...panelSizes, ...voiceSizes].reduce((n, b) => n + (b ?? 0), 0);
@@ -89,7 +90,7 @@ function sceneSection(app) {
           "li",
           {},
           h("strong", {}, scene.id),
-          ` · ${lines.length} baris di ${scene.panels.length} panel · gambar panel ${panelSizes.filter((b) => b !== null).length} dari ${panels.length} ada · ` +
+          ` · ${lines.length} baris di ${scene.panels.length} panel · gambar halaman ${panelSizes.filter((b) => b !== null).length} dari ${panels.length} ada · ` +
             `suara ${voiceSizes.filter((b) => b !== null).length} dari ${voices.length} ada · total ${kb(total)} KB dari batas ${SCENE_MAX_KB} KB`,
           heavy.length ? h("p", { class: "notice notice--warning" }, `⚠ Melebihi ${VOICE_MAX_KB} KB: ${heavy.join(", ")}`) : null,
           kb(total) > SCENE_MAX_KB ? h("p", { class: "notice notice--warning" }, `⚠ Adegan ini melebihi ${SCENE_MAX_KB} KB; ponsel kelas bawah di jaringan pameran akan lambat.`) : null
@@ -111,7 +112,7 @@ function assetSection(app) {
       segment: app.mapLayout.worlds.flatMap((w) => w.segments),
       ...(app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {}),
       ...(app.layers ? catLayerIds(app.layers) : {}),
-      scenePanel: (app.content?.scenes ?? []).flatMap((scene) => scene.panels.map((panel) => `${scene.id}/${panel.image}`)),
+      scenePanel: [...new Set((app.content?.scenes ?? []).flatMap((scene) => scene.panels.map((panel) => `${scene.id}/${panel.image}`)))],
     };
     checkAssets(app.assets, ids).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;

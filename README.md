@@ -99,7 +99,7 @@ Tautan pratinjau Netlify bisa dibuka siapa saja yang tahu alamatnya, jadi matika
 - [ ] Tautan utama membuka layar sambutan di ponsel, lalu pemilihan karakter dan peta.
 - [ ] `https://nama-situs.netlify.app/build.json` menampilkan `buildId` berupa kode commit (deretan huruf dan angka),
       bukan `dev`. Tujuh karakter pertamanya sama dengan commit terakhir di GitHub.
-- [ ] **Pengaturan → Materi** menampilkan **Build:** dengan kode yang sama.
+- [ ] **Setelan → Materi** menampilkan **Build:** dengan kode yang sama.
 - [ ] `https://nama-situs.netlify.app/README.md` dan `…/DECISIONS.md` menampilkan **Page not found**.
 - [ ] Peta menampilkan karakter, ikon menu, dan potongan peta (atau kotak keterangan potongan yang belum digambar),
       bukan tanda ✗ berkas hilang.
@@ -214,7 +214,7 @@ js/screens/region.js        jendela bab: ringkasan, daftar quest, 復習
 js/screens/index.js         index: kanji dan kotoba yang sudah diperkenalkan
 js/screens/kana.js          panduan kana (data/kana.json)
 js/screens/about.js         sambutan pemain baru dan Tentang aplikasi, dengan disclaimer
-js/screens/menu.js          menu empat pintu di luar misi (Index, Kucing, Panduan kana, Pengaturan)
+js/screens/menu.js          menu lima pintu di luar misi (Index, Kucing, Cerita, Panduan kana, Setelan)
 js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
 js/screens/cats.js          koleksi kucing dan momen penyelamatan
@@ -412,15 +412,19 @@ Tab `cerita`: satu baris = satu adegan.
 | `title` | Judul adegan (kartu mulai dan menu Cerita) | `Kota yang sepi` |
 | `sentence_chapter` | *Wajib jika ada kolom `ja` yang terisi.* Bab tertinggi yang dibutuhkan kalimat Jepang adegan ini; `?` jika belum diperiksa (hanya boleh selama draf) | `3` |
 
-Tab `naskah`: satu baris = satu ucapan. Kolom panel (`panel_image`, `panel_note`, `figures`) cukup diisi di baris
-pertama setiap panel.
+Tab `naskah`: satu baris = satu ucapan. Kolom panel (`panel_image`, `panel_box`, `panel_text`, `panel_note`,
+`figures`) cukup diisi di baris pertama setiap panel. Baris yang `speaker` dan `text`-nya kosong adalah **panel tanpa
+ucapan**: tampil untuk satu ketukan, misalnya halaman utuh sebelum zoom ke panel-panelnya (D-125). Kolom `panel_box`
+dan `panel_text` datang belakangan; tab naskah lama tanpa kedua kolom itu tetap terbaca.
 
 | Kolom | Isi | Contoh |
 |---|---|---|
 | `scene_id` | Adegan baris ini (dari tab cerita) | `S-D1-pembuka` |
 | `panel_no` | Nomor panel (gambar) di dalam adegan: 1, 2, 3, … | `2` |
 | `line_no` | Nomor ucapan di dalam panel: 1, 2, 3, … | `1` |
-| `panel_image` | Nama berkas gambar panel tanpa `.jpg`; berkasnya `assets/cerita/<scene_id>/<panel_image>.jpg` | `02` |
+| `panel_image` | Nama berkas gambar halaman tanpa `.jpg`; berkasnya `assets/cerita/<scene_id>/<panel_image>.jpg`. Beberapa panel boleh memakai halaman yang sama | `05` |
+| `panel_box` | *Boleh kosong (= halaman utuh).* Kotak panel di halaman: `x y lebar tinggi` dalam **persen** halaman, dipisah spasi, diukur dari pojok kiri atas. Pemutar zoom ke kotak ini | `69 25 26.5 49.5` |
+| `panel_text` | **Transkrip teks yang tergambar** di halaman ini (balon, efek suara, tulisan tangan), persis seperti tergambar, dipisah ` / `; `-` jika tidak ada teks. Cukup sekali per halaman. Pemeriksa membaca transkrip ini, bukan gambarnya | `Imutnya… / meow~` |
 | `panel_note` | *Boleh kosong.* Deskripsi panel untuk ilustrator; tampil di kotak pengganti selama gambarnya belum ada | `Pemain dan tokoh lain di depan stasiun, sore hari` |
 | `figures` | *Daftar, boleh kosong.* Tokoh yang ditumpuk kode di atas panel: `pemain@kiri`, `<id tokoh>@kanan`; posisinya `kiri`, `tengah`, atau `kanan` | `pemain@kiri;lawan-bicara@kanan` |
 | `speaker` | `narator`, `pemain`, atau ID tokoh dari `data/characters.json` | `lawan-bicara` |
@@ -480,7 +484,15 @@ Untuk penulis naskah (D-124). Bahasa naskah **belum diputuskan tim**: `text` (su
 diisi atau dikosongkan.
 
 - **Satu baris naskah = satu ketukan pemain.** Pemain membaca satu baris, lalu mengetuk untuk lanjut. Pecah kalimat
-  panjang menjadi beberapa baris.
+  panjang menjadi beberapa baris. Panel tanpa ucapan juga satu ketukan.
+- **Halaman berpanel (D-125).** Satu gambar boleh berisi beberapa panel. Tulis satu panel naskah per kotak, dengan
+  `panel_image` yang sama dan kotaknya di `panel_box`; panel tanpa `panel_box` menampilkan halaman utuh. **Urutan baca
+  adalah urutan `panel_no`**, jadi baca dari kanan ke kiri atau dari kiri ke kanan ditentukan di naskah, bukan di kode.
+  Contohnya halaman `05` di `tools/templates/naskah.csv`: halaman utuh, lalu panel kanan, tengah, kiri.
+- **Teks di dalam gambar wajib ditranskripsi** di `panel_text`. Pemeriksa tidak bisa membaca gambar, jadi aturan D-79
+  diperiksa pada transkrip itu: kotoba yang belum diajarkan tidak boleh tergambar, sama seperti di subtitle. Subtitle
+  (`text`) memakai teks dari transkrip itu, misalnya `Imutnya…` di balon ditulis juga di `text` baris panel itu;
+  pemeriksa memperingatkan teks gambar yang tidak muncul di subtitle mana pun di halaman itu.
 - **Panjang maksimal:** subtitle `text` **120 karakter** (tiga baris di layar ponsel), kalimat Jepang `ja`
   **40 karakter** tanpa furigana. Lebih dari itu ditandai pemeriksa.
 - **Adegan yang ringkas:** pembuka ±2 menit (sekitar 8 panel dan 20 baris), penutup ±1,5 menit. Pemain bisa melewati
@@ -872,9 +884,9 @@ percakapan yang memuat kotoba quest ditampilkan sebagai pembanding, lalu pemain 
 disimpan, jadi quest yang dibuka lagi melanjutkan dari titik terakhir: putaran belajar meneruskan soal yang
 belum dijawab benar, dan putaran pemantapan meneruskan item yang belum dikuasai. Soal yang sedang terbuka
 tetapi belum dijawab ditanyakan lagi. Percakapan pengantar yang ditinggalkan sebelum selesai diulang dari awal.
-Menu (index, panduan kana, Pengaturan) tidak tersedia di dalam quest (D-69). **‹ Keluar** kembali ke jendela bab.
+Menu (index, panduan kana, Setelan) tidak tersedia di dalam quest (D-69). **‹ Keluar** kembali ke jendela bab.
 
-**Furigana.** Pengaturan → Furigana: **Selalu tampil** (bawaan), **Tampil setelah menjawab**, atau **Tidak
+**Furigana.** Setelan → Furigana: **Selalu tampil** (bawaan), **Tampil setelah menjawab**, atau **Tidak
 pernah**. Setelan disimpan per pemain, ikut kembali ke bawaan saat reset, tidak bisa diubah di tengah quest,
 dan dicatat di setiap baris log (`furiganaMode`). Di percakapan pengantar, "tampil setelah menjawab" berlaku
 seperti "selalu tampil", karena di sana tidak ada yang ditanyakan.
@@ -897,7 +909,7 @@ tidak menghalangi peserta yang sudah lebih jauh.
 
 Progres disimpan di `localStorage` dengan key `kanjiGame.progress.v2`. Key ini berbeda dari versi level di
 tag `v1-akhir` (`kanjiGame.progress.v1`), sehingga progres kedua versi tidak pernah tercampur. **Reset progres**
-(Pengaturan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, pilihan persetujuan, dan
+(Setelan) menghapus progres quest, membuat `playerId` baru, mengosongkan kode peserta, pilihan persetujuan, dan
 karakter, mengembalikan setelan furigana ke bawaan, dan mengakhiri mode penelitian (lihat [Mode sesi](#mode-sesi)). Pemain berikutnya mulai dari layar sambutan. **Riwayat jawaban tidak ikut terhapus**, karena itu data penelitian.
 
 Jika data progres rusak, aplikasi menyimpan salinannya di key `kanjiGame.progress.v2.corrupt.<waktu>`
@@ -909,12 +921,12 @@ dan memulai progres baru.
 ## Mode sesi
 
 Aplikasi berjalan dalam salah satu dari tiga mode (D-112). Mode yang aktif tertulis di bagian atas
-**Pengaturan → Mode sesi**, dan setiap baris log mencatatnya di kolom `sessionMode`. **Kolom inilah yang
+**Setelan → Mode sesi**, dan setiap baris log mencatatnya di kolom `sessionMode`. **Kolom inilah yang
 memisahkan data penelitian dari data lain**, bukan nomor versi aplikasi.
 
 | | Umum | Pameran | Penelitian |
 |---|---|---|---|
-| Cara masuk | Bawaan, siapa pun yang membuka alamat aplikasi | Pengaturan → **Mode pameran** (setelan perangkat) | **Tautan penelitian**: alamat aplikasi diakhiri `#/penelitian` |
+| Cara masuk | Bawaan, siapa pun yang membuka alamat aplikasi | Setelan → **Mode pameran** (setelan perangkat) | **Tautan penelitian**: alamat aplikasi diakhiri `#/penelitian` |
 | Layar persetujuan | Ya, sebelum quest pertama | **Dilewati** | Ya, **sebelum apa pun** |
 | Pencatatan | Hanya setelah setuju | **Mati sama sekali**: tidak ada baris yang ditulis maupun dikirim | Hanya setelah setuju **dan** kode peserta diisi |
 | Kode peserta | Opsional | Tidak dipakai | **Wajib** sebelum permainan dimulai; bisa diganti, tidak bisa dikosongkan |
@@ -951,7 +963,7 @@ tidak muncul):
 
 Layar ini muncul lagi setelah **Reset progres** (pemain berikutnya), dan ketika **versi teks persetujuan
 berubah**. Pilihan beserta waktunya disimpan, dan setiap baris log mencatat `consentStatus`, `consentVersion`,
-dan `consentAt`. Pemain dapat membuka layar ini lagi dari ⚙ Pengaturan → Persetujuan perekaman dan mengubah
+dan `consentAt`. Pemain dapat membuka layar ini lagi dari ⚙ Setelan → Persetujuan perekaman dan mengubah
 pilihannya; perubahan berlaku untuk jawaban berikutnya.
 
 > ⚠ **Teks persetujuan saat ini adalah PLACEHOLDER** dan belum boleh dipakai untuk peserta penelitian.
@@ -959,7 +971,7 @@ pilihannya; perubahan berlaku untuk jawaban berikutnya.
 
 **Pengaman teks placeholder.** Selama versi teks persetujuan diawali `placeholder` (saat ini `placeholder-0`),
 **pengiriman log ke server dimatikan paksa**, walaupun sudah diaktifkan di `js/config.js`. Jawaban tetap
-tersimpan di perangkat supaya pencatatan bisa diuji, dan Pengaturan menampilkan alasannya. Jawaban yang direkam
+tersimpan di perangkat supaya pencatatan bisa diuji, dan Setelan menampilkan alasannya. Jawaban yang direkam
 dengan persetujuan versi placeholder **tidak pernah dikirim**, termasuk setelah teks final dipasang; jawaban itu
 hanya ada di perangkat dan di file CSV ekspor. Tujuannya membuat mustahil, tanpa disengaja, merekam data
 penelitian atas dasar persetujuan yang redaksinya belum disetujui.
@@ -1002,7 +1014,7 @@ dan, jika pengiriman diaktifkan, dikirim ke Google Sheet milik tim.
 
 ### Peserta yang menarik persetujuan
 
-Jika peserta yang sudah setuju membuka layar persetujuan (⚙ Pengaturan → Persetujuan perekaman) lalu memilih
+Jika peserta yang sudah setuju membuka layar persetujuan (⚙ Setelan → Persetujuan perekaman) lalu memilih
 **Main tanpa merekam** (di mode penelitian: **Tidak setuju**), aplikasi menanyakan apa yang dilakukan dengan jawaban yang sudah terekam:
 
 - **Hapus juga data saya yang sudah terekam** — semua jawaban pemain itu dihapus dari perangkat, lalu aplikasi
@@ -1036,9 +1048,9 @@ setelah baris penarikan muncul.
    `playerId` yang sama, hapus barisnya, simpan ulang), termasuk salinan di laptop atau drive tim.
 6. Catat penghapusan di catatan penelitian: tanggal, `playerId`/kode peserta, dan jumlah baris yang dihapus.
 
-## Pengaturan
+## Setelan
 
-Dibuka dari menu **Pengaturan** di peta dan layar lain di luar quest.
+Dibuka dari menu **Setelan** di peta dan layar lain di luar quest.
 
 | Bagian | Isi |
 |---|---|
@@ -1056,7 +1068,7 @@ peringatan konten, masalah di `data/ui.json` dan `data/characters.json`, pemerik
 pratinjau, dan **pemeriksa aset** yang menandai setiap slot gambar: ✓ sudah diganti, ⚠ masih placeholder, ✗ berkas
 hilang, terlalu besar, atau rasionya salah.
 
-Peringatan kapasitas juga muncul di peta, supaya penjaga stan melihatnya tanpa membuka Pengaturan.
+Peringatan kapasitas juga muncul di peta, supaya penjaga stan melihatnya tanpa membuka Setelan.
 Persentasenya adalah **perkiraan**: browser tidak memberi tahu batas pastinya.
 
 ## Log jawaban
@@ -1088,7 +1100,7 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. Kosong untuk baris pengantar dan Produksi. |
 | `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. Baris pengantar: lama membaca percakapan. |
 | `introReplays` | Baris pengantar saja: berapa kali percakapan diulang. Baris adegan: 1 jika diputar ulang dari menu Cerita. |
-| *Baris adegan cerita* | `phase` = `event`, `questStep` = `scene`, `itemId` = `S:<scene_id>`, `prompt` = ID adegan, `answer` = `selesai` atau `dilewati`, `blankLine` = jumlah baris yang sempat tampil, `responseMs` = lama menonton (D-124). |
+| *Baris adegan cerita* | `phase` = `event`, `questStep` = `scene`, `itemId` = `S:<scene_id>`, `prompt` = ID adegan, `answer` = `selesai` atau `dilewati`, `blankLine` = jumlah langkah (ucapan dan panel tanpa ucapan) yang sempat tampil, `responseMs` = lama menonton (D-124, D-125). |
 | `selfAssessment`, `containsKanji` | Produksi saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji sasaran quest. |
 
 **Baris pengantar.** Satu baris ditulis saat pemain menekan **Mulai latihan** di akhir percakapan pengantar
@@ -1106,7 +1118,7 @@ Cara kerjanya: setiap jawaban disimpan di perangkat lebih dulu, lalu dikirim per
 ke Web App. Baris dianggap terkirim hanya jika server membalas `{"ok": true}`. Jika gagal (jaringan
 mati, server lambat), aplikasi tetap berjalan normal, baris tetap tersimpan, dan pengiriman dicoba lagi
 otomatis: 2 detik setelah jawaban berikutnya, saat jaringan kembali, dan setiap 60 detik. Status dan
-pesan galat terlihat di Pengaturan → Riwayat jawaban → Pengiriman ke server.
+pesan galat terlihat di Setelan → Riwayat jawaban → Pengiriman ke server.
 
 > ⚠ **Siapkan dan uji endpoint jauh sebelum sesi penelitian pertama, jangan di hari-H.** Skrip di bawah sudah
 > diuji dengan tiruan layanan Google, tetapi tim wajib mengujinya sendiri di akun Google yang akan
@@ -1246,12 +1258,12 @@ export const LOG_REMOTE_URL = "https://script.google.com/macros/s/XXXXXXXX/exec"
 ### 4. Uji dari perangkat
 
 1. Buka aplikasi dari Netlify, mainkan beberapa soal.
-2. Buka **Pengaturan**. Setelah beberapa detik harus tertulis **✓ Semua jawaban sudah terkirim.**
+2. Buka **Setelan**. Setelah beberapa detik harus tertulis **✓ Semua jawaban sudah terkirim.**
 3. Periksa sheet `log` di spreadsheet: baris baru muncul dengan kolom `receivedAt`.
 
 ### Jika pengiriman gagal
 
-| Pesan di Pengaturan | Penyebab paling mungkin |
+| Pesan di Setelan | Penyebab paling mungkin |
 |---|---|
 | Balasan server bukan JSON | Akses Web App bukan *Siapa saja*, atau URL bukan yang berakhiran `/exec`. |
 | Tidak bisa terhubung ke server | Jaringan mati, URL salah ketik, atau Web App belum di-deploy. |
@@ -1266,10 +1278,10 @@ aplikasi, sehingga orang lain secara teori bisa mengirim data sampah. Saring dat
 
 Dipakai jika pengiriman ke server tidak bisa diandalkan, misalnya jaringan di tempat sesi penelitian mati.
 
-1. Pengaturan → Riwayat jawaban → **Ekspor CSV**.
+1. Setelan → Riwayat jawaban → **Ekspor CSV**.
 2. File `kanji-bertahap-log-TAHUNBULANTANGGAL-JAMMENIT.csv` masuk ke folder Unduhan perangkat.
 3. File bisa dibuka langsung di Excel atau Google Sheets; huruf Jepang tampil benar.
-4. Ekspor tidak menghapus apa pun. Pengaturan mencatat kapan terakhir diekspor dan berapa jawaban baru
+4. Ekspor tidak menghapus apa pun. Setelan mencatat kapan terakhir diekspor dan berapa jawaban baru
    sejak itu.
 
 Nilai yang diawali `=`, `+`, `-`, atau `@` diberi tanda `'` di depannya supaya spreadsheet tidak
@@ -1287,17 +1299,17 @@ penelitian di perangkat lain (lihat [Prosedur uji coba penelitian](#prosedur-uji
 ### Seminggu sebelum pameran (koordinator data)
 
 1. Di setiap perangkat pameran, buka aplikasi dari tautan Netlify di **satu tab saja**.
-2. Jika perangkat pernah dipakai untuk bermain sebelumnya, buka **Pengaturan → Riwayat jawaban**. Jika masih ada
+2. Jika perangkat pernah dipakai untuk bermain sebelumnya, buka **Setelan → Riwayat jawaban**. Jika masih ada
    jawaban, **Ekspor CSV**, serahkan ke koordinator data, lalu **Hapus log…**. Log yang kosong memudahkan memeriksa
    bahwa pameran memang tidak merekam apa pun.
-3. Di setiap perangkat: **Pengaturan → Mode pameran** → nyalakan **Mode pameran di perangkat ini**.
+3. Di setiap perangkat: **Setelan → Mode pameran** → nyalakan **Mode pameran di perangkat ini**.
    Setelan ini milik perangkat dan tidak hilang saat reset progres.
-4. Periksa bagian atas Pengaturan: **Mode saat ini: Pameran**.
+4. Periksa bagian atas Setelan: **Mode saat ini: Pameran**.
 5. Catat nomor telepon koordinator data untuk ditanya jika ada masalah.
 
 ### Pagi hari sebelum stan dibuka
 
-1. Nyalakan perangkat dan buka aplikasi → **Pengaturan** (menu di bawah layar).
+1. Nyalakan perangkat dan buka aplikasi → **Setelan** (menu di bawah layar).
 2. Pastikan tertulis **Mode saat ini: Pameran**. Jika tertulis Umum, nyalakan lagi sakelar **Mode pameran**. Jika
    tertulis **Penelitian** (ada penanda kuning "Mode penelitian" di atas layar), perangkat ini sedang dipakai untuk
    uji coba penelitian: tekan **Reset progres**, lalu nyalakan mode pameran.
@@ -1307,7 +1319,7 @@ penelitian di perangkat lain (lihat [Prosedur uji coba penelitian](#prosedur-uji
 
 ### Setiap kali pengunjung berganti
 
-1. Pengaturan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus. Jika Pengaturan
+1. Setelan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus. Jika Setelan
    memperingatkan **hadiah yang belum ditukar**, tanyakan dulu kepada pengunjung apakah ingin menukarnya; reset
    menghapusnya.
 2. Tekan **‹ Peta**. Layar **sambutan** muncul (berisi penafian materi); serahkan perangkat ke pengunjung.
@@ -1330,7 +1342,7 @@ Artinya aplikasi terbuka dua kali di perangkat yang sama, dan progres bisa salin
 ### Akhir hari
 
 1. Papan peringkat boleh dibiarkan (berlanjut besok) atau dikosongkan besok pagi (langkah pagi nomor 3).
-2. Pemeriksaan singkat: **Pengaturan → Riwayat jawaban** menunjukkan jumlah jawaban yang **sama** dengan pagi tadi
+2. Pemeriksaan singkat: **Setelan → Riwayat jawaban** menunjukkan jumlah jawaban yang **sama** dengan pagi tadi
    (nol jika log sudah dikosongkan sebelum pameran). Jika bertambah, ada perangkat yang tidak dalam mode pameran;
    beri tahu koordinator data.
 3. Setelah pameran selesai, **matikan mode pameran** dan kosongkan papannya di setiap perangkat. Perangkat yang
@@ -1356,8 +1368,8 @@ Sesi penelitian (kelas, sesi peserta) memakai **tautan penelitian**, bukan alama
    dan jawabannya tidak direkam.
 3. Peserta mengisi **kode peserta** miliknya. Permainan baru bisa dimulai setelah kode diisi.
 4. Periksa penanda kuning di atas layar: **● Mode penelitian · K4-01** dengan kode yang benar. Jika kodenya
-   salah, ganti di **Pengaturan → Kode peserta**.
-5. Setelah sesi, periksa **Pengaturan → Riwayat jawaban**: **✓ Semua jawaban sudah terkirim**. Jika gagal terkirim,
+   salah, ganti di **Setelan → Kode peserta**.
+5. Setelah sesi, periksa **Setelan → Riwayat jawaban**: **✓ Semua jawaban sudah terkirim**. Jika gagal terkirim,
    **Ekspor CSV** sebagai cadangan.
 
 Perangkat yang dipakai bergantian: setelah satu peserta selesai dan jawabannya terkirim, **Reset progres**, lalu
@@ -1365,9 +1377,9 @@ buka tautan penelitian lagi untuk peserta berikutnya.
 
 ### Jika muncul peringatan kapasitas
 
-Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di peta dan di Pengaturan.
+Peringatan kuning "Penyimpanan perangkat hampir penuh" muncul di peta dan di Setelan.
 
-1. Buka Pengaturan → Riwayat jawaban.
+1. Buka Setelan → Riwayat jawaban.
 2. Pastikan tertulis **✓ Semua jawaban sudah terkirim**. Jika belum, tekan **Kirim sekarang** dan tunggu.
 3. Tekan **Ekspor CSV** dan simpan filenya (kirim ke koordinator data atau salin ke laptop).
 4. Periksa bahwa file CSV bisa dibuka.
@@ -1441,9 +1453,9 @@ berdampingan). Sampel dan streak-nya disimpan di entri 復習 sendiri, sehingga 
 item yang sama, dan salah menjawab di 復習 tidak mengubah penguasaan di quest asalnya. Di log: `levelId` =
 `REV-B06`, `isReview` = 1, `questStep` = `review`, dan `questId` = quest asal item.
 
-**Menu lima pintu**: **Index**, **Kucing**, **Cerita**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah
+**Menu lima pintu**: **Index**, **Kucing**, **Cerita**, **Panduan kana**, **Setelan**, sebagai **bilah di bawah
 layar**, sama persis di semua mode sesi. Ada di peta, index, koleksi kucing, daftar cerita, panduan kana, papan
-peringkat, dan Pengaturan; **tidak ada** di dalam misi, 復習, dan pemutar adegan (D-69). Ikonnya slot aset (lihat
+peringkat, dan Setelan; **tidak ada** di dalam misi, 復習, dan pemutar adegan (D-69). Ikonnya slot aset (lihat
 [`ASSETS.md`](ASSETS.md)).
 
 **Adegan cerita** (D-124). Adegan **pembuka** sebuah dunia diputar sekali, sebelum peta dunia itu pertama kali tampil
@@ -1486,7 +1498,7 @@ materi bertambah atau tonggaknya diubah kemudian.
   mengetik `DITUKAR`. Setelah itu hadiah itu tidak bisa ditukar lagi di perangkat tersebut.
 - **Ini sistem kepercayaan, bukan pengaman.** Situs statis tidak bisa menyimpan kode rahasia; reset progres, browser
   lain, atau ponsel lain bisa meraih hadiah yang sama lagi. Tanda "sudah ditukar" hanya ada di perangkat itu.
-- **Reset progres menghapus hadiah yang belum ditukar.** Pengaturan memperingatkannya dengan jelas sebelum reset.
+- **Reset progres menghapus hadiah yang belum ditukar.** Setelan memperingatkannya dengan jelas sebelum reset.
 - **Di mode penelitian, hadiah tidak ada sama sekali:** tidak tampil, tidak disebut, tidak diraih. `#/hadiah` menjawab
   "Halaman tidak ditemukan". Insentif mengubah perilaku peserta, sama alasannya dengan papan peringkat (D-106). Di mode
   umum dan pameran hadiah berjalan normal.
@@ -1501,7 +1513,7 @@ dan sejenisnya tidak menambah apa pun, supaya pemain tidak terdorong menebak cep
 XP tidak bisa melenceng dan tidak bisa ditimbun dengan mengulang quest. **Level tidak mengunci apa pun**: wilayah
 tetap hanya terbuka lewat penyelesaian bab dan 復習.
 
-**Papan peringkat — mode pameran** (D-106). Hanya ada di mode pameran, yang dinyalakan petugas di **Pengaturan →
+**Papan peringkat — mode pameran** (D-106). Hanya ada di mode pameran, yang dinyalakan petugas di **Setelan →
 Mode pameran**; tidak pernah di mode umum atau mode penelitian (D-112).
 Isinya pemain-pemain yang pernah bermain **di perangkat ini**, diurutkan menurut XP, masing-masing dengan potret
 karakter pilihannya dan nomor urut ("Pemain 07"), tanpa nama, tanpa kode peserta, dan tanpa teks ketikan. Tidak
@@ -1538,7 +1550,7 @@ tombol untuk beralih antara hiragana dan katakana. Hanya rujukan: tidak dicatat 
 
 **Sambutan dan disclaimer.** Pemain baru (termasuk setelah reset) pertama kali melihat layar sambutan dengan
 disclaimer: materi mengikuti cakupan buku dan bab **yang ada di materi**, dihitung otomatis per dunia (misalnya
-"みんなの日本語初級I bab 1–5"), dan semua kalimat serta percakapan ditulis tim pengembang. Disclaimer yang sama ada di **Tentang aplikasi** (tautan di bawah peta dan di Pengaturan). Judul buku
+"みんなの日本語初級I bab 1–5"), dan semua kalimat serta percakapan ditulis tim pengembang. Disclaimer yang sama ada di **Tentang aplikasi** (tautan di bawah peta dan di Setelan). Judul buku
 diambil dari `data/ui.json` (`bookTitle` untuk 初級I, `bookTitle2` untuk 初級II).
 
 **Label antarmuka berbahasa Jepang** (復習, dan kelak 画数, 熟語, dan lainnya) ada di `data/ui.json`, ditulis
@@ -1647,7 +1659,7 @@ belum di akun Google yang sebenarnya. Masalah izin atau akses hanya muncul di ak
 1. Ikuti [Pengiriman log ke Google Apps Script](#pengiriman-log-ke-google-apps-script) langkah 1–4.
 2. Periksa:
    - [ ] Membuka URL `/exec` di browser menampilkan `{"ok":true,...}`.
-   - [ ] Setelah bermain beberapa soal, Pengaturan menampilkan **✓ Semua jawaban sudah terkirim**.
+   - [ ] Setelah bermain beberapa soal, Setelan menampilkan **✓ Semua jawaban sudah terkirim**.
    - [ ] Sheet `log` berisi baris baru; huruf Jepang tampil benar.
    - [ ] Matikan Wi-Fi, jawab beberapa soal, nyalakan lagi: dalam 1 menit semua terkirim, dan tidak ada
          baris ganda di sheet (periksa kolom `rowId`).
@@ -1659,7 +1671,7 @@ belum di akun Google yang sebenarnya. Masalah izin atau akses hanya muncul di ak
 Android dan komputer, dan belum pernah dicoba.
 
 1. Di iPhone, buka aplikasi di Safari, mainkan beberapa soal.
-2. ⚙ Pengaturan → **Ekspor CSV**. Jika Safari bertanya, pilih **Unduh**.
+2. ⚙ Setelan → **Ekspor CSV**. Jika Safari bertanya, pilih **Unduh**.
 3. Periksa:
    - [ ] File muncul di aplikasi **File** → **Unduhan**.
    - [ ] File bisa dibuka (Numbers atau Google Sheets) dan huruf Jepang tampil benar.
@@ -1700,7 +1712,7 @@ Dijalankan oleh koordinator data dan penjaga stan.
 - [ ] Aset dari tim sudah diganti dan halaman pemeriksaan aset tidak menunjukkan ✗ (potongan peta, ikon lokasi,
       ikon menu, karakter); nama tokoh lawan bicara di `data/characters.json` sudah diisi tim.
 - [ ] Log lama di setiap perangkat stan sudah diekspor dan dihapus, sehingga **Riwayat jawaban** menunjukkan 0.
-- [ ] **Mode pameran** sudah dinyalakan di setiap perangkat stan, Pengaturan menampilkan **Mode saat ini: Pameran**,
+- [ ] **Mode pameran** sudah dinyalakan di setiap perangkat stan, Setelan menampilkan **Mode saat ini: Pameran**,
       dan papan peringkat dari uji coba sudah dikosongkan.
 - [ ] Setiap perangkat stan sudah dicoba: aplikasi terbuka dari tautan Netlify di **satu tab**, tidak ada layar
       persetujuan, satu quest dimainkan sampai tuntas, pemain muncul di papan peringkat, dan **Riwayat jawaban
@@ -1727,7 +1739,7 @@ manual. Jangan menjanjikan atau menyebut hadiah kepada peserta.
       `buildId` yang terkunci dicatat di catatan penelitian (lihat `https://nama-situs.netlify.app/build.json`).
 - [ ] **Tautan penelitian** (alamat Netlify + `#/penelitian`) sudah dibuat dan diuji di ponsel: tautan membuka
       layar persetujuan, penanda **● Mode penelitian** tampil, permainan tidak bisa dimulai sebelum kode peserta
-      diisi, dan Pengaturan menampilkan **Mode saat ini: Penelitian** tanpa sakelar mode pameran.
+      diisi, dan Setelan menampilkan **Mode saat ini: Penelitian** tanpa sakelar mode pameran.
 - [ ] **Daftar kode peserta** anonim (`K4-01`, `K4-02`, …) sudah disiapkan, dan pasangan kode ↔ nama **disimpan
       terpisah** dari aplikasi dan dari spreadsheet log.
 - [ ] **Teks persetujuan final** sudah dipasang: `data/consent.json` berisi redaksi yang disetujui dosen

@@ -62,7 +62,7 @@ const STROKES_PATH = /^[A-Za-z0-9_./-]+\.(svg|png|webp)$/;
 
 const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba", "rewards", "scenes"];
 const SCENE_KEYS = ["id", "trigger", "world", "title", "sentenceChapter", "panels"];
-const PANEL_KEYS = ["image", "note", "figures", "lines"];
+const PANEL_KEYS = ["image", "box", "drawnText", "note", "figures", "lines"];
 const SCENE_LINE_KEYS = ["speaker", "text", "ja", "audio"];
 const SCENE_TRIGGER_LIST = ["world-opening", "world-closing"];
 const SCENE_NARRATOR = "narrator";
@@ -1516,9 +1516,12 @@ function checkScenes(data, kotoba, root, report) {
     const texts = [{ value: scene.title, ctx: sctx.field("title"), plain: scene.title }];
     let hasJa = false;
     if (!Array.isArray(scene.panels) || !scene.panels.length) {
-      report.error(sctx.field("panels"), "NO_SCENE_PANELS", "Adegan harus punya minimal satu panel dengan minimal satu baris.");
+      report.error(sctx.field("panels"), "NO_SCENE_PANELS", "Adegan harus punya minimal satu panel.");
       return;
     }
+    // Text drawn in each image (D-125): the validator cannot read pictures, so the
+    // team's transcript is what is checked, and the subtitles are taken from it.
+    const pages = new Map(); // image → { ctx, transcripts: [], subtitles: [] }
     scene.panels.forEach((panel, p) => {
       const pctx = sctx.child(`panels[${p}]`, `panel ${p + 1}`);
       if (!isPlainObject(panel)) {
@@ -1529,14 +1532,28 @@ function checkScenes(data, kotoba, root, report) {
       const image = requireString(panel, "image", pctx, report);
       if (image !== undefined && !FILE_ID.test(image)) report.error(pctx.field("image"), "INVALID_SCENE_FILE", `Nama berkas gambar panel tanpa .jpg: huruf latin, angka, "-", "_". Ditemukan "${image}".`);
       optionalString(panel, "note", pctx, report);
+      if (panel.box !== undefined && panel.box !== null) {
+        const b = panel.box;
+        const ok = isPlainObject(b) && ["x", "y", "w", "h"].every((k) => typeof b[k] === "number" && Number.isFinite(b[k])) &&
+          b.x >= 0 && b.y >= 0 && b.w > 0 && b.h > 0 && b.x + b.w <= 100.5 && b.y + b.h <= 100.5;
+        if (!ok) report.error(pctx.field("box"), "INVALID_SCENE_BOX", `Kotak panel ditulis x, y, lebar, tinggi dalam persen halaman, dan harus di dalam gambar (x + lebar dan y + tinggi paling besar 100). Ditemukan ${show(b)}.`);
+      }
+      const page = image === undefined ? null : pages.get(image) ?? pages.set(image, { ctx: pctx, transcripts: [], subtitles: [] }).get(image);
+      if (panel.drawnText !== undefined && panel.drawnText !== null) {
+        const drawn = optionalString(panel, "drawnText", pctx, report);
+        if (typeof drawn === "string") {
+          page?.transcripts.push({ value: drawn, ctx: pctx.field("drawnText") });
+          if (drawn) texts.push({ value: drawn, ctx: pctx.field("drawnText"), plain: drawn });
+        }
+      }
       for (const [f, figure] of (Array.isArray(panel.figures) ? panel.figures : []).entries()) {
         const fctx = pctx.child(`figures[${f}]`, `tokoh ${f + 1}`);
         if (!isPlainObject(figure) || typeof figure.who !== "string" || !["kiri", "tengah", "kanan"].includes(figure.at)) {
           report.error(fctx, "INVALID_SCENE_FIGURE", 'Tokoh di panel ditulis "pemain@kiri" atau "<id tokoh>@kanan"; posisinya kiri, tengah, atau kanan.');
         }
       }
-      if (!Array.isArray(panel.lines) || !panel.lines.length) {
-        report.error(pctx.field("lines"), "NO_SCENE_LINES", "Setiap panel harus punya minimal satu baris.");
+      if (!Array.isArray(panel.lines)) {
+        report.error(pctx.field("lines"), "EXPECTED_ARRAY", "Baris panel harus berupa daftar [...]; panel tanpa baris ditulis [].");
         return;
       }
       panel.lines.forEach((line, l) => {
@@ -1552,6 +1569,7 @@ function checkScenes(data, kotoba, root, report) {
         }
         const text = requireString(line, "text", lctx, report);
         if (text !== undefined) texts.push({ value: text, ctx: lctx.field("text"), plain: text });
+        if (text !== undefined) page?.subtitles.push(text);
         if (text !== undefined && text.length > SCENE_TEXT_MAX) {
           report.warn(lctx.field("text"), "SCENE_LINE_TOO_LONG", `Subtitle ${text.length} karakter; di ponsel paling banyak ${SCENE_TEXT_MAX} karakter (tiga baris). Pecah menjadi dua baris naskah.`);
         }
@@ -1581,6 +1599,29 @@ function checkScenes(data, kotoba, root, report) {
         }
       });
     });
+
+    if (!scene.panels.some((panel) => isPlainObject(panel) && Array.isArray(panel.lines) && panel.lines.length)) {
+      report.error(sctx.field("panels"), "NO_SCENE_LINES", "Adegan harus punya minimal satu baris naskah.");
+    }
+    for (const [image, page] of pages) {
+      if (!page.transcripts.length) {
+        report.incomplete(
+          page.ctx.field("drawnText"),
+          "SCENE_DRAWN_TEXT_MISSING",
+          `Transkrip teks yang tergambar di gambar ${image} belum ada (kolom panel_text). Tulis setiap teks di gambar persis seperti tergambar, ` +
+            'dipisah " / ", atau "-" jika tidak ada teks. Validator tidak bisa membaca gambar, jadi transkrip inilah yang diperiksa (D-79, D-125).'
+        );
+        continue;
+      }
+      const subtitles = page.subtitles.join("\n").toLowerCase();
+      for (const t of page.transcripts) {
+        if (PLACEHOLDER_TEST.test(t.value)) continue;
+        const missing = splitDrawn(t.value).filter((piece) => !subtitles.includes(piece.toLowerCase()));
+        if (missing.length) {
+          report.warn(t.ctx, "SCENE_DRAWN_TEXT_NOT_SUBTITLED", `Teks di gambar ${image} tidak muncul di subtitle: ${missing.map((m) => `"${m}"`).join(", ")}. Subtitle memakai teks dari transkrip (D-125).`);
+        }
+      }
+    }
 
     // Japanese above the player's chapter.
     if (hasJa) {
@@ -1625,6 +1666,10 @@ function checkScenes(data, kotoba, root, report) {
     }
   });
 }
+
+/** "Imutnya… / meow~" → ["Imutnya…", "meow~"] */
+const splitDrawn = (value) => value.split(" / ").map((p) => p.trim()).filter(Boolean);
+const PLACEHOLDER_TEST = /«[^»]*»/;
 
 function checkPlaceholders(data, root, report) {
   const walk = (value, path) => {

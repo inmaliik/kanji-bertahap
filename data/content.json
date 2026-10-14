@@ -242,66 +242,177 @@
       "panels": [
         {
           "image": "01",
-          "note": "«BELUM DIISI: deskripsi panel 1 untuk ilustrator»",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 01 (atau - jika tidak ada)»",
+          "note": "",
           "figures": [],
           "lines": [
             {
               "speaker": "narrator",
-              "text": "«BELUM DIISI: narasi pembuka»",
+              "text": "«BELUM DIISI: teks panel 1»",
               "ja": null,
               "audio": "01-1"
-            },
-            {
-              "speaker": "narrator",
-              "text": "«BELUM DIISI: narasi lanjutan»",
-              "ja": null,
-              "audio": "01-2"
             }
           ]
         },
         {
           "image": "02",
-          "note": "«BELUM DIISI: deskripsi panel 2 untuk ilustrator»",
-          "figures": [
-            {
-              "who": "player",
-              "at": "kiri"
-            },
-            {
-              "who": "lawan-bicara",
-              "at": "kanan"
-            }
-          ],
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 02 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
           "lines": [
             {
-              "speaker": "lawan-bicara",
-              "text": "«BELUM DIISI: ucapan tokoh lawan bicara»",
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 2»",
               "ja": null,
               "audio": "02-1"
-            },
-            {
-              "speaker": "player",
-              "text": "«BELUM DIISI: ucapan pemain (tanpa suara)»",
-              "ja": null,
-              "audio": null
             }
           ]
         },
         {
           "image": "03",
-          "note": "«BELUM DIISI: deskripsi panel 3 untuk ilustrator»",
-          "figures": [
-            {
-              "who": "player",
-              "at": "tengah"
-            }
-          ],
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 03 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
           "lines": [
             {
               "speaker": "narrator",
-              "text": "«BELUM DIISI: narasi penutup adegan»",
+              "text": "«BELUM DIISI: teks panel 3»",
               "ja": null,
               "audio": "03-1"
+            }
+          ]
+        },
+        {
+          "image": "04",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 04 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 4»",
+              "ja": null,
+              "audio": "04-1"
+            }
+          ]
+        },
+        {
+          "image": "05",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 05 (atau - jika tidak ada)»",
+          "note": "Halaman utuh dulu (tanpa baris)",
+          "figures": [],
+          "lines": []
+        },
+        {
+          "image": "05",
+          "box": {
+            "x": 69,
+            "y": 25,
+            "w": 26.5,
+            "h": 49.5
+          },
+          "note": "Panel kanan halaman 05",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel kanan halaman 05»",
+              "ja": null,
+              "audio": "06-1"
+            }
+          ]
+        },
+        {
+          "image": "05",
+          "box": {
+            "x": 23,
+            "y": 25,
+            "w": 47,
+            "h": 49.5
+          },
+          "note": "Panel tengah halaman 05",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel tengah halaman 05»",
+              "ja": null,
+              "audio": "07-1"
+            }
+          ]
+        },
+        {
+          "image": "05",
+          "box": {
+            "x": 3.5,
+            "y": 25,
+            "w": 38,
+            "h": 49.5
+          },
+          "note": "Panel kiri halaman 05",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel kiri halaman 05»",
+              "ja": null,
+              "audio": "08-1"
+            }
+          ]
+        },
+        {
+          "image": "06",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 06 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 9»",
+              "ja": null,
+              "audio": "09-1"
+            }
+          ]
+        },
+        {
+          "image": "07",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 07 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 10»",
+              "ja": null,
+              "audio": "10-1"
+            }
+          ]
+        },
+        {
+          "image": "08",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 08 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 11»",
+              "ja": null,
+              "audio": "11-1"
+            }
+          ]
+        },
+        {
+          "image": "09",
+          "drawnText": "«BELUM DIISI: transkrip teks yang tergambar di halaman 09 (atau - jika tidak ada)»",
+          "note": "",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: teks panel 12»",
+              "ja": null,
+              "audio": "12-1"
             }
           ]
         }

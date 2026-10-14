@@ -23,6 +23,7 @@ const { convertCsvFilesToContent } = await import(jsModule("csv-content.js"));
 const codes = (issues) => issues.map((i) => i.code);
 const sample = () => clone(loadSampleContent());
 const opening = () => sample().scenes.find((s) => s.trigger === "world-opening");
+const closing = () => sample().scenes.find((s) => s.trigger === "world-closing");
 
 beforeEach(() => {
   logger.clearLog();
@@ -48,9 +49,8 @@ test("the opening scene plays once, before the first map; the closing one only w
 
 test("voice files: the player's lines have none, unless the name holds {karakter}", () => {
   const scene = opening();
-  const lines = SC.sceneLines(scene);
-  const narrator = lines[0].line;
-  const player = lines.find(({ line }) => line.speaker === "player").line;
+  const narrator = SC.sceneLines(scene)[0].line;
+  const player = SC.sceneLines(closing()).find(({ line }) => line.speaker === "player").line;
   assert.equal(SC.voicePath(scene, narrator, "hana"), "assets/suara/S-D1-pembuka/01-1.mp3");
   assert.equal(SC.voicePath(scene, { ...player, audio: "02-2" }, "hana"), null, "a single recording cannot fit every player character");
   assert.equal(SC.voicePath(scene, { ...player, audio: "02-2-{karakter}" }, "kazu"), "assets/suara/S-D1-pembuka/02-2-kazu.mp3");
@@ -119,14 +119,14 @@ test("the validator: D-79 by the moment a scene plays, Japanese above the player
   assert.ok(codes(validateContent(ja).warnings).includes("SCENE_JA_ABOVE_LEVEL"), "the opening plays before chapter 1");
 
   const voiced = sample();
-  voiced.scenes[0].panels[1].lines[1].audio = "02-2";
+  voiced.scenes[1].panels[0].lines[1].audio = "02-2";
   assert.ok(codes(validateContent(voiced).warnings).includes("PLAYER_LINE_VOICED"));
-  voiced.scenes[0].panels[1].lines[1].audio = "02-2-{karakter}";
+  voiced.scenes[1].panels[0].lines[1].audio = "02-2-{karakter}";
   assert.ok(!codes(validateContent(voiced).warnings).includes("PLAYER_LINE_VOICED"));
 
   const long = sample();
   long.scenes[0].panels[0].lines[0].text = "a".repeat(121);
-  long.scenes[0].panels[0].lines[1].ja = "あ".repeat(41);
+  long.scenes[0].panels[1].lines[0].ja = "あ".repeat(41);
   long.scenes[0].sentenceChapter = 1;
   assert.equal(codes(validateContent(long).warnings).filter((c) => c === "SCENE_LINE_TOO_LONG").length, 2, "120 characters of subtitle, 40 of Japanese");
 
@@ -137,7 +137,7 @@ test("the validator: D-79 by the moment a scene plays, Japanese above the player
   bad.scenes[0].trigger = "region-opening";
   assert.ok(codes(validateContent(bad).errors).includes("INVALID_SCENE_TRIGGER"), "only the triggers the code knows");
   const figure = sample();
-  figure.scenes[0].panels[1].figures[0].at = "atas";
+  figure.scenes[1].panels[0].figures[0].at = "atas";
   assert.ok(codes(validateContent(figure).errors).includes("INVALID_SCENE_FIGURE"));
 });
 
@@ -156,12 +156,82 @@ test("the cerita and naskah tabs: optional together, lines grouped by panel and 
   const shuffled = { ...naskah, text: `${[lines[0], ...lines.slice(1).reverse()].join("\n")}\n` };
   const both = convertCsvFilesToContent([...base, read("cerita.csv"), shuffled], "draft-0");
   assert.equal(both.problems.length, 0);
-  const scene = both.content.scenes[0];
-  assert.deepEqual(scene.panels.map((p) => p.image), ["01", "02", "03"], "panels by panel_no, whatever the row order");
-  assert.deepEqual(scene.panels[1].figures, [{ who: "player", at: "kiri" }, { who: "lawan-bicara", at: "kanan" }]);
-  assert.deepEqual(scene.panels[1].lines.map((l) => l.speaker), ["lawan-bicara", "player"]);
+  const [scene, end] = both.content.scenes;
+  assert.deepEqual(scene.panels.map((p) => p.image), ["01", "02", "03", "04", "05", "05", "05", "05", "06", "07", "08", "09"], "panels by panel_no, whatever the row order");
   assert.equal(scene.panels[0].lines[0].speaker, "narrator");
+  assert.deepEqual(end.panels[0].figures, [{ who: "player", at: "kiri" }, { who: "lawan-bicara", at: "kanan" }]);
+  assert.deepEqual(end.panels[0].lines.map((l) => l.speaker), ["lawan-bicara", "player"]);
 
   const orphan = { ...naskah, text: `${naskah.text}S-tidak-ada,1,1,01,,,narator,teks,,\n` };
   assert.ok(convertCsvFilesToContent([...base, read("cerita.csv"), orphan], "draft-0").problems.some((p) => p.message.includes("S-tidak-ada")));
+});
+
+test("pages with several panels (D-125): the box, a panel without lines, one tap per step", () => {
+  const scene = opening();
+  const page = scene.panels.filter((p) => p.image === "05");
+  assert.deepEqual(page.map((p) => p.box ?? null), [null, { x: 69, y: 25, w: 26.5, h: 49.5 }, { x: 23, y: 25, w: 47, h: 49.5 }, { x: 3.5, y: 25, w: 38, h: 49.5 }], "whole page, then right to left as the data says");
+  assert.deepEqual(page[0].lines, [], "the whole page has no line");
+  const steps = SC.sceneSteps(scene);
+  assert.equal(steps.length, SC.sceneLines(scene).length + 1, "a panel without lines is one step");
+  assert.equal(steps[4].line, null);
+  assert.equal(steps[4].panel.image, "05");
+  assert.deepEqual(SC.panelBox(page[0]), SC.WHOLE_PAGE);
+
+  // The whole 4:3 page in a 300 × 400 frame: frame-wide, centred top to bottom.
+  const whole = SC.fitBox({ frameWidth: 300, frameHeight: 400, ratio: 4 / 3 });
+  assert.equal(whole.scale, 1);
+  assert.equal(whole.x, 0);
+  assert.equal(whole.y, (400 - 225) / 2);
+  // A box fills the frame on one side and is centred on the other.
+  const box = { x: 70, y: 25, w: 25, h: 50 };
+  const fit = SC.fitBox({ frameWidth: 300, frameHeight: 400, ratio: 4 / 3, box });
+  const left = fit.x + fit.scale * 300 * 0.7;
+  const top = fit.y + fit.scale * 225 * 0.25;
+  const width = fit.scale * 300 * 0.25;
+  const height = fit.scale * 225 * 0.5;
+  assert.ok(Math.abs(width - 300) < 1e-9 || Math.abs(height - 400) < 1e-9, "one side fills the frame");
+  assert.ok(width <= 300 + 1e-9 && height <= 400 + 1e-9, "the box stays whole");
+  assert.ok(Math.abs(left + width / 2 - 150) < 1e-9 && Math.abs(top + height / 2 - 200) < 1e-9, "centred");
+});
+
+test("drawn text (D-125): the transcript is checked like the script, and the subtitles carry it", () => {
+  const ok = validateContent(sample());
+  assert.deepEqual(ok.errors, []);
+  assert.ok(codes(ok.warnings).includes("SCENE_DRAWN_TEXT_MISSING"), "the closing panel has no transcript yet");
+
+  const leak = sample();
+  leak.scenes[0].panels[1].drawnText = "食べます!";
+  assert.ok(validateContent(leak).errors.some((e) => e.code === "SCENE_LEAKS_KOTOBA" && e.path === "scenes[0].panels[1].drawnText"), "kotoba drawn in the picture is a leak too (D-79)");
+
+  const subtitled = sample();
+  subtitled.scenes[0].panels[1].drawnText = "Imutnya… / meow~";
+  subtitled.scenes[0].panels[1].lines[0].text = "Imutnya…";
+  const missing = validateContent(subtitled).warnings.filter((w) => w.code === "SCENE_DRAWN_TEXT_NOT_SUBTITLED");
+  assert.equal(missing.length, 1);
+  assert.match(missing[0].message, /"meow~"/);
+  subtitled.scenes[0].panels[1].lines[0].text = "Imutnya… (meow~)";
+  assert.ok(!codes(validateContent(subtitled).warnings).includes("SCENE_DRAWN_TEXT_NOT_SUBTITLED"));
+  subtitled.scenes[0].panels[1].drawnText = "";
+  assert.ok(!validateContent(subtitled).warnings.some((w) => w.path.startsWith("scenes[0].panels[1]") && w.code.startsWith("SCENE_DRAWN_TEXT")), '"-" (nothing drawn as text) counts as a transcript');
+  delete subtitled.scenes[0].panels[1].drawnText;
+  assert.ok(validateContent(subtitled).warnings.some((w) => w.path === "scenes[0].panels[1].drawnText" && w.code === "SCENE_DRAWN_TEXT_MISSING"));
+
+  const box = sample();
+  box.scenes[0].panels[5].box = { x: 80, y: 25, w: 30, h: 50 };
+  assert.ok(codes(validateContent(box).errors).includes("INVALID_SCENE_BOX"), "a box outside the page");
+  const silent = sample();
+  for (const panel of silent.scenes[0].panels) panel.lines = [];
+  assert.ok(codes(validateContent(silent).errors).includes("NO_SCENE_LINES"), "a scene needs at least one line");
+});
+
+test("the panel_box column: four numbers in percent, or a problem", () => {
+  const read = (name) => ({ name, text: readFileSync(join(ROOT, "tools/templates", name), "utf8") });
+  const base = ["wilayah.csv", "kanji.csv", "kotoba.csv", "quest.csv", "percakapan.csv", "cerita.csv"].map(read);
+  const naskah = read("naskah.csv");
+  const bad = { ...naskah, text: naskah.text.replace("69 25 26.5 49.5", "kanan") };
+  assert.ok(convertCsvFilesToContent([...base, bad], "draft-0").problems.some((p) => p.message.includes("panel_box")));
+  const old = { ...naskah, text: naskah.text.split("\n").map((l) => l.split(",").filter((_, i) => i !== 4 && i !== 5).join(",")).join("\n") };
+  const converted = convertCsvFilesToContent([...base, old], "draft-0");
+  assert.equal(converted.problems.length, 0, "a naskah tab from before D-125 still converts");
+  assert.equal(converted.content.scenes[0].panels.some((p) => "box" in p || "drawnText" in p), false);
 });

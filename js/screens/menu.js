@@ -10,8 +10,8 @@ const DOORS = [
   { key: "cats", href: "#/kucing", label: "Kucing", asset: "menu-kucing" },
   { key: "story", href: "#/cerita", label: "Cerita", asset: "menu-cerita" },
   { key: "kana", href: "#/kana", label: "Panduan kana", asset: "menu-kana" },
-  // A soft hyphen: with five doors a phone gives each about 60 px, and "Pengaturan" breaks as Penga-turan.
-  { key: "settings", href: "#/settings", label: "Penga\u00ADturan", asset: "menu-pengaturan" },
+  // "Setelan", not "Pengaturan": with five doors a phone gives each about 60 px, and a label must fit whole.
+  { key: "settings", href: "#/settings", label: "Setelan", asset: "menu-pengaturan" },
 ];
 
 /**

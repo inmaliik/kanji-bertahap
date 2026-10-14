@@ -12,6 +12,12 @@
 // voice file. The player's own lines have no voice (D-72, D-97): a recorded
 // voice would not fit every character. A file name with {karakter} is the one
 // exception the data allows, one recording per player character.
+//
+// Pages (D-125): the team draws a scene as pages, some with several panels. A
+// page is one image; a panel of the script shows the whole page or zooms to a
+// box on it (percent of the page, like the portrait crop box of a character).
+// The reading order is the order of the panels in the script, so it lives in
+// the data. A panel without lines is shown for one tap.
 // Pure module: no DOM, no storage.
 
 import { worldSummary } from "./progression.js";
@@ -38,6 +44,30 @@ export function voicePath(scene, line, characterId) {
 
 /** Every line of a scene in play order, with its panel. */
 export const sceneLines = (scene) => scene.panels.flatMap((panel, p) => panel.lines.map((line, l) => ({ panel, line, panelIndex: p, lineIndex: l })));
+
+/** What one tap shows, in play order: each line, or a panel without lines once (line null). */
+export const sceneSteps = (scene) =>
+  scene.panels.flatMap((panel, p) => (panel.lines.length ? panel.lines.map((line, l) => ({ panel, line, panelIndex: p, lineIndex: l })) : [{ panel, line: null, panelIndex: p, lineIndex: -1 }]));
+
+export const WHOLE_PAGE = Object.freeze({ x: 0, y: 0, w: 100, h: 100 });
+export const panelBox = (panel) => panel.box ?? WHOLE_PAGE;
+
+/**
+ * Where the page goes so that `box` fills the frame and stays whole, centred:
+ * the page is drawn `frameWidth` wide (its height follows its own ratio), then
+ * scaled by `scale` from its top-left corner and moved by (x, y), in pixels.
+ * @param {{frameWidth: number, frameHeight: number, ratio: number, box?: {x: number, y: number, w: number, h: number}}} input
+ *   ratio: page width / page height
+ */
+export function fitBox({ frameWidth, frameHeight, ratio, box = WHOLE_PAGE }) {
+  const pageHeight = frameWidth / ratio;
+  const bx = (frameWidth * box.x) / 100;
+  const by = (pageHeight * box.y) / 100;
+  const bw = (frameWidth * box.w) / 100;
+  const bh = (pageHeight * box.h) / 100;
+  const scale = Math.min(frameWidth / bw, frameHeight / bh);
+  return { scale, x: frameWidth / 2 - scale * (bx + bw / 2), y: frameHeight / 2 - scale * (by + bh / 2) };
+}
 
 const findScene = (scenes, trigger, world) => (scenes ?? []).find((s) => s.trigger === trigger && s.world === world.number) ?? null;
 
@@ -74,7 +104,7 @@ export function sceneEvent(scene, { finished, linesShown, replay, ms }) {
     itemId: `S:${scene.id}`,
     prompt: scene.id,
     answer: finished ? "selesai" : "dilewati",
-    blankLine: linesShown, // for scene rows: the number of lines shown before it ended
+    blankLine: linesShown, // for scene rows: the number of steps (lines, and panels without lines) shown before it ended
     introReplays: replay ? 1 : 0, // for scene rows: 1 when replayed from the Cerita menu
     responseMs: Math.round(ms),
   };
