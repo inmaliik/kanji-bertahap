@@ -25,7 +25,7 @@
 
 import { h } from "../dom.js";
 import { APP_TITLE } from "../config.js";
-import { columnPoint, placeLocations, segmentsOf } from "../map-layout.js";
+import { columnPoint, defaultPinsOf, placeLocations, segmentsOf } from "../map-layout.js";
 import { currentWorld, nodeStatuses, worldSummary } from "../progression.js";
 import { saveProgress, storageUsage } from "../state.js";
 import { uiLabel } from "../ui-labels.js";
@@ -221,7 +221,7 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
   recordScore(mode, { playerId: progress.playerId, character: progress.character, xp, level: levelOf(xp).level });
 
   const segmentNames = segmentsOf(app.mapLayout, world.number);
-  const { places, segmentCount } = placeLocations(world.regions, segmentNames);
+  const { places, segmentCount } = placeLocations(world.regions, segmentNames, defaultPinsOf(app.mapLayout, world.number));
   const points = places.map((p) => columnPoint(p, segmentCount));
   const target = scrollTarget(summaries, sheetRegion);
   // Segments more than one screen away from the view load later (D-108).

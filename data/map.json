@@ -1,5 +1,13 @@
 {
   "worlds": [
-    { "world": 1, "segments": ["potongan-01", "potongan-02"] }
+    {
+      "world": 1,
+      "segments": ["potongan-01", "potongan-02"],
+      "pins": {
+        "1": { "segment": 1, "x": 34, "y": 75 },
+        "2": { "segment": 1, "x": 67, "y": 55 },
+        "3": { "segment": 1, "x": 74, "y": 21 }
+      }
+    }
   ]
 }

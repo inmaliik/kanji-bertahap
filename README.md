@@ -312,7 +312,7 @@ Satu baris = satu bab = satu wilayah di peta. Wilayah selalu diurutkan menurut n
 | `title` | Nama wilayah yang tampil di peta | `Wilayah Bab 6` |
 | `intro_summary` | Ringkasan bab untuk jendela pengantar: apa yang dipelajari di bab ini (bahasa Indonesia) | |
 | `intro_points` | *Daftar, boleh kosong.* Poin-poin tambahan jendela pengantar | |
-| `pin_segment`, `pin_x`, `pin_y` | *Boleh kosong, tetapi diisi bertiga.* Posisi lokasi di peta: nomor **potongan peta** di peta dunianya (1 = paling atas, urutan di `data/map.json`), lalu posisi dalam **persen** lebar dan tinggi potongan itu (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah potongan peta jadi; selama kosong, lokasi ditaruh di posisi sementara, tiga per potongan. | `2` · `42,5` · `30` |
+| `pin_segment`, `pin_x`, `pin_y` | *Boleh kosong, tetapi diisi bertiga.* Posisi lokasi di peta: nomor **potongan peta** di peta dunianya (1 = paling atas, urutan di `data/map.json`), lalu posisi dalam **persen** lebar dan tinggi potongan itu (0–100; `42,5` dan `42.5` sama-sama diterima). Diisi setelah potongan peta jadi; selama kosong, lokasi memakai pin bawaan babnya di `data/map.json` (bab 1–3 Dunia 1, di peta tim), atau posisi sementara, tiga per potongan. | `2` · `42,5` · `30` |
 
 ### Tab `kanji`
 

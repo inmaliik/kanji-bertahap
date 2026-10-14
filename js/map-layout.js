@@ -4,7 +4,9 @@
 // assets/peta/<name>.png (the "potongan-peta" slot of data/assets.json).
 // A region's pin names its segment (1 = top of its world's map) and a
 // position in percent of that segment. Adding a chapter means adding one
-// segment at the bottom of its world.
+// segment at the bottom of its world. A world may also give default pins per
+// chapter ("pins": { "1": { "segment": 1, "x": 34, "y": 75 } }), used while the
+// wilayah tab leaves a region's pin empty; the tab always wins.
 
 import { WORLDS } from "./worlds.js";
 
@@ -16,6 +18,9 @@ export const FALLBACK_LAYOUT = Object.freeze({ worlds: [{ world: 1, segments: ["
 
 /** Segment names of one world; empty when the world is not listed yet. */
 export const segmentsOf = (layout, world) => layout.worlds.find((w) => w.world === world)?.segments ?? [];
+
+/** Default pins of one world, by chapter number; empty when it has none. */
+export const defaultPinsOf = (layout, world) => layout.worlds.find((w) => w.world === world)?.pins ?? {};
 
 /** Locations per segment for regions whose pin is not filled in yet. */
 export const TEMPORARY_PER_SEGMENT = 3;
@@ -43,6 +48,16 @@ export function validateMapLayout(data) {
       else if (names.has(name)) problems.push(`${where}, potongan ke-${i + 1}: "${name}" sudah dipakai di atasnya.`);
       names.add(name);
     });
+    if (entry.pins !== undefined) {
+      if (!isPlainObject(entry.pins)) problems.push(`${where}: "pins" harus berupa { "<bab>": { "segment": 1, "x": 50, "y": 50 } }.`);
+      else {
+        for (const [chapter, pin] of Object.entries(entry.pins)) {
+          const ok = /^[1-9][0-9]*$/.test(chapter) && isPlainObject(pin) && Number.isInteger(pin.segment) && pin.segment >= 1 &&
+            [pin.x, pin.y].every((v) => typeof v === "number" && v >= 0 && v <= 100);
+          if (!ok) problems.push(`${where}, pin bawaan bab ${chapter}: harus { "segment": nomor potongan (1 = paling atas), "x": 0–100, "y": 0–100 }.`);
+        }
+      }
+    }
   });
   return problems;
 }
@@ -62,15 +77,19 @@ export async function loadMapLayout(url) {
 }
 
 /**
- * Where each region of one world sits. Regions without a pin get a temporary
- * place, three per segment in play order, zigzagging down.
+ * Where each region of one world sits: its pin from the wilayah tab, else the
+ * world's default pin for its chapter, else a temporary place, three per
+ * segment in play order, zigzagging down.
  * @param {object[]} regions the regions of one world
  * @param {string[]} segments that world's segment names (segmentsOf)
+ * @param {Record<string, {segment: number, x: number, y: number}>} [defaults] defaultPinsOf
  * @returns {{places: Array<{segment: number, x: number, y: number, temporary: boolean}>, segmentCount: number}}
  */
-export function placeLocations(regions, segments) {
+export function placeLocations(regions, segments, defaults = {}) {
   const places = regions.map((region, i) => {
     if (region.pin) return { ...region.pin, temporary: false };
+    const fallback = defaults[String(region.chapter)];
+    if (fallback) return { segment: fallback.segment, x: fallback.x, y: fallback.y, temporary: false };
     const k = i % TEMPORARY_PER_SEGMENT;
     return { segment: Math.floor(i / TEMPORARY_PER_SEGMENT) + 1, x: k % 2 ? 30 : 70, y: 25 + k * 30, temporary: true };
   });

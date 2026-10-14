@@ -469,3 +469,22 @@ test("the map shows the world looked at last; progress remembers it and a reset 
   assert.equal(P.currentWorld(model, progress).number, 2);
   assert.equal(P.currentWorld(buildModel(loadSampleContent()), progress).number, 1, "a world without material falls back");
 });
+
+test("default pins per world (prototype B01–B03 on the team's map): used while the wilayah tab leaves the pin empty", async () => {
+  const L = await import(jsModule("map-layout.js"));
+  const layout = JSON.parse(readFileSync(join(ROOT, "data/map.json"), "utf8"));
+  assert.deepEqual(L.defaultPinsOf(layout, 1), {
+    1: { segment: 1, x: 34, y: 75 }, // west: Kyushu, Shikoku, Chugoku, Kansai
+    2: { segment: 1, x: 67, y: 55 }, // Honshu, centre to Tohoku
+    3: { segment: 1, x: 74, y: 21 }, // Hokkaido
+  });
+  assert.deepEqual(L.defaultPinsOf(layout, 2), {}, "world 2 has none");
+  const regions = [1, 2, 3, 4].map((chapter) => ({ id: `B0${chapter}`, chapter, world: 1, pin: null }));
+  regions[1].pin = { segment: 2, x: 10, y: 20 };
+  const { places } = L.placeLocations(regions, ["a", "b"], L.defaultPinsOf(layout, 1));
+  assert.deepEqual(places[0], { segment: 1, x: 34, y: 75, temporary: false }, "the default pin");
+  assert.deepEqual(places[1], { segment: 2, x: 10, y: 20, temporary: false }, "the wilayah tab wins");
+  assert.equal(places[3].temporary, true, "a chapter without a default stays temporary");
+  const bad = { worlds: [{ world: 1, segments: ["a"], pins: { 1: { segment: 0, x: 50, y: 50 }, satu: { segment: 1, x: 5, y: 5 }, 2: { segment: 1, x: 120, y: 5 } } }] };
+  assert.equal(L.validateMapLayout(bad).length, 3);
+});

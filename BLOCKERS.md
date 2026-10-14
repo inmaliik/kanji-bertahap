@@ -67,6 +67,25 @@ Pemutar adegan cerita (D-124) sudah dibangun, dan memutar **9 halaman prolog Dun
 - Berkas suara (`assets/suara/`) dan gambar adegan penutup belum ada; selama itu baris tampil tanpa suara dan panel
   penutup tampil sebagai kotak keterangan. Adegan penutup Dunia 1 baru diputar saat Dunia 1 tamat.
 
+### 2d. Prototipe bab 1–3 — **Terbuka**
+Tim akan menguji prototipe dengan B01–B03 dulu (24 misi), sesuai peta tiga bagian. Daftar kerja per tab dan baris ada di
+`sumber/impor/DAFTAR-KERJA-PROTOTIPE.md` (tidak masuk repo, karena memuat materi). Ringkasannya (2026-10-14):
+
+| Pekerjaan tim untuk B01–B03 | Jumlah | Menghalangi pemuatan? |
+|---|---|---|
+| Nama pengganti penanda `«NAMA-…»` (5 tokoh, 2 perusahaan, 2 universitas) | 9 nama di 12 baris percakapan | **Ya** (error) |
+| Terjemahan baris percakapan | 47 baris | Tidak (draf) |
+| Arti kotoba / arti kanji | 17 kotoba / 25 kanji | Tidak (draf) |
+| Nama dan ringkasan wilayah | 3 wilayah | Tidak (draf) |
+| `sentence_chapter` masih `?` | 24 percakapan | Tidak (draf) |
+| Pengecoh cara baca yang harus diganti | 8 kotoba (何歳 belum punya pilihan salah sama sekali) | Tidak (draf) |
+| Percakapan uji | 24 quest, ditambah 1 percakapan pengantar (何歳) | Tidak (draf) |
+| Kucing misi (5 kolom di tab quest) | 24 misi | Tidak (draf) |
+| Transkrip teks tergambar di prolog | 9 halaman | Tidak (draf) |
+
+**9 butir harus selesai sebelum B01–B03 bisa dimuat di situs**: kesembilan nama itu. Sisanya boleh menyusul selama
+revisi masih draf, tetapi semuanya menjadi error saat rilis.
+
 ### 3. Percakapan uji untuk semua quest — **Terbuka**
 Tidak ada di dokumen tim, dan pengembang tidak menulisnya (semua percakapan ditulis tim). Selama draf, quest bisa
 dimainkan tanpa langkah uji dan bertanda belum lengkap (D-92). Setiap quest butuh minimal satu percakapan uji dengan
@@ -112,12 +131,9 @@ Karakter Hana dan Kazu sudah ada (1080×1080, D-107). Yang masih placeholder ata
 - motif jalur (opsional).
 Setelah potongan peta jadi, tim konten mengisi posisi setiap lokasi (`pin_segment`, `pin_x`, `pin_y`).
 
-**Peta dari tim (2026-10-14, di `sumber/map/`, belum dipakai):** satu peta Jepang utuh, bukan potongan bersambung,
-dalam enam berkas PNG 1536 × 2048 (3 : 4 tegak, 348–423 KB). Wilayah terang adalah wilayah terbuka, gelap terkunci, dalam
-tiga bagian: barat (Kyushu, Shikoku, Chugoku, Kansai), Honshu tengah dan timur sampai Tohoku, dan Hokkaido. Berkasnya:
-`0persen` dan `100persen` (semua gelap / semua terang, latar transparan), `0persenbg` dan `100persenbg` (sama, dengan
-laut biru), `33persen` dan `66persen` (barat terang / barat dan Honshu terang, dengan laut). Garis pantai di keenamnya
-segaris. Materi punya 5 bab, peta 3 bagian. Cara memakainya dirancang di tahap 6 (lihat `MULAI-DI-SINI.md`).
+**Peta dari tim (2026-10-14):** satu peta Jepang utuh dalam enam keadaan terang/gelap, sudah diekspor ke
+`assets/peta/D1/` (WebP lossless 1080 × 1440; rincian di ASSETS.md). Belum dipakai aplikasi: cara memakainya dirancang
+di tahap 6. Pin bawaan bab 1–3 sudah ada di `data/map.json`; tim bisa menggantinya di tab `wilayah`.
 
 ### 7. Urutan guratan — **Terbuka** (menunggu D-66)
 Tempat untuk urutan guratan sudah disiapkan, tetapi **tidak ada data guratan di repo** sampai lisensinya diputuskan.

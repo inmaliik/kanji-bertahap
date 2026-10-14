@@ -55,19 +55,34 @@ persisnya.
 **Cara kerja tahap 6:** sebelum membangun, usulan per layar dengan pratinjau ponsel dan laptop berdampingan dengan
 referensinya, untuk disetujui; baru kemudian dikerjakan.
 
-**Peta dari tim** (temuan 2026-10-14; berkasnya di `sumber/map/`, rincian di BLOCKERS butir 6):
-- Satu peta Jepang utuh, **1536 × 2048, rasio 3 : 4 sama dengan potongan 1080 × 1440**, sehingga bisa dipakai sebagai satu
-  potongan tegak. Mentahnya 348–423 KB; diekspor 1080 × 1440 menjadi ±275 KB sebagai PNG (melebihi batas 150 KB) atau
-  ±75 KB sebagai JPEG kualitas 70, jadi format potongan peta perlu diputuskan di tahap ini.
-- **Ada versi terang dan gelap** (terbuka dan terkunci) dari gambar tim, dengan garis pantai yang identik di keenam
-  berkas. Keadaan terkunci memakai versi gelap tim, **bukan penggelapan oleh kode**.
-- **Panduan sambungan tidak berlaku**: tidak ada potongan yang disambung, semuanya satu kanvas.
-- **Tiga bagian, materi lima bab:** bab 1–3 di peta tim, **bab 4–5 tetap di potongan placeholder**; materi tidak diubah.
-  Usulan lokasi pin (persen gambar, titik tengah daratan setiap bagian): barat x 34, y 75; Honshu tengah–timur x 67,
-  y 55; Hokkaido x 74, y 21. Urutan bab ke bagian belum ditentukan tim.
-- Berkas 33 % dan 66 % menyalakan bagian secara berurutan (barat, lalu Honshu, lalu Hokkaido). Jika wilayah boleh
-  dituntaskan tidak berurutan, perlu satu lapisan terang per bagian (diekspor dari berkas induk yang sama, tanpa
-  menggambar ulang).
+**Peta dari tim** (sudah diekspor ke repo; rincian berkas di [`ASSETS.md`, Peta Dunia 1 dari tim](ASSETS.md#peta-dunia-1-dari-tim-assetspetad1-untuk-tahap-6)):
+- Satu peta Jepang utuh di `assets/peta/D1/`, enam keadaan, **WebP lossless 1080 × 1440** (3 : 4, rasio potongan
+  peta), 98–120 KB. Sesi tahap 6 tidak membutuhkan `sumber/map/`.
+- **Versi terang dan gelap** dari tim, garis pantai identik di keenam berkas. Keadaan terkunci memakai versi gelap tim,
+  **bukan penggelapan oleh kode**.
+- **Panduan sambungan tidak berlaku**: satu kanvas, tidak ada potongan yang disambung.
+- **Tiga bagian, materi lima bab:** prototipe bab 1–3 di peta tim; **bab 4–5 tetap di potongan placeholder**; materi
+  tidak diubah. Pin bawaan sudah di `data/map.json`: bab 1 barat (x 34, y 75), bab 2 Honshu (x 67, y 55), bab 3
+  Hokkaido (x 74, y 21); tim bisa menggantinya di tab `wilayah`.
+- Yang dirancang di tahap 6: bagaimana peta tim masuk ke susunan potongan (misalnya potongan 1 = peta tim, potongan 2 =
+  placeholder bab 4–5), dan keadaan mana yang tampil. Berkas 33 % dan 66 % hanya cocok jika bagian dibuka berurutan;
+  jika tidak, minta tim mengekspor satu lapisan terang per bagian.
+
+**Gambar referensi** (di `sumber/referensi/`, **tidak pernah masuk repo**: karya pihak lain, dan repo ini publik). Uraian
+ini acuan tertulis untuk sesi yang tidak bisa membuka gambarnya. Semuanya satu rangkaian desain UI game kasual bertema
+kucing dan perjalanan kereta, dengan teks berbahasa Tionghoa.
+
+| Berkas | Isi | Warna | Susunan dan bentuk unsur utama |
+|---|---|---|---|
+| `1.jpg` | Layar "perjalanan" dengan panel naik level, mendatar | Langit biru muda dengan awan putih, kereta biru-putih, panel biru muda dan krem, aksen emas | Kiri: judul berbentuk pita dengan ikon pesawat kertas, di bawahnya empat tombol menu bulat (ikon putih berbingkai) dengan label di tab tembus pandang. Tengah: ilustrasi peron stasiun, siswi berseragam pelaut dan ransel membaca buku spiral biru, kucing abu-putih menatapnya. Kanan: panel besar bergaya **buku catatan spiral** (cincin spiral di tepi kanan, kertas bergaris kotak), kepala berupa pita "level 1" dengan bilah XP, stiker kepala kucing di pojok, tab angka 1–5, dua baris petak hadiah (baris biru dan baris krem) dengan label samping seperti perangko, dua tombol bawah: krem-emas dan biru muda, sudut membulat. Pojok kanan atas: dua pil mata uang. Kiri bawah: lencana bertelinga kucing. |
+| `2.jpg` | Layar peta | Kertas peta pucat, daratan hijau muda, laut biru muda, label biru dan merah muda keabu-abuan, sorot kuning | Peta kertas bergambar tangan yang sedikit miring, jejak kaki kucing sebagai jalur antarlokasi. Setiap lokasi berupa bangunan kecil isometrik (stasiun, torii, ladang, truk kopi, rumah) dengan label heksagon: abu-merah muda untuk "belum dicapai", biru dengan persentase dan stiker centang hijau untuk yang sudah. Lokasi terpilih bercahaya kuning. Kanan: panel detail berkepala **atap toko bergaris biru-putih**, judul di pita, bagian-bagian berlabel biru, petak hadiah, tombol lebar biru di bawah. Kiri: menu bulat yang sama dengan `1.jpg`. |
+| `3.jpeg` | Papan presentasi panjang yang menggabungkan semua layar | Latar gradasi biru lembut | Dari atas: potongan sistem rumah; layar toko (atap bergaris biru-putih, penjaga toko di kiri, kisi kartu barang dengan harga, papan tulis kecil); layar peta seperti `2.jpg` dengan stiker bulat "45 % eksplorasi"; tiga panel lokasi bertema (atap toko bergaris, gerbang torii merah, kereta putih) dengan isi yang sama; **kit UI**: judul pita, papan kayu tergantung sebagai tab, tombol persegi panjang biru dan emas, stiker centang hijau, stiker bulat persentase, ikon bulat berbingkai putih, pita level dengan bilah XP dan stiker kucing, papan pengumuman, petak warna hijau-biru-emas, lencana tanda seru merah muda; siswi dengan buku di kanan. |
+| `4.jpeg` | Potongan layar toko dari `3.jpeg` | Biru-putih, kayu terang, krem | Atap bergaris di atas seluruh layar; balon ucapan penjaga toko di kiri atas; papan nama toko; dua tab papan tergantung; kisi 2 × 5 kartu barang (ikon di kotak, nama di atas, harga di pita bawah). |
+| `5.png` | Potongan tiga panel lokasi bertema dari `3.jpeg` | Biru muda, merah torii, putih | Tiga panel berdampingan dengan isi sama tetapi kepala berbeda; ikon bangunan mengambang di atas setiap panel; tombol lebar biru di dasar setiap panel. |
+| `6.png` | Potongan kit UI dari `3.jpeg` | Gradasi biru, emas, hijau | Lihat kit UI di `3.jpeg`; siswi dengan buku biru berdiri di kanan. |
+
+Yang diambil hanya kosakata visualnya (lihat daftar "boleh dipakai" di atas); logo, lencana bertelinga kucing, ikon
+barang, ilustrasi, dan komposisi persisnya tidak diambil.
 
 Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca bergantung pada peran Anda.
 

@@ -141,6 +141,35 @@ Potongan ditampilkan rapat tanpa celah. Supaya sambungannya tidak terlihat:
 - Status wilayah (terkunci, terbuka, tuntas) ditunjukkan lokasi dengan ikon dan teks. Tidak perlu menggambar versi
   peta per status.
 
+### Peta Dunia 1 dari tim (`assets/peta/D1/`, untuk tahap 6)
+
+Tim menggambar Dunia 1 sebagai **satu peta Jepang utuh**, bukan potongan bersambung, dalam versi terang (terbuka) dan
+gelap (terkunci). Berkasnya sudah diekspor ke repo, tetapi **belum dipakai aplikasi**: cara memakainya dirancang di
+tahap 6 (`MULAI-DI-SINI.md`, Rencana tahap 6). Selama itu peta memakai potongan placeholder di `data/map.json`.
+
+- **Format: WebP lossless, 1080 × 1440 (3 : 4, rasio potongan peta), 98–120 KB.** Mentahnya PNG 1536 × 2048 (348–423 KB)
+  di `sumber/map/`. Lossless dipilih supaya warna terang dan gelap tim persis sama di setiap berkas; PNG 1080 × 1440
+  ±275 KB melebihi batas 150 KB, dan JPEG tidak bisa menyimpan dua versi yang transparan. Ekspor ulang:
+  `cwebp -lossless -z 9 -resize 1080 1440 sumber/map/<mentah>.png -o assets/peta/D1/<nama>.webp`.
+- Garis pantai keenam berkas identik (diukur piksel demi piksel), jadi berkas boleh ditumpuk.
+- Tiga bagian: **barat** (Kyushu, Shikoku, Chugoku, Kansai), **Honshu** tengah sampai Tohoku, dan **Hokkaido**.
+
+| Berkas | Mentah tim | Keadaan | Latar |
+|---|---|---|---|
+| `terkunci-semua.webp` | `0persen.png` | semua bagian gelap (terkunci) | transparan |
+| `terkunci-semua-laut.webp` | `0persenbg.png` | semua bagian gelap | laut biru |
+| `terbuka-barat-laut.webp` | `33persen.png` | barat terang, Honshu dan Hokkaido gelap | laut biru |
+| `terbuka-barat-honshu-laut.webp` | `66persen.png` | barat dan Honshu terang, Hokkaido gelap | laut biru |
+| `terbuka-semua.webp` | `100persen.png` | semua bagian terang (terbuka) | transparan |
+| `terbuka-semua-laut.webp` | `100persenbg.png` | semua bagian terang | laut biru |
+
+- Keadaan terkunci memakai **versi gelap tim**, bukan penggelapan oleh kode.
+- Versi 33 % dan 66 % menyalakan bagian berurutan (barat, Honshu, Hokkaido). Jika wilayah boleh dituntaskan tidak
+  berurutan, tim mengekspor satu lapisan terang per bagian dari berkas induk yang sama (tanpa menggambar ulang).
+- **Pin bawaan** untuk prototipe bab 1–3 ada di `data/map.json` (`pins` Dunia 1, persen gambar peta): bab 1 di barat
+  (x 34, y 75), bab 2 di Honshu (x 67, y 55), bab 3 di Hokkaido (x 74, y 21), yaitu titik tengah daratan setiap bagian.
+  Pin yang diisi tim di tab `wilayah` selalu menang. Bab 4–5 tetap di potongan placeholder; materinya tidak diubah.
+
 ## Ilustrasi adegan (`assets/adegan/`)
 
 - **Satu gambar per percakapan.** Nama berkasnya adalah ID percakapan dari tab `percakapan` di spreadsheet, ditambah
