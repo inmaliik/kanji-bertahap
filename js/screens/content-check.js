@@ -5,6 +5,7 @@ import { h } from "../dom.js";
 import { checkAssets } from "../assets.js";
 import { combinationCount, layerFiles, usesColors } from "../layers.js";
 import { catLayerProblems } from "../cats.js";
+import { panelPath, sceneLines, voicePath } from "../scenes.js";
 import { unknownSpeakers } from "../cast.js";
 import { segmentsOf, unlistedSegments } from "../map-layout.js";
 import { backLink, issueList } from "./common.js";
@@ -57,6 +58,51 @@ function catSection(app) {
   return h("section", { class: "card", "aria-labelledby": "cats-title" }, h("h2", { id: "cats-title" }, "Lapisan kucing (data/layers.json)"), parts);
 }
 
+/** Limits for one story scene (ASSETS.md): voice files and the whole scene. */
+const VOICE_MAX_KB = 64;
+const SCENE_MAX_KB = 2560;
+
+/** The story scenes (D-124): lines, panels and voice files delivered so far, and their sizes. */
+function sceneSection(app) {
+  const scenes = app.content?.scenes ?? [];
+  const list = h("ul", { class: "asset-checks", "aria-live": "polite" });
+  const summary = h("p", {}, scenes.length ? "Memeriksa berkas adegan…" : "Materi belum punya adegan cerita (tab cerita dan naskah).");
+  if (scenes.length) {
+    const size = async (path) => {
+      try {
+        const r = await fetch(path, { method: "HEAD", cache: "no-cache" });
+        return r.ok ? Number(r.headers.get("content-length") ?? 0) : null;
+      } catch {
+        return null;
+      }
+    };
+    Promise.all(
+      scenes.map(async (scene) => {
+        const lines = sceneLines(scene);
+        const voices = [...new Set(lines.map(({ line }) => voicePath(scene, line, app.characters?.players?.[0]?.id)).filter(Boolean))];
+        const panels = scene.panels.map((p) => panelPath(scene, p));
+        const [panelSizes, voiceSizes] = await Promise.all([Promise.all(panels.map(size)), Promise.all(voices.map(size))]);
+        const kb = (n) => Math.ceil(n / 1024);
+        const total = [...panelSizes, ...voiceSizes].reduce((n, b) => n + (b ?? 0), 0);
+        const heavy = voices.filter((_, i) => voiceSizes[i] !== null && kb(voiceSizes[i]) > VOICE_MAX_KB);
+        return h(
+          "li",
+          {},
+          h("strong", {}, scene.id),
+          ` · ${lines.length} baris di ${scene.panels.length} panel · gambar panel ${panelSizes.filter((b) => b !== null).length} dari ${panels.length} ada · ` +
+            `suara ${voiceSizes.filter((b) => b !== null).length} dari ${voices.length} ada · total ${kb(total)} KB dari batas ${SCENE_MAX_KB} KB`,
+          heavy.length ? h("p", { class: "notice notice--warning" }, `⚠ Melebihi ${VOICE_MAX_KB} KB: ${heavy.join(", ")}`) : null,
+          kb(total) > SCENE_MAX_KB ? h("p", { class: "notice notice--warning" }, `⚠ Adegan ini melebihi ${SCENE_MAX_KB} KB; ponsel kelas bawah di jaringan pameran akan lambat.`) : null
+        );
+      })
+    ).then((items) => {
+      summary.textContent = `${scenes.length} adegan. Berkas yang belum ada tampil sebagai kotak keterangan (gambar) atau tanpa suara (subtitle saja).`;
+      list.replaceChildren(...items);
+    });
+  }
+  return h("section", { class: "card", "aria-labelledby": "scenes-title" }, h("h2", { id: "scenes-title" }, "Adegan cerita"), summary, list);
+}
+
 function assetSection(app) {
   const list = h("ul", { class: "asset-checks", "aria-live": "polite" }, h("li", { class: "muted" }, "Memeriksa aset…"));
   const summary = h("p", {});
@@ -65,6 +111,7 @@ function assetSection(app) {
       segment: app.mapLayout.worlds.flatMap((w) => w.segments),
       ...(app.model ? { conversationId: [...app.model.conversations.keys()], regionId: app.model.regions.map((r) => r.id) } : {}),
       ...(app.layers ? catLayerIds(app.layers) : {}),
+      scenePanel: (app.content?.scenes ?? []).flatMap((scene) => scene.panels.map((panel) => `${scene.id}/${panel.image}`)),
     };
     checkAssets(app.assets, ids).then((results) => {
       const count = (state) => results.filter((r) => r.state === state).length;
@@ -179,6 +226,7 @@ export function contentCheckScreen(app) {
     ),
     charactersSection(app),
     catSection(app),
+    sceneSection(app),
     mapSection(app),
     assetSection(app)
   );

@@ -33,13 +33,15 @@ export const TABS = Object.freeze({
     "sentence_chapter", "scene", "placeholder",
   ],
   hadiah: ["reward_id", "title", "text", "requires_chapters", "requires_world"],
+  cerita: ["scene_id", "trigger", "world", "title", "sentence_chapter"],
+  naskah: ["scene_id", "panel_no", "line_no", "panel_image", "panel_note", "figures", "speaker", "text", "ja", "audio"],
 });
 
 /** Download order used in README and in the converter page. */
-export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan", "hadiah"];
+export const TAB_ORDER = ["wilayah", "kanji", "kotoba", "quest", "percakapan", "hadiah", "cerita", "naskah"];
 
-/** Tabs the spreadsheet may leave out: no "hadiah" tab means no rewards (D-123). */
-export const OPTIONAL_TABS = Object.freeze(["hadiah"]);
+/** Tabs the spreadsheet may leave out: no "hadiah" tab means no rewards (D-123), no "cerita" and "naskah" no story scenes (D-124). */
+export const OPTIONAL_TABS = Object.freeze(["hadiah", "cerita", "naskah"]);
 
 /**
  * Columns a tab may leave out of its header row: added after the team's
@@ -49,7 +51,7 @@ export const OPTIONAL_TABS = Object.freeze(["hadiah"]);
 export const OPTIONAL_COLUMNS = Object.freeze({ quest: ["cat_name", "cat_body", "cat_pattern", "cat_accessory", "cat_color"] });
 
 // A column that exists in exactly one tab identifies the file.
-const SIGNATURE = { wilayah: "intro_summary", kanji: "bushu_char", kotoba: "word_ruby", quest: "quest_id", percakapan: "conversation_id", hadiah: "reward_id" };
+const SIGNATURE = { wilayah: "intro_summary", kanji: "bushu_char", kotoba: "word_ruby", quest: "quest_id", percakapan: "conversation_id", hadiah: "reward_id", cerita: "trigger", naskah: "panel_no" };
 
 // Conversation-level columns may be written on the first line only.
 const CONVERSATION_COLUMNS = ["sentence_chapter", "scene", "placeholder"];
@@ -251,6 +253,80 @@ function catOf(cells) {
     accessory: cells.cat_accessory ?? "",
     color: cells.cat_color ? cells.cat_color : null,
   };
+}
+
+/** Speaker words for the narrator in the naskah tab. */
+const NARRATOR_WORDS = ["narator", "narrator"];
+
+/** "pemain@kiri;lawan-bicara@kanan" → [{ who: "player", at: "kiri" }, …] */
+function parseFigures(cell) {
+  return splitList(cell).map((item) => {
+    const [who, at] = item.split("@").map((p) => p.trim());
+    return { who: PLAYER_WORDS.includes(who.toLowerCase()) ? PLAYER_SPEAKER : who, at: (at ?? "").toLowerCase() };
+  });
+}
+
+/**
+ * Story scenes (D-124): one row per scene in the cerita tab, one row per line in
+ * the naskah tab. Lines are ordered by panel_no and line_no; panel_image,
+ * panel_note and figures are read from the first line of each panel.
+ */
+function buildScenes(sceneRows, lineRows, problems, rowMap) {
+  const byScene = new Map();
+  for (const { row, cells } of lineRows) {
+    if (!byScene.has(cells.scene_id)) byScene.set(cells.scene_id, []);
+    byScene.get(cells.scene_id).push({ row, cells });
+  }
+  const scenes = [];
+  for (const { row, cells } of sceneRows) {
+    const world = parseInteger(cells.world, "world", "cerita", [row], problems, { allowDash: false });
+    const chapter =
+      cells.sentence_chapter === ""
+        ? null
+        : parseInteger(cells.sentence_chapter, "sentence_chapter", "cerita", [row], problems, { allowDash: false, allowUnknown: true }) ?? null;
+    const lines = byScene.get(cells.scene_id) ?? [];
+    byScene.delete(cells.scene_id);
+    const panels = new Map();
+    for (const line of lines) {
+      const p = parseInteger(line.cells.panel_no, "panel_no", "naskah", [line.row], problems, { allowDash: false });
+      const l = parseInteger(line.cells.line_no, "line_no", "naskah", [line.row], problems, { allowDash: false });
+      if (p === undefined || l === undefined) continue;
+      if (!panels.has(p)) panels.set(p, []);
+      panels.get(p).push({ ...line, l });
+    }
+    const sceneIndex = scenes.length;
+    rowMap.set(`scenes[${sceneIndex}]`, { tab: "cerita", rows: [row] });
+    const scene = {
+      id: cells.scene_id,
+      trigger: cells.trigger,
+      world: world ?? null,
+      title: cells.title,
+      sentenceChapter: chapter,
+      panels: [...panels.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, panelLines], pi) => {
+          panelLines.sort((a, b) => a.l - b.l);
+          const first = panelLines[0].cells;
+          rowMap.set(`scenes[${sceneIndex}].panels[${pi}]`, { tab: "naskah", rows: panelLines.map((x) => x.row) });
+          return {
+            image: first.panel_image,
+            note: first.panel_note,
+            figures: parseFigures(first.figures),
+            lines: panelLines.map(({ row: r, cells: c }, li) => {
+              rowMap.set(`scenes[${sceneIndex}].panels[${pi}].lines[${li}]`, { tab: "naskah", rows: [r] });
+              const word = c.speaker.toLowerCase();
+              const speaker = PLAYER_WORDS.includes(word) ? PLAYER_SPEAKER : NARRATOR_WORDS.includes(word) ? "narrator" : c.speaker;
+              return { speaker, text: c.text, ja: c.ja || null, audio: c.audio || null };
+            }),
+          };
+        }),
+    };
+    scenes.push(scene);
+  }
+  for (const [id, lines] of byScene) {
+    problems.add("naskah", lines.map((x) => x.row), `Baris naskah adegan "${id}", tetapi tab cerita tidak punya adegan dengan scene_id itu.`);
+  }
+  return scenes;
 }
 
 /** One reward per row (D-123): its milestone as chapters to finish, a world to complete, or both. */
@@ -552,6 +628,14 @@ export function convertCsvFilesToContent(files, revision) {
 
   const content = { schemaVersion: SCHEMA_VERSION, contentRevision: revision, regions, kanji, kotoba };
   if (tabs.hadiah) content.rewards = buildRewards(tabs.hadiah.rows, problems, rowMap);
+  if (tabs.cerita || tabs.naskah) {
+    if (!tabs.cerita || !tabs.naskah) {
+      const [has, lacks] = tabs.cerita ? ["cerita", "naskah"] : ["naskah", "cerita"];
+      problems.add(has, [], `Tab ${has} ada tetapi tab ${lacks} tidak dipilih. Adegan cerita butuh keduanya: daftar adegan (cerita) dan barisnya (naskah).`);
+    } else {
+      content.scenes = buildScenes(tabs.cerita.rows, tabs.naskah.rows, problems, rowMap);
+    }
+  }
   return { fatal: null, problems: problems.list, recognized, content, rowMap };
 }
 

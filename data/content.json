@@ -231,5 +231,118 @@
         "world": null
       }
     }
+  ],
+  "scenes": [
+    {
+      "id": "S-D1-pembuka",
+      "trigger": "world-opening",
+      "world": 1,
+      "title": "«BELUM DIISI: judul adegan pembuka Dunia 1»",
+      "sentenceChapter": null,
+      "panels": [
+        {
+          "image": "01",
+          "note": "«BELUM DIISI: deskripsi panel 1 untuk ilustrator»",
+          "figures": [],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: narasi pembuka»",
+              "ja": null,
+              "audio": "01-1"
+            },
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: narasi lanjutan»",
+              "ja": null,
+              "audio": "01-2"
+            }
+          ]
+        },
+        {
+          "image": "02",
+          "note": "«BELUM DIISI: deskripsi panel 2 untuk ilustrator»",
+          "figures": [
+            {
+              "who": "player",
+              "at": "kiri"
+            },
+            {
+              "who": "lawan-bicara",
+              "at": "kanan"
+            }
+          ],
+          "lines": [
+            {
+              "speaker": "lawan-bicara",
+              "text": "«BELUM DIISI: ucapan tokoh lawan bicara»",
+              "ja": null,
+              "audio": "02-1"
+            },
+            {
+              "speaker": "player",
+              "text": "«BELUM DIISI: ucapan pemain (tanpa suara)»",
+              "ja": null,
+              "audio": null
+            }
+          ]
+        },
+        {
+          "image": "03",
+          "note": "«BELUM DIISI: deskripsi panel 3 untuk ilustrator»",
+          "figures": [
+            {
+              "who": "player",
+              "at": "tengah"
+            }
+          ],
+          "lines": [
+            {
+              "speaker": "narrator",
+              "text": "«BELUM DIISI: narasi penutup adegan»",
+              "ja": null,
+              "audio": "03-1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-D1-penutup",
+      "trigger": "world-closing",
+      "world": 1,
+      "title": "«BELUM DIISI: judul adegan penutup Dunia 1»",
+      "sentenceChapter": null,
+      "panels": [
+        {
+          "image": "01",
+          "note": "«BELUM DIISI: deskripsi panel untuk ilustrator»",
+          "figures": [
+            {
+              "who": "player",
+              "at": "kiri"
+            },
+            {
+              "who": "lawan-bicara",
+              "at": "kanan"
+            }
+          ],
+          "lines": [
+            {
+              "speaker": "lawan-bicara",
+              "text": "«BELUM DIISI: ucapan tokoh lawan bicara»",
+              "ja": null,
+              "audio": "01-1"
+            },
+            {
+              "speaker": "player",
+              "text": "«BELUM DIISI: ucapan pemain (tanpa suara)»",
+              "ja": null,
+              "audio": null
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

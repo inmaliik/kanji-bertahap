@@ -173,7 +173,7 @@ function levelBar(app) {
 }
 
 /** The world the map shows, remembered so that links back to the map return to it. */
-function shownWorld(app, sheetRegion, number) {
+export function shownWorld(app, sheetRegion, number) {
   const { model, progress } = app;
   const region = sheetRegion ? model.regions.find((r) => r.id === sheetRegion) : null;
   const wanted = region ? region.world : number;

@@ -1,0 +1,8 @@
+scene_id,panel_no,line_no,panel_image,panel_note,figures,speaker,text,ja,audio
+S-D1-pembuka,1,1,01,«BELUM DIISI: deskripsi panel 1 untuk ilustrator»,,narator,«BELUM DIISI: narasi pembuka»,,01-1
+S-D1-pembuka,1,2,,,,narator,«BELUM DIISI: narasi lanjutan»,,01-2
+S-D1-pembuka,2,1,02,«BELUM DIISI: deskripsi panel 2 untuk ilustrator»,pemain@kiri;lawan-bicara@kanan,lawan-bicara,«BELUM DIISI: ucapan tokoh lawan bicara»,,02-1
+S-D1-pembuka,2,2,,,,pemain,«BELUM DIISI: ucapan pemain (tanpa suara)»,,
+S-D1-pembuka,3,1,03,«BELUM DIISI: deskripsi panel 3 untuk ilustrator»,pemain@tengah,narator,«BELUM DIISI: narasi penutup adegan»,,03-1
+S-D1-penutup,1,1,01,«BELUM DIISI: deskripsi panel untuk ilustrator»,pemain@kiri;lawan-bicara@kanan,lawan-bicara,«BELUM DIISI: ucapan tokoh lawan bicara»,,01-1
+S-D1-penutup,1,2,,,,pemain,«BELUM DIISI: ucapan pemain (tanpa suara)»,,

@@ -49,6 +49,12 @@ Hadiah kartu fisik (D-123) sudah dibangun dengan tonggak bawaan B01–B05, tetap
 diskon) masih penanda `«BELUM DIISI: …»`. Tim memutuskan tonggak dan teksnya di tab `hadiah` spreadsheet. Penanda itu
 diperingatkan selama draf dan menjadi error saat rilis.
 
+### 2c. Naskah, panel, dan suara adegan cerita — **Terbuka**
+Pemutar adegan cerita (D-124) sudah dibangun. Naskah pembuka dan penutup Dunia 1 masih kerangka penanda
+`«BELUM DIISI: …»` di `tools/templates/naskah.csv`; bahasa naskah (subtitle Indonesia, kalimat Jepang, atau keduanya)
+belum diputuskan tim. Gambar panel (`assets/cerita/`) dan berkas suara (`assets/suara/`) belum ada; selama itu panel
+tampil sebagai kotak keterangan dan baris tampil tanpa suara. Adegan penutup Dunia 1 baru diputar saat Dunia 1 tamat.
+
 ### 3. Percakapan uji untuk semua quest — **Terbuka**
 Tidak ada di dokumen tim, dan pengembang tidak menulisnya (semua percakapan ditulis tim). Selama draf, quest bisa
 dimainkan tanpa langkah uji dan bertanda belum lengkap (D-92). Setiap quest butuh minimal satu percakapan uji dengan

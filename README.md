@@ -181,6 +181,7 @@ js/cat-placeholders.js      gambar pengganti lapisan kucing buatan kode, sampai 
 js/cat-figure.js            penumpuk lapisan: isi bertopeng berwarna, corak, garis, aksesori, atau siluet
 js/cats.js                  kucing per misi: mana yang bebas, momen penyelamatan, ID lapisan yang tidak dikenal
 js/rewards.js               hadiah: syarat tonggak, pencapaian bertanggal, penukaran sekali, kode pemain; tidak ada di mode penelitian
+js/scenes.js                adegan cerita: kapan diputar, berkas panel dan suara, baris pemain tanpa suara, baris peristiwa
 js/leaderboard.js           setelan perangkat (mode pameran) dan papan peringkat per perangkat
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
@@ -218,6 +219,7 @@ js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
 js/screens/cats.js          koleksi kucing dan momen penyelamatan
 js/screens/rewards.js       kartu hadiah di peta dan layar hadiah dengan konfirmasi penjual
+js/screens/scene.js         pemutar adegan cerita (subtitle, suara, lewati) dan menu Cerita
 js/screens/content-check.js pemeriksaan konten, karakter, potongan peta, dan aset (halaman tim)
 js/screens/preview.js       pratinjau dan cetak materi untuk validator (halaman tim)
 js/screens/settings.js      pengaturan: mode sesi, reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
@@ -393,6 +395,39 @@ Jika keduanya diisi, keduanya harus tercapai. Tonggak yang belum bisa dicapai de
 "hadiah berikutnya". Judul dan teks hadiah tampil di peta sebelum misi dimainkan, jadi **tidak boleh memuat kotoba
 atau cara baca kotoba** (D-79).
 
+### Tab `cerita` dan `naskah` (opsional, berdua)
+
+Adegan cerita bergaya *visual novel* (D-124): gambar diam, subtitle, dan suara, untuk momen besar saja. Kedua tab
+**boleh tidak ada**; tanpa keduanya, materi tidak punya adegan. Jika salah satu ada, yang lain wajib. Contohnya ada di
+`tools/templates/cerita.csv` dan `naskah.csv`: kerangka pembuka dan penutup Dunia 1 yang isinya masih penanda
+`«BELUM DIISI: …»`. Cara menulisnya ada di [Menulis naskah adegan cerita](#menulis-naskah-adegan-cerita).
+
+Tab `cerita`: satu baris = satu adegan.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `scene_id` | ID permanen adegan: huruf latin, angka, `-`, `_` | `S-D1-pembuka` |
+| `trigger` | Kapan adegan diputar: `world-opening` (sekali, sebelum peta dunia itu pertama kali tampil) atau `world-closing` (sekali, saat dunia itu tamat) | `world-opening` |
+| `world` | Nomor dunia | `1` |
+| `title` | Judul adegan (kartu mulai dan menu Cerita) | `Kota yang sepi` |
+| `sentence_chapter` | *Wajib jika ada kolom `ja` yang terisi.* Bab tertinggi yang dibutuhkan kalimat Jepang adegan ini; `?` jika belum diperiksa (hanya boleh selama draf) | `3` |
+
+Tab `naskah`: satu baris = satu ucapan. Kolom panel (`panel_image`, `panel_note`, `figures`) cukup diisi di baris
+pertama setiap panel.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `scene_id` | Adegan baris ini (dari tab cerita) | `S-D1-pembuka` |
+| `panel_no` | Nomor panel (gambar) di dalam adegan: 1, 2, 3, … | `2` |
+| `line_no` | Nomor ucapan di dalam panel: 1, 2, 3, … | `1` |
+| `panel_image` | Nama berkas gambar panel tanpa `.jpg`; berkasnya `assets/cerita/<scene_id>/<panel_image>.jpg` | `02` |
+| `panel_note` | *Boleh kosong.* Deskripsi panel untuk ilustrator; tampil di kotak pengganti selama gambarnya belum ada | `Pemain dan tokoh lain di depan stasiun, sore hari` |
+| `figures` | *Daftar, boleh kosong.* Tokoh yang ditumpuk kode di atas panel: `pemain@kiri`, `<id tokoh>@kanan`; posisinya `kiri`, `tengah`, atau `kanan` | `pemain@kiri;lawan-bicara@kanan` |
+| `speaker` | `narator`, `pemain`, atau ID tokoh dari `data/characters.json` | `lawan-bicara` |
+| `text` | **Wajib.** Subtitle (selalu tampil). Paling banyak **120 karakter** | |
+| `ja` | *Boleh kosong.* Kalimat Jepang dengan [sintaks furigana](#sintaks-furigana). Paling banyak **40 karakter** | `[駅|えき]はどこですか。` |
+| `audio` | *Boleh kosong.* Nama berkas suara tanpa `.mp3`; berkasnya `assets/suara/<scene_id>/<audio>.mp3` | `02-1` |
+
 ### Tab `percakapan`
 
 Satu baris = **satu ucapan**. Semua baris dengan `conversation_id` yang sama membentuk satu percakapan.
@@ -438,6 +473,31 @@ percakapan uji selesai, sementara materi yang belum lengkap tidak mungkin terbaw
 > sebagai contoh di bagian [Menulis percakapan](#menulis-percakapan).
 
 ---
+
+## Menulis naskah adegan cerita
+
+Untuk penulis naskah (D-124). Bahasa naskah **belum diputuskan tim**: `text` (subtitle) selalu wajib, `ja` boleh
+diisi atau dikosongkan.
+
+- **Satu baris naskah = satu ketukan pemain.** Pemain membaca satu baris, lalu mengetuk untuk lanjut. Pecah kalimat
+  panjang menjadi beberapa baris.
+- **Panjang maksimal:** subtitle `text` **120 karakter** (tiga baris di layar ponsel), kalimat Jepang `ja`
+  **40 karakter** tanpa furigana. Lebih dari itu ditandai pemeriksa.
+- **Adegan yang ringkas:** pembuka ±2 menit (sekitar 8 panel dan 20 baris), penutup ±1,5 menit. Pemain bisa melewati
+  adegan kapan saja.
+- **Baris pemain tidak bersuara.** Pemain memilih Hana atau Kazu, jadi satu rekaman tidak cocok untuk semua karakter:
+  kosongkan kolom `audio` di baris `pemain`. Seperti di percakapan, baris pemain **tidak menyebut nama atau
+  identitasnya sendiri** dan tidak memakai ragam bahasa yang terikat jenis kelamin (D-72, D-97). Jika tim memutuskan
+  merekam satu versi per karakter, tulis `{karakter}` di nama berkas (misalnya `02-2-{karakter}`), lalu rekam
+  `02-2-hana.mp3` dan `02-2-kazu.mp3`.
+- **Narator** (`narator`) tampil tanpa nama, huruf miring.
+- **Jangan mendahului pelajaran (D-79).** Adegan pembuka diputar sebelum misi mana pun, jadi naskahnya tidak boleh
+  memuat kotoba yang diajarkan misi, atau cara bacanya; kanji sasaran misi juga sebaiknya dihindari. Adegan penutup
+  diputar setelah semua misi dunianya tuntas, jadi boleh memakai kotoba dunia itu, tetapi tidak kotoba dunia lain.
+  Pemeriksa materi menandai pelanggarannya.
+- **Kalimat Jepang** (`ja`) di adegan pembuka belum didukung bab mana pun; pemeriksa memperingatkan setiap kalimat Jepang
+  di sana. Isi `sentence_chapter` dengan bab tertinggi yang dibutuhkan.
+- Nama tokoh buatan tim, bukan dari buku (D-62, D-95).
 
 ## Sintaks furigana
 
@@ -1027,7 +1087,8 @@ Daftar lengkap kolom ada di `LOG_COLUMNS` dalam `js/logger.js`. Kolom yang penti
 | `furiganaMode` | Setelan furigana pemain saat baris ditulis: `always`, `after`, atau `never`. |
 | `isCorrect`, `streakAfter` | 1/0, dan streak item setelah dijawab. Kosong untuk baris pengantar dan Produksi. |
 | `responseMs`, `wasHidden` | Waktu jawab; `wasHidden` = 1 jika tab sempat ditinggalkan, jadi waktunya tidak valid. Baris pengantar: lama membaca percakapan. |
-| `introReplays` | Baris pengantar saja: berapa kali percakapan diulang. |
+| `introReplays` | Baris pengantar saja: berapa kali percakapan diulang. Baris adegan: 1 jika diputar ulang dari menu Cerita. |
+| *Baris adegan cerita* | `phase` = `event`, `questStep` = `scene`, `itemId` = `S:<scene_id>`, `prompt` = ID adegan, `answer` = `selesai` atau `dilewati`, `blankLine` = jumlah baris yang sempat tampil, `responseMs` = lama menonton (D-124). |
 | `selfAssessment`, `containsKanji` | Produksi saja: `similar`/`unsure`, dan 1 jika kalimat memuat kanji sasaran quest. |
 
 **Baris pengantar.** Satu baris ditulis saat pemain menekan **Mulai latihan** di akhir percakapan pengantar
@@ -1380,9 +1441,25 @@ berdampingan). Sampel dan streak-nya disimpan di entri 復習 sendiri, sehingga 
 item yang sama, dan salah menjawab di 復習 tidak mengubah penguasaan di quest asalnya. Di log: `levelId` =
 `REV-B06`, `isReview` = 1, `questStep` = `review`, dan `questId` = quest asal item.
 
-**Menu empat pintu**: **Index**, **Kucing**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah layar**. Ada
-di peta, index, koleksi kucing, panduan kana, papan peringkat, dan Pengaturan; **tidak ada** di dalam misi dan 復習
-(D-69). Ikonnya slot aset (lihat [`ASSETS.md`](ASSETS.md)).
+**Menu lima pintu**: **Index**, **Kucing**, **Cerita**, **Panduan kana**, **Pengaturan**, sebagai **bilah di bawah
+layar**, sama persis di semua mode sesi. Ada di peta, index, koleksi kucing, daftar cerita, panduan kana, papan
+peringkat, dan Pengaturan; **tidak ada** di dalam misi, 復習, dan pemutar adegan (D-69). Ikonnya slot aset (lihat
+[`ASSETS.md`](ASSETS.md)).
+
+**Adegan cerita** (D-124). Adegan **pembuka** sebuah dunia diputar sekali, sebelum peta dunia itu pertama kali tampil
+(untuk pemain baru: setelah memilih karakter). Adegan **penutup** diputar sekali saat dunia itu tamat, jadi belum akan
+muncul selama materi Dunia 1 baru sebagian.
+- **Kartu mulai** lebih dulu: suara tidak pernah berbunyi sebelum pemain mengetuk **▶ Mulai**.
+- Satu baris per ketukan, di atas gambar panelnya. **Subtitle selalu tampil.** Suara diputar jika berkasnya sudah
+  terunduh; aplikasi mengunduh tiga baris ke depan dan **tidak pernah menunggu** suara. Berkas yang belum ada berarti
+  baris itu tanpa suara.
+- **⏭ Lewati** kapan saja, dan **🔊 Suara nyala / 🔇 Suara mati**, diingat per pemain; saat suara mati, berkas suara
+  tidak diunduh sama sekali.
+- Panel yang belum digambar tampil sebagai kotak keterangan (nama berkas, ukuran, deskripsi panel).
+- **Menu Cerita** (`#/cerita`): adegan yang sudah ditonton bisa diputar ulang; yang belum, hanya disebut kapan diputar.
+- Adegan sama di semua mode sesi. Setiap pemutaran dicatat sebagai satu baris peristiwa, lewat jalur yang sama dengan
+  peristiwa index, sehingga mengikuti mode sesi: **tidak ada di mode pameran**, hanya setelah persetujuan, dan di mode
+  penelitian hanya dengan kode peserta, dengan `sessionMode` dan `buildId` di setiap baris (D-112, D-115).
 
 **Kucing** (D-121). **Setiap misi yang tuntas membebaskan satu kucing**; kucing tidak bergantung pada XP atau level, dan
 kucing yang bebas dihitung dari misi yang tuntas (tidak disimpan sebagai angka tersendiri). Kucing digambar dari
@@ -1515,11 +1592,12 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini (98 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+Uji ini (103 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
 (sesi quest, pemantapan, kunci wilayah, 復習), dunia (dibuka bebas, urutan per dunia), materi yang tidak boleh tampil
 sebelum diperkenalkan, peta (potongan, posisi lokasi), XP, eksplorasi per dunia dan papan peringkat, kucing (lapisan,
 kombinasi kembar, nama kucing menurut D-79, kolom CSV lama), hadiah (tonggak dari data, penukaran sekali, tidak ada di
-mode penelitian, tab opsional), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
+mode penelitian, tab opsional), adegan cerita (kapan diputar, baris pemain tanpa suara, D-79 pada naskah, panjang baris,
+pencatatan per mode sesi), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
 penelitian), kontras palet warna, kontrak aset, log (penyimpanan penuh, kolom, antrean pengiriman, CSV, `buildId`),
 alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), **isi terbitan Netlify** (hanya enam butir
 situs dan `build.json`), **sintaks setiap skrip**, dan bahwa tidak ada materi bahasa Jepang yang ditulis langsung di

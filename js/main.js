@@ -22,7 +22,9 @@ import { issueList } from "./screens/common.js";
 import { contentCheckScreen } from "./screens/content-check.js";
 import { previewScreen } from "./screens/preview.js";
 import { questScreen, reviewScreen } from "./screens/quest.js";
-import { mapScreen } from "./screens/map.js";
+import { mapScreen, shownWorld } from "./screens/map.js";
+import { sceneMenuScreen, sceneScreen } from "./screens/scene.js";
+import { dueScene } from "./scenes.js";
 import { indexScreen, kanjiDetailScreen, kanjiScreen, kotobaScreen } from "./screens/index.js";
 import { leaderboardScreen } from "./screens/leaderboard.js";
 import { kanaScreen, loadKana } from "./screens/kana.js";
@@ -73,8 +75,10 @@ const app = {
 const ROUTES = [
   // Every new player sees the welcome screen with the disclaimer, then picks a character (D-71, D-102).
   { pattern: /^#?\/?$/, screen: () => firstScreen() },
-  { pattern: /^#\/dunia\/(\d+)$/, screen: (n) => mapScreen(app, { world: Number(n) }) },
-  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
+  { pattern: /^#\/dunia\/(\d+)$/, screen: (n) => mapOrScene({ world: Number(n) }) },
+  { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapOrScene({ sheetRegion: decodeURIComponent(id) }) },
+  { pattern: /^#\/cerita$/, screen: () => sceneMenuScreen(app) },
+  { pattern: /^#\/cerita\/([^/]+)$/, screen: (id) => replayScene(decodeURIComponent(id)) },
   { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
   { pattern: /^#\/kucing$/, screen: () => catsScreen(app) },
   // In research mode there are no rewards: the address answers like any unknown page (D-123).
@@ -105,7 +109,22 @@ function firstScreen() {
   if (gate) return gate;
   if (!app.progress.welcomeSeen) return welcomeScreen(app, navigate);
   if (!app.progress.character && app.characters?.players?.length) return characterScreen(app, navigate);
-  return mapScreen(app);
+  return mapOrScene();
+}
+
+/** The map, unless a story scene of the world it shows is due first (D-124). */
+function mapOrScene(options = {}) {
+  const world = shownWorld(app, options.sheetRegion ?? null, options.world ?? null);
+  const scene = dueScene(app.model, app.content.scenes, app.progress, world);
+  if (scene) return sceneScreen(app, scene, { onDone: () => navigate() });
+  return mapScreen(app, options);
+}
+
+/** A seen scene from the Cerita menu; one not seen yet is not offered. */
+function replayScene(id) {
+  const scene = (app.content.scenes ?? []).find((s) => s.id === id);
+  if (!scene || !app.progress.scenesSeen[scene.id]) return notFoundScreen();
+  return sceneScreen(app, scene, { replay: true, onDone: () => (location.hash = "#/cerita") });
 }
 
 function notFoundScreen() {
@@ -149,7 +168,7 @@ function render() {
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
   // Blue page for the screens already in the blue palette (D-118); the rest follow in stage 6.
-  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen, .cats-screen, .rewards-screen")));
+  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen, .cats-screen, .rewards-screen, .scenes-screen, .scene-screen")));
 }
 
 function refreshBadge() {

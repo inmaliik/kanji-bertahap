@@ -18,8 +18,8 @@ titik berhenti untuk ditinjau:
 | 1 | Deploy otomatis ke Netlify, `buildId` di log | ✓ Selesai |
 | 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai |
 | 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | ✓ Selesai; templat untuk tim aset di `templat/` |
-| 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | ✓ Selesai, menunggu tinjauan; tonggak dan teks hadiah menunggu tim |
-| 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | Belum |
+| 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | ✓ Selesai; tonggak dan teks hadiah menunggu tim |
+| 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | ✓ Selesai, menunggu tinjauan; naskah, panel, dan suara menunggu tim |
 | 6 | Pemolesan antarmuka dari referensi tim, warna biru di semua layar | Belum |
 
 Di samping itu, materi dan aset dari tim masih ditunggu. Materi bab 1–5 dari dokumen tim sudah diimpor ke format
@@ -36,7 +36,7 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
 ## Saya penulis materi
 
 1. Baca README: [Alur kerja tim konten](README.md#alur-kerja-tim-konten), lalu
-   [Kolom spreadsheet](README.md#kolom-spreadsheet) (lima tab), [Sintaks furigana](README.md#sintaks-furigana), dan
+   [Kolom spreadsheet](README.md#kolom-spreadsheet) (lima tab wajib, ditambah tab opsional `hadiah`, `cerita`, dan `naskah`), [Sintaks furigana](README.md#sintaks-furigana), dan
    [Aturan `highlight` dan `blank`](README.md#aturan-highlight-dan-blank).
 2. Sebelum menulis percakapan, **wajib** baca [Menulis percakapan](README.md#menulis-percakapan),
    [Menulis pengecoh](README.md#menulis-pengecoh), dan
@@ -49,6 +49,15 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
    `https://kanjikucing.netlify.app/tools/convert.html`. Tidak perlu memasang apa pun.
 5. Setiap nomor bab dan jumlah guratan yang Anda periksa dicentang di
    [Yang harus diverifikasi terhadap buku](README.md#yang-harus-diverifikasi-terhadap-buku).
+
+## Saya penulis naskah atau pengisi suara adegan cerita
+
+1. Penulis naskah: baca README [Tab `cerita` dan `naskah`](README.md#tab-cerita-dan-naskah-opsional-berdua) dan
+   [Menulis naskah adegan cerita](README.md#menulis-naskah-adegan-cerita): satu baris per ketukan, subtitle paling
+   banyak 120 karakter, baris pemain tanpa suara, dan tidak mendahului pelajaran (D-79). Mulai dari
+   `tools/templates/cerita.csv` dan `naskah.csv`.
+2. Pengisi suara dan ilustrator panel: baca [`ASSETS.md`, bagian Adegan cerita](ASSETS.md#adegan-cerita-assetscerita-dan-assetssuara):
+   format MP3 dan JPEG, batas ukuran, dan cara menyerahkan berkas.
 
 ## Saya pembuat aset (menggambar peta, ikon, karakter, kucing)
 

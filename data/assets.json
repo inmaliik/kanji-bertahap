@@ -58,6 +58,17 @@
       "placeholderSha256": "338518b49d981d15767786bd06f8e5ab35e35ea74741a1180a79e54951ec8eb9"
     },
     {
+      "id": "menu-cerita",
+      "path": "assets/ui/menu-cerita.png",
+      "format": "PNG",
+      "width": 192,
+      "height": 192,
+      "transparent": true,
+      "maxKB": 30,
+      "screen": "Menu: tombol Cerita (adegan cerita)",
+      "placeholderSha256": "4cb3b1b90ac8465b89ec53adfa4f3c04eee2b8793501c41d784cf394e4522d85"
+    },
+    {
       "id": "menu-kana",
       "path": "assets/ui/menu-kana.png",
       "format": "PNG",
@@ -144,6 +155,17 @@
       "transparent": true,
       "maxKB": 20,
       "screen": "Kucing: aksesori; titik tengah kanvas ditaruh di titik jangkar tubuh (kepala atau leher). Didaftar di data/layers.json",
+      "optional": true
+    },
+    {
+      "id": "panel-cerita",
+      "pattern": "assets/cerita/{scenePanel}.jpg",
+      "format": "JPEG",
+      "width": 1080,
+      "height": 1440,
+      "transparent": false,
+      "maxKB": 150,
+      "screen": "Adegan cerita: satu gambar per panel, assets/cerita/<ID adegan>/<panel>.jpg. Didaftar di tab naskah (panel_image)",
       "optional": true
     }
   ]

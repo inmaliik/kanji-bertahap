@@ -1477,6 +1477,44 @@ beserta teksnya membuat janji kepada pemain tidak berubah diam-diam. Insentif da
 alasannya dengan papan peringkat (D-106). **Alternatif ditolak:** Kode diskon di aplikasi (tidak bisa dirahasiakan di
 situs statis); menyimpan hadiah di setelan perangkat (hadiah milik pemain, bukan perangkat); hadiah sebagai pintu menu
 (menu harus sama di semua mode, D-116).
+
+### D-124 · Tahap 5: adegan cerita, suara yang tidak pernah ditunggu, pencatatan per mode sesi
+**Tanggal:** 2026-10-14. **Keputusan:** Menerapkan bagian adegan cerita dari D-116.
+- **Data:** tab spreadsheet `cerita` (satu baris per adegan: ID, pemicu, dunia, judul, bab kalimat Jepang) dan `naskah`
+  (satu baris per ucapan: panel, nomor baris, gambar panel, deskripsi panel, tokoh di panel, pembicara, `text`, `ja`,
+  `audio`). Keduanya **opsional berdua**; satu tanpa yang lain adalah masalah CSV. Templat berisi kerangka pembuka dan
+  penutup Dunia 1 dengan penanda draf; isi naskah ditulis tim.
+- **Pemicu dari daftar tetap:** `world-opening` (sekali, sebelum peta dunia itu pertama kali tampil; pemain baru
+  melihatnya setelah memilih karakter) dan `world-closing` (sekali, saat dunia tamat, D-116). Adegan baru dengan pemicu
+  yang ada cukup lewat data; pemicu jenis baru butuh sedikit kode. Satu adegan per pemicu per dunia.
+- **Pemutar:** kartu mulai lebih dulu, karena suara tidak boleh berbunyi sebelum ketukan (Web Audio dibuka oleh ketukan
+  itu). Satu baris per ketukan di atas panelnya; **subtitle selalu tampil**; `ja` mengikuti setelan furigana seperti
+  percakapan pengantar. Suara diunduh dan didekode tiga baris ke depan dan **hanya diputar jika sudah siap**: adegan tidak
+  pernah menunggu, dan berkas yang tidak ada berarti baris tanpa suara. Tombol **Lewati** dan **Suara nyala/mati**
+  (diingat per pemain, `progress.settings.sceneVoice`; saat mati, tidak ada unduhan suara). Panel yang belum digambar
+  tampil sebagai kotak keterangan; karakter pemain ditumpuk kode dari gambar karakternya.
+- **Baris pemain tanpa suara** (D-72, D-97): kolom `audio` di baris pemain diabaikan dan diperingatkan, kecuali nama
+  berkas memuat `{karakter}` (satu rekaman per karakter).
+- **Validator:** D-79 menurut saat adegan diputar. Sebelum pembuka belum ada misi yang pasti diperkenalkan, sesudah
+  penutup semua misi dunianya; dunia lain tidak pernah pasti karena dunia dibuka bebas. Kotoba atau cara bacanya di
+  judul, `text`, atau `ja`: error; kanji sasaran: peringatan. Kalimat Jepang tanpa `sentence_chapter`: penanda draf;
+  di atas bab pemain: peringatan. Panjang baris: `text` paling banyak 120 karakter, `ja` 40 (peringatan).
+- **Menu Cerita**, pintu kelima (D-116): adegan yang sudah ditonton bisa diputar ulang; yang belum hanya disebut
+  kapan diputar, tanpa judul. Alamat putar ulang untuk adegan yang belum ditonton menjawab seperti halaman yang tidak ada.
+- **Pencatatan:** satu baris peristiwa per pemutaran (`questStep` = `scene`, `answer` = `selesai` atau `dilewati`,
+  `blankLine` = baris yang sempat tampil, `introReplays` = 1 untuk putar ulang, `responseMs` = lama menonton). Baris
+  ditulis lewat `recordEvent`, jalur yang sama dengan pembukaan index, jadi mengikuti D-112 tanpa aturan tambahan: tidak
+  ada di mode pameran, hanya setelah persetujuan, di mode penelitian hanya dengan kode peserta, dan setiap baris membawa
+  `sessionMode` dan `buildId`. Uji `tests/scenes.test.mjs` memeriksanya per mode. Tidak ada kolom log baru.
+- **Aset:** panel JPEG 1080 × 1440 maks 150 KB; suara MP3 mono 64 kbps, ≤ 8 detik, maks 64 KB; ±2,5 MB per adegan.
+  Halaman pemeriksaan konten menghitung berkas yang ada dan ukurannya.
+- Adegan sama di semua mode sesi, termasuk penelitian: adegan bagian dari permainan yang diuji.
+
+**Alasan:** Jaringan pameran dan ponsel kelas bawah tidak boleh membuat adegan tertahan; subtitle yang selalu ada membuat
+suara benar-benar opsional, sehingga berkas suara bisa diserahkan bertahap. Memakai jalur peristiwa yang sudah ada
+membuat aturan mode sesi berlaku tanpa kemungkinan terlewat. **Alternatif ditolak:** Elemen `<audio>` per baris (di
+iPhone tidak bisa diputar tanpa ketukan per baris); menunggu suara selesai diunduh sebelum menampilkan baris (adegan
+tertahan di jaringan lambat); kolom log baru untuk adegan (kolom yang ada cukup, dengan arti yang didokumentasikan).
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal

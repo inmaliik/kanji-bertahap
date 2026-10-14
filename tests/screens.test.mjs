@@ -55,7 +55,9 @@ const passedEntry = { status: "passed", attempts: 1, introDone: true, learningDo
 /** Progress states, built with the app's own modules. */
 function progressStates(content) {
   const model = buildModel(content);
-  const base = () => Object.assign(S.createProgress(), { welcomeSeen: true, character: "hana", consent: { choice: "declined", version: "placeholder-0", at: now } });
+  // The opening scene of world 1 is seen, so the map shows (D-124); the new player sees it first.
+  const base = () =>
+    Object.assign(S.createProgress(), { welcomeSeen: true, character: "hana", consent: { choice: "declined", version: "placeholder-0", at: now }, scenesSeen: { "S-D1-pembuka": now } });
   const pass = (progress, questId) => {
     for (const item of buildQuestItems(model, model.quests.get(questId))) progress.items[item.id] = 2;
     progress.quests[questId] = { ...passedEntry };
@@ -78,6 +80,7 @@ const ALL_ROUTES = [
   "#/", "#/region/B06", "#/kucing", "#/quest/B06/1", "#/quest/B06/2", "#/review/B06", "#/index", "#/index/kanji/食",
   "#/index/kanji/食/detail", "#/index/kotoba/0", "#/kana", "#/settings", "#/about", "#/consent", "#/peringkat",
   "#/dunia/1", "#/dunia/2", "#/content-check", "#/preview/all", "#/preview/B06", "#/tidak-ada", "#/hadiah",
+  "#/cerita", "#/cerita/S-D1-pembuka", "#/cerita/S-D1-penutup",
 ];
 
 /** What research mode may never show: rewards are not shown, not mentioned, not earned (D-123). */
@@ -157,6 +160,7 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   const leaks = [];
   const visited = [];
   const rewardShown = [];
+  const sceneFlow = [];
   const rewardHidden = [];
 
   const waitForScreen = async () => {
@@ -211,6 +215,21 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
     await evaluate(`document.querySelector(".character-card")?.click()`);
     await click("Mulai");
     await sleep(150);
+    // The opening scene of world 1 plays before the first map (D-124): start card, every line, then the map.
+    sceneFlow.push(await evaluate(`Boolean(document.querySelector(".scene__start"))`));
+    await check("baru adegan pembuka (kartu mulai)");
+    await click("▶ Mulai");
+    for (let i = 0; i < 20 && (await evaluate(`Boolean(document.querySelector(".scene__next"))`)); i++) {
+      await sleep(80);
+      await check(`baru adegan pembuka baris ${i + 1}`);
+      if (i === 1) {
+        await click("🔊 Suara nyala");
+        await check("baru adegan pembuka suara mati");
+      }
+      await evaluate(`document.querySelector(".scene__next").click()`);
+    }
+    await sleep(150);
+    sceneFlow.push(await evaluate(`Boolean(document.querySelector(".map-screen"))`));
     await visit("baru", ALL_ROUTES);
 
     // Playing: a free cat without pattern or accessory (its rescue moment), a mission without test conversations.
@@ -265,6 +284,7 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   assert.deepEqual(errors, [], "no uncaught errors in the browser");
   assert.deepEqual(leaks, [], "screens showing an empty value as text");
   assert.deepEqual(rewardShown, [true], "outside research mode the earned reward is on the map");
+  assert.deepEqual(sceneFlow, [true, true], "the opening scene plays after character selection, then the map shows");
   assert.deepEqual(researchLeaks, [], "research mode never mentions rewards");
   assert.deepEqual(rewardHidden, ["Halaman tidak ditemukan"], "in research mode #/hadiah answers like an unknown page");
 });
