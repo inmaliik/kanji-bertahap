@@ -55,7 +55,7 @@ test("voice files: the player's lines have none, unless the name holds {karakter
   assert.equal(SC.voicePath(scene, { ...player, audio: "02-2" }, "hana"), null, "a single recording cannot fit every player character");
   assert.equal(SC.voicePath(scene, { ...player, audio: "02-2-{karakter}" }, "kazu"), "assets/suara/S-D1-pembuka/02-2-kazu.mp3");
   assert.equal(SC.voicePath(scene, { ...narrator, audio: null }, "hana"), null);
-  assert.equal(SC.panelPath(scene, scene.panels[1]), "assets/cerita/S-D1-pembuka/02.jpg");
+  assert.equal(SC.panelPath(scene, scene.panels[1]), "assets/cerita/S-D1-pembuka/02.png");
 });
 
 /** An app context for recordEvent: a player in `mode` with consent and, for research, a participant code. */

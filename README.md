@@ -230,6 +230,8 @@ tools/convert.html          pemeriksa dan konverter CSV → content.json di brow
 tools/csv-to-json.mjs       konversi lima CSV → data/content.json dari terminal
 tools/validate-content.mjs  pemeriksa konten dari terminal
 tools/lib/print-issues.mjs  tampilan error/peringatan di terminal
+tools/ekspor-halaman.mjs    ekspor halaman adegan dari tim: PNG abu-abu 16 tingkat, ukuran penuh (D-125)
+tools/lib/png.mjs           baca dan tulis PNG tanpa pustaka luar, untuk ekspor halaman
 tools/templates/            contoh CSV, satu per tab (wilayah, kanji, kotoba, quest, percakapan)
 tools/apps-script-log.gs    skrip Google Apps Script penerima log (siap tempel)
 
@@ -422,7 +424,7 @@ dan `panel_text` datang belakangan; tab naskah lama tanpa kedua kolom itu tetap 
 | `scene_id` | Adegan baris ini (dari tab cerita) | `S-D1-pembuka` |
 | `panel_no` | Nomor panel (gambar) di dalam adegan: 1, 2, 3, … | `2` |
 | `line_no` | Nomor ucapan di dalam panel: 1, 2, 3, … | `1` |
-| `panel_image` | Nama berkas gambar halaman tanpa `.jpg`; berkasnya `assets/cerita/<scene_id>/<panel_image>.jpg`. Beberapa panel boleh memakai halaman yang sama | `05` |
+| `panel_image` | Nama berkas gambar halaman tanpa `.png`; berkasnya `assets/cerita/<scene_id>/<panel_image>.png`. Beberapa panel boleh memakai halaman yang sama | `05` |
 | `panel_box` | *Boleh kosong (= halaman utuh).* Kotak panel di halaman: `x y lebar tinggi` dalam **persen** halaman, dipisah spasi, diukur dari pojok kiri atas. Pemutar zoom ke kotak ini | `69 25 26.5 49.5` |
 | `panel_text` | **Transkrip teks yang tergambar** di halaman ini (balon, efek suara, tulisan tangan), persis seperti tergambar, dipisah ` / `; `-` jika tidak ada teks. Cukup sekali per halaman. Pemeriksa membaca transkrip ini, bukan gambarnya | `Imutnya… / meow~` |
 | `panel_note` | *Boleh kosong.* Deskripsi panel untuk ilustrator; tampil di kotak pengganti selama gambarnya belum ada | `Pemain dan tokoh lain di depan stasiun, sore hari` |

@@ -96,7 +96,7 @@ Semua rincian ada di [`README.md`](README.md). Bagian yang perlu Anda baca berga
    satu panel naskah per kotak (`panel_box`), dan setiap teks yang tergambar ditranskripsi di `panel_text` (D-125).
    Mulai dari `tools/templates/cerita.csv` dan `naskah.csv`.
 2. Pengisi suara dan ilustrator panel: baca [`ASSETS.md`, bagian Adegan cerita](ASSETS.md#adegan-cerita-assetscerita-dan-assetssuara):
-   format MP3 dan JPEG, halaman mendatar 4 : 3 yang boleh berisi beberapa panel, batas ukuran, dan cara menyerahkan berkas.
+   format MP3 dan PNG, halaman mendatar 4 : 3 yang boleh berisi beberapa panel, batas ukuran, dan cara menyerahkan berkas.
 
 ## Saya pembuat aset (menggambar peta, ikon, karakter, kucing)
 

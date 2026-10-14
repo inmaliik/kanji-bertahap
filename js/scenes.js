@@ -29,8 +29,8 @@ export const NARRATOR = "narrator";
 export const CHARACTER_SLOT = "{karakter}";
 export const FIGURE_PLACES = Object.freeze(["kiri", "tengah", "kanan"]);
 
-/** assets/cerita/<scene>/<panel image>.jpg */
-export const panelPath = (scene, panel) => `assets/cerita/${scene.id}/${panel.image}.jpg`;
+/** assets/cerita/<scene>/<page image>.png (D-125: line art stays sharp in PNG) */
+export const panelPath = (scene, panel) => `assets/cerita/${scene.id}/${panel.image}.png`;
 
 /**
  * The voice file of a line, or null: no file named, or a player's line

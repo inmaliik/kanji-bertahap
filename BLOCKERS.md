@@ -51,7 +51,7 @@ diperingatkan selama draf dan menjadi error saat rilis.
 
 ### 2c. Naskah, panel, dan suara adegan cerita — **Sebagian**
 Pemutar adegan cerita (D-124) sudah dibangun, dan memutar **9 halaman prolog Dunia 1 dari tim** (D-125,
-`assets/cerita/S-D1-pembuka/01.jpg` … `09.jpg`). Yang masih ditunggu dari tim:
+`assets/cerita/S-D1-pembuka/01.png` … `09.png`). Yang masih ditunggu dari tim:
 - **Naskah** pembuka dan penutup Dunia 1: masih penanda `«BELUM DIISI: …»` di `tools/templates/naskah.csv`; bahasa
   naskah (subtitle Indonesia, kalimat Jepang, atau keduanya) belum diputuskan.
 - **Transkrip teks yang tergambar** di setiap halaman (kolom `panel_text`), karena pemeriksa tidak bisa membaca gambar.

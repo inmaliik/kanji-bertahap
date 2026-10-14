@@ -1506,7 +1506,7 @@ situs statis); menyimpan hadiah di setelan perangkat (hadiah milik pemain, bukan
   ditulis lewat `recordEvent`, jalur yang sama dengan pembukaan index, jadi mengikuti D-112 tanpa aturan tambahan: tidak
   ada di mode pameran, hanya setelah persetujuan, di mode penelitian hanya dengan kode peserta, dan setiap baris membawa
   `sessionMode` dan `buildId`. Uji `tests/scenes.test.mjs` memeriksanya per mode. Tidak ada kolom log baru.
-- **Aset:** panel JPEG 1080 × 1440 maks 150 KB (diubah oleh D-125: halaman mendatar 1600 × 1200); suara MP3 mono 64 kbps, ≤ 8 detik, maks 64 KB; ±2,5 MB per adegan.
+- **Aset:** panel JPEG 1080 × 1440 maks 150 KB (diubah oleh D-125: halaman mendatar PNG 2048 × 1536); suara MP3 mono 64 kbps, ≤ 8 detik, maks 64 KB; ±2,5 MB per adegan.
   Halaman pemeriksaan konten menghitung berkas yang ada dan ukurannya.
 - Adegan sama di semua mode sesi, termasuk penelitian: adegan bagian dari permainan yang diuji.
 
@@ -1534,8 +1534,11 @@ panel; sebagian balon berisi teks tulisan tangan, sebagian kosong.
   error, kanji sasaran: peringatan). Halaman tanpa transkrip: penanda draf (`SCENE_DRAWN_TEXT_MISSING`, error saat
   rilis). Subtitle memakai teks dari transkrip: teks gambar yang tidak muncul di subtitle halaman itu diperingatkan
   (`SCENE_DRAWN_TEXT_NOT_SUBTITLED`).
-- **Aset:** berkas mentah tetap di `sumber/` (tidak masuk repo); yang masuk `assets/cerita/` adalah JPEG 1600 × 1200
-  abu-abu kualitas 60 (69–144 KB per halaman, 971 KB untuk prolog). Slot `panel-cerita` menjadi 1600 × 1200 mendatar.
+- **Aset:** berkas mentah tetap di `sumber/` (tidak masuk repo); yang masuk `assets/cerita/` adalah **PNG abu-abu
+  16 tingkat, ukuran penuh 2048 × 1536** (`tools/ekspor-halaman.mjs`; 26–99 KB per halaman, 576 KB untuk prolog). Ekspor
+  pertama memakai JPEG 1600 × 1200 (971 KB) dan garisnya kabur saat di-zoom; perbandingan format ada di ASSETS.md.
+  **Anggaran per adegan (±2,5 MB), bukan per halaman**; semua halaman mulai diunduh saat kartu mulai tampil.
+  Slot `panel-cerita` menjadi PNG 2048 × 1536 mendatar. Kesembilan JPEG pertama tetap ada di riwayat git (±1 MB, D-113).
   Halaman yang dipakai beberapa panel dihitung sekali di pemeriksaan konten.
 - Kolom baru opsional: tab naskah lama tanpa kedua kolom itu tetap terbaca. Templat `S-D1-pembuka` memakai 9 halaman tim
   (halaman 05: utuh, lalu kanan, tengah, kiri, mengikuti keterangan tim "dibaca dari kanan ke kiri"); isi naskah dan

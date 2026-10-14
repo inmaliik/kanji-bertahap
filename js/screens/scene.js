@@ -89,7 +89,7 @@ const placeholder = (path, panel) =>
     { class: "scene__placeholder" },
     h("strong", {}, "Panel belum digambar"),
     h("span", {}, path),
-    h("span", {}, "JPEG 1600 × 1200 (mendatar), maks 150 KB"),
+    h("span", {}, "PNG 2048 × 1536 (mendatar), abu-abu 16 tingkat"),
     panel.note ? h("span", { class: "scene__note" }, panel.note) : null
   );
 
@@ -184,6 +184,9 @@ export function sceneScreen(app, scene, { replay = false, onDone }) {
   let index = -1;
   let startedAt = 0;
   let ended = false;
+  // Every page starts downloading with the start card, so no page waits later (D-125:
+  // the budget is per scene, ±2.5 MB, and a scene plays once).
+  for (const path of new Set(scene.panels.map((panel) => panelPath(scene, panel)))) new Image().src = path;
 
   const voiceOf = (i) => (i >= 0 && i < steps.length && steps[i].line ? voicePath(scene, steps[i].line, app.progress.character) : null);
   const prefetch = () => {

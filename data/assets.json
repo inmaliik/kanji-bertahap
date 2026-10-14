@@ -159,13 +159,13 @@
     },
     {
       "id": "panel-cerita",
-      "pattern": "assets/cerita/{scenePanel}.jpg",
-      "format": "JPEG",
-      "width": 1600,
-      "height": 1200,
+      "pattern": "assets/cerita/{scenePanel}.png",
+      "format": "PNG",
+      "width": 2048,
+      "height": 1536,
       "transparent": false,
-      "maxKB": 150,
-      "screen": "Adegan cerita: satu gambar per halaman (mendatar 4:3, boleh berisi beberapa panel), assets/cerita/<ID adegan>/<halaman>.jpg. Didaftar di tab naskah (panel_image)",
+      "maxKB": 250,
+      "screen": "Adegan cerita: satu gambar per halaman (mendatar 4:3, boleh berisi beberapa panel), assets/cerita/<ID adegan>/<halaman>.png. Didaftar di tab naskah (panel_image). Batas sebenarnya per adegan: ±2,5 MB",
       "optional": true
     }
   ]

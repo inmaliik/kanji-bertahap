@@ -1530,7 +1530,7 @@ function checkScenes(data, kotoba, root, report) {
       }
       checkKeys(panel, PANEL_KEYS, pctx, report);
       const image = requireString(panel, "image", pctx, report);
-      if (image !== undefined && !FILE_ID.test(image)) report.error(pctx.field("image"), "INVALID_SCENE_FILE", `Nama berkas gambar panel tanpa .jpg: huruf latin, angka, "-", "_". Ditemukan "${image}".`);
+      if (image !== undefined && !FILE_ID.test(image)) report.error(pctx.field("image"), "INVALID_SCENE_FILE", `Nama berkas gambar halaman tanpa .png: huruf latin, angka, "-", "_". Ditemukan "${image}".`);
       optionalString(panel, "note", pctx, report);
       if (panel.box !== undefined && panel.box !== null) {
         const b = panel.box;
