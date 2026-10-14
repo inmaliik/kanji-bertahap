@@ -17,8 +17,8 @@ titik berhenti untuk ditinjau:
 |---|---|---|
 | 1 | Deploy otomatis ke Netlify, `buildId` di log | ✓ Selesai |
 | 2 | Dunia di atas wilayah, peta per dunia, "Misi", warna dominan biru di peta | ✓ Selesai |
-| 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | ✓ Selesai, menunggu tinjauan; templat untuk tim aset di `templat/` |
-| 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | Belum |
+| 3 | Kucing: satu kucing per misi tuntas, koleksi kucing | ✓ Selesai; templat untuk tim aset di `templat/` |
+| 4 | Hadiah diskon kartu fisik (tidak ada di mode penelitian) | ✓ Selesai, menunggu tinjauan; tonggak dan teks hadiah menunggu tim |
 | 5 | Adegan cerita berdubbing (pembuka dan penutup dunia) | Belum |
 | 6 | Pemolesan antarmuka dari referensi tim, warna biru di semua layar | Belum |
 

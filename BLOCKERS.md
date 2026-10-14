@@ -44,6 +44,11 @@ Setiap misi butuh satu kucing: nama buatan tim dan susunan lapisannya (kolom `ca
 memperingatkannya selama draf dan menolaknya saat rilis. Nama kucing tidak boleh memuat kotoba misi lain di bab yang
 sama atau sesudahnya (D-79).
 
+### 2b. Tonggak dan teks hadiah — **Terbuka**
+Hadiah kartu fisik (D-123) sudah dibangun dengan tonggak bawaan B01–B05, tetapi judul dan teks hadiahnya (misalnya besaran
+diskon) masih penanda `«BELUM DIISI: …»`. Tim memutuskan tonggak dan teksnya di tab `hadiah` spreadsheet. Penanda itu
+diperingatkan selama draf dan menjadi error saat rilis.
+
 ### 3. Percakapan uji untuk semua quest — **Terbuka**
 Tidak ada di dokumen tim, dan pengembang tidak menulisnya (semua percakapan ditulis tim). Selama draf, quest bisa
 dimainkan tanpa langkah uji dan bertanda belum lengkap (D-92). Setiap quest butuh minimal satu percakapan uji dengan

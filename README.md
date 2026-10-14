@@ -180,6 +180,7 @@ js/layers.js                lapisan kucing (data/layers.json): pemeriksaan, juml
 js/cat-placeholders.js      gambar pengganti lapisan kucing buatan kode, sampai gambar tim datang
 js/cat-figure.js            penumpuk lapisan: isi bertopeng berwarna, corak, garis, aksesori, atau siluet
 js/cats.js                  kucing per misi: mana yang bebas, momen penyelamatan, ID lapisan yang tidak dikenal
+js/rewards.js               hadiah: syarat tonggak, pencapaian bertanggal, penukaran sekali, kode pemain; tidak ada di mode penelitian
 js/leaderboard.js           setelan perangkat (mode pameran) dan papan peringkat per perangkat
 js/logger.js                pencatatan jawaban ke localStorage, konversi CSV
 js/log-sender.js            pengiriman log ke Google Apps Script
@@ -216,6 +217,7 @@ js/screens/menu.js          menu empat pintu di luar misi (Index, Kucing, Pandua
 js/screens/character.js     pemilihan karakter pemain
 js/screens/leaderboard.js   papan peringkat mode pameran
 js/screens/cats.js          koleksi kucing dan momen penyelamatan
+js/screens/rewards.js       kartu hadiah di peta dan layar hadiah dengan konfirmasi penjual
 js/screens/content-check.js pemeriksaan konten, karakter, potongan peta, dan aset (halaman tim)
 js/screens/preview.js       pratinjau dan cetak materi untuk validator (halaman tim)
 js/screens/settings.js      pengaturan: mode sesi, reset, persetujuan, kode peserta, kapasitas, pengiriman, ekspor, hapus log
@@ -371,6 +373,25 @@ Kelima kolom kucing (D-121) **boleh tidak ada** di baris judul spreadsheet lama;
 (peringatan selama draf, error saat rilis). Dua misi dengan susunan lapisan yang persis sama diperingatkan, karena setiap
 misi sebaiknya membebaskan kucing yang berbeda. ID lapisan yang tidak ada di `data/layers.json` adalah error di pemeriksa
 materi. Daftar lapisan dan cara menggambarnya ada di [`ASSETS.md`](ASSETS.md), bagian Kucing.
+
+### Tab `hadiah` (opsional)
+
+Satu baris = satu hadiah untuk kartu fisik tim (D-123). Tab ini **boleh tidak ada**: tanpa tab ini, materi tidak punya
+hadiah. Contohnya ada di `tools/templates/hadiah.csv`: tonggak bawaan **B01–B05**, dengan judul dan teks yang masih
+penanda `«BELUM DIISI: …»` sampai tim memutuskannya.
+
+| Kolom | Isi | Contoh |
+|---|---|---|
+| `reward_id` | ID permanen hadiah: huruf latin, angka, `-`, `_` | `H-B01-B05` |
+| `title` | Judul hadiah di kartu peta dan layar hadiah | `Diskon kartu kanji` |
+| `text` | Isi hadiah yang ditunjukkan ke penjual, misalnya besaran diskon. Teks yang memuat koma diberi tanda kutip (Google Sheets melakukannya otomatis). | `Potongan 20% untuk satu set kartu` |
+| `requires_chapters` | *Daftar, boleh kosong jika `requires_world` diisi.* Bab yang wilayahnya harus **diselesaikan** (semua misi dan 復習) | `1;2;3;4;5` |
+| `requires_world` | *Boleh kosong.* Nomor dunia yang harus **ditamatkan** (semua bab dalam rentangnya ada di materi dan tuntas) | `1` |
+
+Jika keduanya diisi, keduanya harus tercapai. Tonggak yang belum bisa dicapai dengan materi sekarang (misalnya
+"tamatkan Dunia 1" selama materinya baru bab 1–5) memunculkan peringatan, dan tidak ditampilkan di peta sebagai
+"hadiah berikutnya". Judul dan teks hadiah tampil di peta sebelum misi dimainkan, jadi **tidak boleh memuat kotoba
+atau cara baca kotoba** (D-79).
 
 ### Tab `percakapan`
 
@@ -1225,7 +1246,9 @@ penelitian di perangkat lain (lihat [Prosedur uji coba penelitian](#prosedur-uji
 
 ### Setiap kali pengunjung berganti
 
-1. Pengaturan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus.
+1. Pengaturan → **Reset progres** → **Ya, reset progres**. Papan peringkat **tidak** ikut terhapus. Jika Pengaturan
+   memperingatkan **hadiah yang belum ditukar**, tanyakan dulu kepada pengunjung apakah ingin menukarnya; reset
+   menghapusnya.
 2. Tekan **‹ Peta**. Layar **sambutan** muncul (berisi penafian materi); serahkan perangkat ke pengunjung.
 3. Pengunjung menekan tombol lanjut, **memilih karakter** (Hana atau Kazu), lalu sampai di peta. Peta menggulir
    sendiri ke lokasi yang sedang dikerjakan. Quest langsung bisa dimainkan; tidak ada layar persetujuan.
@@ -1375,6 +1398,22 @@ memakai gambar pengganti buatan kode.
 - Kucing sama di semua mode sesi, termasuk mode penelitian: kucing bagian dari produk yang diuji, bukan hadiah dari
   luar (bandingkan hadiah di tahap 4).
 
+**Hadiah kartu fisik** (D-123). Pemain yang mencapai tonggak dari tab `hadiah` mendapat hadiah, misalnya potongan
+harga kartu. Hadiah yang diraih **disimpan beserta tanggal, judul, dan teksnya saat itu**, sehingga tetap diraih walaupun
+materi bertambah atau tonggaknya diubah kemudian.
+- **Kartu hadiah di peta:** "🎁 Hadiah siap ditukar" (kuning) jika ada hadiah yang belum ditukar, atau "Hadiah
+  berikutnya" beserta progresnya (misalnya "selesaikan Bab 1–5 · 2 dari 5 tuntas").
+- **Layar hadiah** (`#/hadiah`, dari kartu itu): setiap hadiah dengan teksnya; yang sudah diraih menampilkan tanggal
+  diraih, potret karakter, **kode pemain** (misalnya `#7F3A`, dari ID pemain acak), dan jumlah kucing di koleksi.
+- **Penukaran tatap muka:** pemain menunjukkan layar itu saat membeli kartu; **penjual** menekan **Sudah ditukar** dan
+  mengetik `DITUKAR`. Setelah itu hadiah itu tidak bisa ditukar lagi di perangkat tersebut.
+- **Ini sistem kepercayaan, bukan pengaman.** Situs statis tidak bisa menyimpan kode rahasia; reset progres, browser
+  lain, atau ponsel lain bisa meraih hadiah yang sama lagi. Tanda "sudah ditukar" hanya ada di perangkat itu.
+- **Reset progres menghapus hadiah yang belum ditukar.** Pengaturan memperingatkannya dengan jelas sebelum reset.
+- **Di mode penelitian, hadiah tidak ada sama sekali:** tidak tampil, tidak disebut, tidak diraih. `#/hadiah` menjawab
+  "Halaman tidak ditemukan". Insentif mengubah perilaku peserta, sama alasannya dengan papan peringkat (D-106). Di mode
+  umum dan pameran hadiah berjalan normal.
+
 **Lencana eksplorasi** (D-122) menghitung misi dan 復習 yang tuntas **di dunia yang sedang tampil saja**, dengan label
 dari `data/ui.json` (探検 · Eksplorasi): misalnya "Eksplorasi Dunia 1: 40%".
 
@@ -1476,10 +1515,11 @@ Untuk anggota tim yang mengubah kode. Butuh Node.js 22 atau lebih baru; tanpa np
 node --test tests/*.test.mjs
 ```
 
-Uji ini (91 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
+Uji ini (98 uji) memeriksa aturan konten (furigana, validator, bab, pengecoh, penanda draf), aturan permainan
 (sesi quest, pemantapan, kunci wilayah, 復習), dunia (dibuka bebas, urutan per dunia), materi yang tidak boleh tampil
 sebelum diperkenalkan, peta (potongan, posisi lokasi), XP, eksplorasi per dunia dan papan peringkat, kucing (lapisan,
-kombinasi kembar, nama kucing menurut D-79, kolom CSV lama), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
+kombinasi kembar, nama kucing menurut D-79, kolom CSV lama), hadiah (tonggak dari data, penukaran sekali, tidak ada di
+mode penelitian, tab opsional), isi repo publik, mode sesi (pameran tanpa log, kode peserta wajib di mode
 penelitian), kontras palet warna, kontrak aset, log (penyimpanan penuh, kolom, antrean pengiriman, CSV, `buildId`),
 alat baris perintah, skrip Apps Script (dengan tiruan layanan Google), **isi terbitan Netlify** (hanya enam butir
 situs dan `build.json`), **sintaks setiap skrip**, dan bahwa tidak ada materi bahasa Jepang yang ditulis langsung di
@@ -1598,6 +1638,9 @@ Dijalankan oleh koordinator data dan penjaga stan.
 ## Daftar periksa sebelum uji coba penelitian
 
 Dijalankan oleh peneliti sebelum sesi peserta pertama. Lihat [Prosedur uji coba penelitian](#prosedur-uji-coba-penelitian-untuk-peneliti).
+
+Hadiah kartu fisik tidak pernah tampil di mode penelitian (D-123); uji otomatis menjaganya, jadi tidak perlu diperiksa
+manual. Jangan menjanjikan atau menyebut hadiah kepada peserta.
 
 - [ ] Aplikasi dengan materi yang sudah keluar dari draf sudah di-deploy ke Netlify (`contentRevision` bukan
       `draft-…`, `APP_VERSION` 1.x; lihat [Daftar periksa sebelum validasi ahli](#daftar-periksa-sebelum-validasi-ahli)).

@@ -60,7 +60,9 @@ const NPC_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const RESERVED_QUEST_ID = /^(REV-|all$)/i;
 const STROKES_PATH = /^[A-Za-z0-9_./-]+\.(svg|png|webp)$/;
 
-const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba"];
+const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba", "rewards"];
+const REWARD_KEYS = ["id", "title", "text", "requires"];
+const REQUIRES_KEYS = ["regions", "world"];
 const REGION_KEYS = ["chapter", "title", "intro", "pin", "quests"];
 const REGION_INTRO_KEYS = ["summary", "points"];
 const PIN_KEYS = ["segment", "x", "y"];
@@ -270,6 +272,7 @@ export function validateContent(data) {
   const usage = validateRegions(data.regions, { kanji, kotoba }, root, report);
   if (usage) checkUsage(data, { kanji, kotoba, usage }, root, report);
   checkCats(data, kotoba, root, report);
+  checkRewards(data, kotoba, root, report);
   checkPlaceholders(data, root, report);
 
   return report.result();
@@ -1346,6 +1349,103 @@ function checkCats(data, kotoba, root, report) {
       }
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Rewards (D-123)
+
+/**
+ * Optional: content without rewards has none. Each reward needs a milestone
+ * (regions, a world, or both). A milestone the material cannot reach yet is a
+ * warning: the team may set it ahead of the chapters. The reward card is on
+ * the map before any mission is played, so its texts follow D-79 like the
+ * region texts.
+ */
+function checkRewards(data, kotoba, root, report) {
+  if (data.rewards === undefined) return;
+  const ctx = root.field("rewards");
+  if (!Array.isArray(data.rewards)) {
+    report.error(ctx, "EXPECTED_ARRAY", `Harus berupa daftar hadiah [...], ditemukan ${show(data.rewards)}.`);
+    return;
+  }
+  const chapters = new Set((Array.isArray(data.regions) ? data.regions : []).map((r) => r?.chapter));
+  const ids = new Set();
+  data.rewards.forEach((reward, i) => {
+    const label = isPlainObject(reward) && typeof reward.id === "string" ? `Hadiah ${reward.id}` : `Hadiah #${i + 1}`;
+    const rctx = root.child(`rewards[${i}]`, label);
+    if (!isPlainObject(reward)) {
+      report.error(rctx, "REWARD_NOT_OBJECT", "Setiap hadiah harus berupa objek { ... }.");
+      return;
+    }
+    checkKeys(reward, REWARD_KEYS, rctx, report);
+    const id = requireId(reward, "id", rctx, report);
+    if (id !== undefined) {
+      if (ids.has(id)) report.error(rctx.field("id"), "DUPLICATE_REWARD", `Hadiah ${id} ditulis dua kali.`);
+      ids.add(id);
+    }
+    requireString(reward, "title", rctx, report);
+    requireString(reward, "text", rctx, report);
+
+    const qctx = rctx.field("requires");
+    const req = reward.requires;
+    if (!isPlainObject(req)) {
+      report.error(qctx, "INVALID_REWARD_REQUIRES", 'Harus berupa { "regions": ["B01", …], "world": 1 } dengan minimal salah satu.');
+      return;
+    }
+    checkKeys(req, REQUIRES_KEYS, qctx, report);
+    const regions = req.regions ?? [];
+    if (!Array.isArray(regions) || !regions.every((r) => typeof r === "string" && /^B\d{2}$/.test(r))) {
+      report.error(qctx.field("regions"), "INVALID_REWARD_REQUIRES", `Harus daftar ID wilayah seperti "B01", ditemukan ${show(req.regions)}.`);
+      return;
+    }
+    const world = req.world ?? null;
+    if (world !== null && !WORLDS.some((w) => w.number === world)) {
+      report.error(qctx.field("world"), "INVALID_REWARD_REQUIRES", `Harus nomor dunia ${WORLDS.map((w) => w.number).join(" atau ")}, ditemukan ${show(world)}.`);
+      return;
+    }
+    if (!regions.length && world === null) {
+      report.error(qctx, "INVALID_REWARD_REQUIRES", "Hadiah butuh tonggak: wilayah yang harus diselesaikan (requires_chapters), dunia yang harus ditamatkan (requires_world), atau keduanya.");
+      return;
+    }
+    const missing = regions.filter((r) => !chapters.has(Number(r.slice(1))));
+    if (missing.length) {
+      report.warn(
+        qctx,
+        "REWARD_UNREACHABLE",
+        `Tonggak hadiah ini menyebut wilayah yang belum ada di materi: ${missing.join(", ")}. Hadiah belum bisa diraih sampai babnya ditambahkan.`
+      );
+    }
+    if (world !== null) {
+      const w = WORLDS.find((x) => x.number === world);
+      const absent = [];
+      for (let c = w.from; c <= w.to; c++) if (!chapters.has(c)) absent.push(c);
+      if (absent.length) {
+        report.warn(
+          qctx.field("world"),
+          "REWARD_UNREACHABLE",
+          `Dunia ${world} baru tamat jika semua bab ${w.from}–${w.to} ada di materi dan tuntas; ${absent.length} bab belum ada. ` +
+            "Pakai tonggak wilayah untuk hadiah yang bisa diraih sekarang."
+        );
+      }
+    }
+
+    // D-79: the card shows before any mission.
+    for (const key of ["title", "text"]) {
+      const value = reward[key];
+      if (typeof value !== "string") continue;
+      for (const [kid, { entry }] of kotoba) {
+        const found = [entry.word, entry.reading].filter((v) => typeof v === "string" && v).find((g) => value.includes(g));
+        if (!found) continue;
+        report.error(
+          rctx.field(key),
+          "REWARD_TEXT_LEAKS_KOTOBA",
+          `Teks hadiah memuat "${found}", kotoba (atau cara baca kotoba) "${kid}". Kartu hadiah tampil di peta sebelum misi ` +
+            "dimainkan, jadi materi tidak boleh muncul di sini (D-79)."
+        );
+        break;
+      }
+    }
+  });
 }
 
 function checkPlaceholders(data, root, report) {

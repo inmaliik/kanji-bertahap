@@ -41,6 +41,11 @@ function fixture() {
   const [tabemasu, nomimasu] = content.regions[0].quests;
   Object.assign(tabemasu.cat, { pattern: "polos", accessory: "tanpa" });
   nomimasu.tests = [];
+  // One reward the material can reach (B06) and one it cannot yet (world 1, D-123).
+  content.rewards = [
+    { id: "H-B06", title: "Diskon contoh", text: "Potongan harga kartu contoh", requires: { regions: ["B06"], world: null } },
+    { id: "H-D1", title: "Hadiah dunia contoh", text: "Hadiah contoh", requires: { regions: [], world: 1 } },
+  ];
   return content;
 }
 
@@ -62,16 +67,21 @@ function progressStates(content) {
   pass(done, "Q-nomimasu");
   done.quests["REV-B06"] = { ...passedEntry, reviewItemIds: [], streaks: {} };
   done.rescuesShown = ["Q-tabemasu", "Q-nomimasu"];
+  const redeemed = clone(done);
+  redeemed.rewards = { "H-B06": { title: "Diskon contoh", text: "Potongan harga kartu contoh", achievedAt: now, redeemedAt: now } };
   const researchNoCode = Object.assign(base(), { sessionMode: "research", consent: { choice: "agreed", version: "placeholder-0", at: now } });
   const research = Object.assign(clone(researchNoCode), { participantCode: "K4-01" });
-  return { playing, done, researchNoCode, research };
+  return { playing, done, redeemed, researchNoCode, research };
 }
 
 const ALL_ROUTES = [
   "#/", "#/region/B06", "#/kucing", "#/quest/B06/1", "#/quest/B06/2", "#/review/B06", "#/index", "#/index/kanji/食",
   "#/index/kanji/食/detail", "#/index/kotoba/0", "#/kana", "#/settings", "#/about", "#/consent", "#/peringkat",
-  "#/dunia/1", "#/dunia/2", "#/content-check", "#/preview/all", "#/preview/B06", "#/tidak-ada",
+  "#/dunia/1", "#/dunia/2", "#/content-check", "#/preview/all", "#/preview/B06", "#/tidak-ada", "#/hadiah",
 ];
+
+/** What research mode may never show: rewards are not shown, not mentioned, not earned (D-123). */
+const REWARD_WORDS = /hadiah|🎁/i;
 
 function serve(content) {
   const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml" };
@@ -146,6 +156,8 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   const { send, evaluate, sleep, errors } = browser;
   const leaks = [];
   const visited = [];
+  const rewardShown = [];
+  const rewardHidden = [];
 
   const waitForScreen = async () => {
     for (let i = 0; i < 80; i++) {
@@ -154,6 +166,7 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
     }
   };
   // Visible text plus the texts a screen reader reads.
+  const researchLeaks = [];
   const check = async (label) => {
     const text = await evaluate(`(() => {
       const parts = [document.body.innerText];
@@ -165,6 +178,9 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
     visited.push(label);
     const line = text.split("\n").find((l) => LEAK.test(l));
     if (line) leaks.push(`${label}: "${line.trim().slice(0, 140)}"`);
+    const reward = text.split("\n").find((l) => REWARD_WORDS.test(l));
+    if (label.startsWith("penelitian") && reward) researchLeaks.push(`${label}: "${reward.trim().slice(0, 140)}"`);
+    return text;
   };
   const start = async (state, device = null) => {
     await send("Page.navigate", { url: base });
@@ -211,15 +227,29 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
       await check(`bermain #/quest/B06/2 langkah ${i + 1}`);
     }
 
-    // Everything done: region and world states, the review's result.
+    // Everything done: region and world states, the review's result, a reward ready to redeem.
     await start(states.done);
-    await visit("tuntas", ["#/", "#/region/B06", "#/kucing", "#/review/B06", "#/quest/B06/2", "#/index", "#/settings"]);
+    await visit("tuntas", ["#/", "#/region/B06", "#/kucing", "#/review/B06", "#/quest/B06/2", "#/index", "#/settings", "#/hadiah"]);
+    await evaluate(`location.hash = "#/"`);
+    await sleep(150);
+    rewardShown.push((await check("tuntas kartu hadiah")).includes("Hadiah siap ditukar"));
+    await evaluate(`location.hash = "#/hadiah"`);
+    await sleep(150);
+    await click("Sudah ditukar");
+    await sleep(100);
+    await check("tuntas konfirmasi penukaran");
+    await start(states.redeemed);
+    await visit("ditukar", ["#/", "#/hadiah", "#/settings"]);
 
     // Research mode, before and after the participant code; the research link over an existing player.
     await start(states.researchNoCode);
     await visit("penelitian-tanpa-kode", ["#/", "#/settings", "#/quest/B06/1"]);
-    await start(states.research);
-    await visit("penelitian", ["#/", "#/settings", "#/kucing", "#/peringkat", "#/consent"]);
+    // A research participant who finished B06: the reward's milestone is met, and still nothing shows.
+    await start({ ...states.done, sessionMode: "research", participantCode: "K4-01", consent: { choice: "agreed", version: "placeholder-0", at: now } });
+    await visit("penelitian", ["#/", "#/region/B06", "#/settings", "#/kucing", "#/peringkat", "#/consent", "#/about", "#/index"]);
+    await evaluate(`location.hash = "#/hadiah"`);
+    await sleep(150);
+    rewardHidden.push(await evaluate(`document.querySelector("#app h1")?.innerText`));
     await start(states.playing);
     await visit("tautan-penelitian", ["#/penelitian"]);
 
@@ -234,4 +264,7 @@ test("every screen, empty and filled, shows no null, undefined, NaN or [object (
   assert.ok(visited.length > 60, `${visited.length} screens visited`);
   assert.deepEqual(errors, [], "no uncaught errors in the browser");
   assert.deepEqual(leaks, [], "screens showing an empty value as text");
+  assert.deepEqual(rewardShown, [true], "outside research mode the earned reward is on the map");
+  assert.deepEqual(researchLeaks, [], "research mode never mentions rewards");
+  assert.deepEqual(rewardHidden, ["Halaman tidak ditemukan"], "in research mode #/hadiah answers like an unknown page");
 });

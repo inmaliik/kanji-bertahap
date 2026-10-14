@@ -3,6 +3,8 @@
 import { ASSETS_URL, BUILD_URL, CHARACTERS_URL, CONSENT_URL, CONTENT_URL, KANA_URL, LAYERS_URL, MAP_URL, UI_LABELS_URL } from "./config.js";
 import { loadLayers } from "./layers.js";
 import { catsScreen } from "./screens/cats.js";
+import { rewardsScreen } from "./screens/rewards.js";
+import { rewardsAvailable } from "./rewards.js";
 import { loadBuildId } from "./build.js";
 import { isPlaceholderConsentVersion, loadConsentText } from "./consent.js";
 import { loadContent } from "./content.js";
@@ -75,6 +77,8 @@ const ROUTES = [
   { pattern: /^#\/region\/([^/]+)$/, screen: (id) => mapScreen(app, { sheetRegion: decodeURIComponent(id) }) },
   { pattern: /^#\/peringkat$/, screen: () => leaderboardScreen(app) },
   { pattern: /^#\/kucing$/, screen: () => catsScreen(app) },
+  // In research mode there are no rewards: the address answers like any unknown page (D-123).
+  { pattern: /^#\/hadiah$/, screen: () => (rewardsAvailable(currentMode(app)) ? rewardsScreen(app) : notFoundScreen()) },
   // The research link shared with participants; replaced by #/ once the player is in research mode (D-112).
   { pattern: /^#\/penelitian$/, screen: () => researchLinkScreen(app, () => location.replace("#/")) },
   { pattern: /^#\/quest\/([^/]+)\/(\d+)$/, screen: (id, n) => questScreen(app, decodeURIComponent(id), n) },
@@ -145,7 +149,7 @@ function render() {
   root.classList.toggle("with-menu", Boolean(root.querySelector(".menu")));
   document.body.classList.toggle("sheet-open", Boolean(root.querySelector(".sheet")));
   // Blue page for the screens already in the blue palette (D-118); the rest follow in stage 6.
-  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen, .cats-screen")));
+  document.body.classList.toggle("page--blue", Boolean(root.querySelector(".map-screen, .cats-screen, .rewards-screen")));
 }
 
 function refreshBadge() {
