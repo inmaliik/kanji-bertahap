@@ -1477,6 +1477,80 @@ beserta teksnya membuat janji kepada pemain tidak berubah diam-diam. Insentif da
 alasannya dengan papan peringkat (D-106). **Alternatif ditolak:** Kode diskon di aplikasi (tidak bisa dirahasiakan di
 situs statis); menyimpan hadiah di setelan perangkat (hadiah milik pemain, bukan perangkat); hadiah sebagai pintu menu
 (menu harus sama di semua mode, D-116).
+
+### D-124 · Tahap 5: adegan cerita, suara yang tidak pernah ditunggu, pencatatan per mode sesi
+**Tanggal:** 2026-10-14. **Keputusan:** Menerapkan bagian adegan cerita dari D-116.
+- **Data:** tab spreadsheet `cerita` (satu baris per adegan: ID, pemicu, dunia, judul, bab kalimat Jepang) dan `naskah`
+  (satu baris per ucapan: panel, nomor baris, gambar panel, deskripsi panel, tokoh di panel, pembicara, `text`, `ja`,
+  `audio`). Keduanya **opsional berdua**; satu tanpa yang lain adalah masalah CSV. Templat berisi kerangka pembuka dan
+  penutup Dunia 1 dengan penanda draf; isi naskah ditulis tim.
+- **Pemicu dari daftar tetap:** `world-opening` (sekali, sebelum peta dunia itu pertama kali tampil; pemain baru
+  melihatnya setelah memilih karakter) dan `world-closing` (sekali, saat dunia tamat, D-116). Adegan baru dengan pemicu
+  yang ada cukup lewat data; pemicu jenis baru butuh sedikit kode. Satu adegan per pemicu per dunia.
+- **Pemutar:** kartu mulai lebih dulu, karena suara tidak boleh berbunyi sebelum ketukan (Web Audio dibuka oleh ketukan
+  itu). Satu baris per ketukan di atas panelnya; **subtitle selalu tampil**; `ja` mengikuti setelan furigana seperti
+  percakapan pengantar. Suara diunduh dan didekode tiga baris ke depan dan **hanya diputar jika sudah siap**: adegan tidak
+  pernah menunggu, dan berkas yang tidak ada berarti baris tanpa suara. Tombol **Lewati** dan **Suara nyala/mati**
+  (diingat per pemain, `progress.settings.sceneVoice`; saat mati, tidak ada unduhan suara). Panel yang belum digambar
+  tampil sebagai kotak keterangan; karakter pemain ditumpuk kode dari gambar karakternya.
+- **Baris pemain tanpa suara** (D-72, D-97): kolom `audio` di baris pemain diabaikan dan diperingatkan, kecuali nama
+  berkas memuat `{karakter}` (satu rekaman per karakter).
+- **Validator:** D-79 menurut saat adegan diputar. Sebelum pembuka belum ada misi yang pasti diperkenalkan, sesudah
+  penutup semua misi dunianya; dunia lain tidak pernah pasti karena dunia dibuka bebas. Kotoba atau cara bacanya di
+  judul, `text`, atau `ja`: error; kanji sasaran: peringatan. Kalimat Jepang tanpa `sentence_chapter`: penanda draf;
+  di atas bab pemain: peringatan. Panjang baris: `text` paling banyak 120 karakter, `ja` 40 (peringatan).
+- **Menu Cerita**, pintu kelima (D-116): adegan yang sudah ditonton bisa diputar ulang; yang belum hanya disebut
+  kapan diputar, tanpa judul. Alamat putar ulang untuk adegan yang belum ditonton menjawab seperti halaman yang tidak ada.
+- **Pencatatan:** satu baris peristiwa per pemutaran (`questStep` = `scene`, `answer` = `selesai` atau `dilewati`,
+  `blankLine` = baris yang sempat tampil, `introReplays` = 1 untuk putar ulang, `responseMs` = lama menonton). Baris
+  ditulis lewat `recordEvent`, jalur yang sama dengan pembukaan index, jadi mengikuti D-112 tanpa aturan tambahan: tidak
+  ada di mode pameran, hanya setelah persetujuan, di mode penelitian hanya dengan kode peserta, dan setiap baris membawa
+  `sessionMode` dan `buildId`. Uji `tests/scenes.test.mjs` memeriksanya per mode. Tidak ada kolom log baru.
+- **Aset:** panel JPEG 1080 × 1440 maks 150 KB (diubah oleh D-125: halaman mendatar PNG 2048 × 1536); suara MP3 mono 64 kbps, ≤ 8 detik, maks 64 KB; ±2,5 MB per adegan.
+  Halaman pemeriksaan konten menghitung berkas yang ada dan ukurannya.
+- Adegan sama di semua mode sesi, termasuk penelitian: adegan bagian dari permainan yang diuji.
+
+**Alasan:** Jaringan pameran dan ponsel kelas bawah tidak boleh membuat adegan tertahan; subtitle yang selalu ada membuat
+suara benar-benar opsional, sehingga berkas suara bisa diserahkan bertahap. Memakai jalur peristiwa yang sudah ada
+membuat aturan mode sesi berlaku tanpa kemungkinan terlewat. **Alternatif ditolak:** Elemen `<audio>` per baris (di
+iPhone tidak bisa diputar tanpa ketukan per baris); menunggu suara selesai diunduh sebelum menampilkan baris (adegan
+tertahan di jaringan lambat); kolom log baru untuk adegan (kolom yang ada cukup, dengan arti yang didokumentasikan).
+
+### D-125 · Halaman adegan berpanel dan transkrip teks tergambar
+**Tanggal:** 2026-10-14. **Keputusan:** Pemutar adegan (D-124) menyesuaikan diri dengan prolog Dunia 1 yang dikirim tim:
+9 halaman PNG 2048 × 1536 (4 : 3, mendatar), gambar garis hitam-putih; satu halaman berisi tiga panel, sisanya satu
+panel; sebagian balon berisi teks tulisan tangan, sebagian kosong.
+- **Halaman, bukan panel:** satu berkas gambar adalah satu halaman. Panel naskah menampilkan halaman utuh, atau
+  **zoom ke kotak** di halaman itu: kolom baru `panel_box` di tab naskah, `x y lebar tinggi` dalam persen halaman, seperti
+  kotak potong potret karakter (`portrait` di `data/characters.json`). Panel-panel berurutan dengan gambar yang sama
+  memakai satu elemen gambar, jadi perpindahannya animasi zoom (tanpa animasi jika pengguna meminta gerak dikurangi).
+- **Urutan baca ada di data:** urutan `panel_no`. "Kanan ke kiri" atau "kiri ke kanan" diputuskan di naskah, tanpa kode.
+- **Panel tanpa ucapan:** baris naskah tanpa `speaker` dan `text` adalah panel untuk satu ketukan (misalnya halaman utuh
+  sebelum zoom). Adegan tetap wajib punya minimal satu baris.
+- **Panggung 3 : 4 tegak** di ponsel; halaman mendatar tampil utuh dengan ruang kosong atas-bawah, panel tegak yang di-zoom
+  mengisi tingginya. Gambar panel tegak 3 : 4 yang lama tetap didukung: halaman utuh mengisi panggung.
+- **Transkrip teks tergambar:** kolom baru `panel_text`, teks di gambar persis seperti tergambar, dipisah ` / `, atau `-`
+  jika tidak ada. Validator tidak bisa membaca gambar, jadi **transkrip itulah yang diperiksa** terhadap D-79 (kotoba:
+  error, kanji sasaran: peringatan). Halaman tanpa transkrip: penanda draf (`SCENE_DRAWN_TEXT_MISSING`, error saat
+  rilis). Subtitle memakai teks dari transkrip: teks gambar yang tidak muncul di subtitle halaman itu diperingatkan
+  (`SCENE_DRAWN_TEXT_NOT_SUBTITLED`).
+- **Aset:** berkas mentah tetap di `sumber/` (tidak masuk repo); yang masuk `assets/cerita/` adalah **PNG abu-abu
+  16 tingkat, ukuran penuh 2048 × 1536** (`tools/ekspor-halaman.mjs`; 26–99 KB per halaman, 576 KB untuk prolog). Ekspor
+  pertama memakai JPEG 1600 × 1200 (971 KB) dan garisnya kabur saat di-zoom; perbandingan format ada di ASSETS.md.
+  **Anggaran per adegan (±2,5 MB), bukan per halaman**; semua halaman mulai diunduh saat kartu mulai tampil.
+  Slot `panel-cerita` menjadi PNG 2048 × 1536 mendatar. Kesembilan JPEG pertama tetap ada di riwayat git (±1 MB, D-113).
+  Halaman yang dipakai beberapa panel dihitung sekali di pemeriksaan konten.
+- Kolom baru opsional: tab naskah lama tanpa kedua kolom itu tetap terbaca. Templat `S-D1-pembuka` memakai 9 halaman tim
+  (halaman 05: utuh, lalu kanan, tengah, kiri, mengikuti keterangan tim "dibaca dari kanan ke kiri"); isi naskah dan
+  transkripnya masih penanda draf untuk tim.
+- Pencatatan tidak berubah; `blankLine` di baris adegan kini menghitung langkah (ucapan dan panel tanpa ucapan).
+
+**Alasan:** Rancangan menyesuaikan diri dengan aset tim, bukan sebaliknya; menggambar ulang 9 halaman ke format tegak
+1080 × 1440 akan memotong komposisi tim. Kotak dalam persen tidak bergantung pada ukuran ekspor. **Alternatif ditolak:**
+memotong halaman menjadi berkas per panel (panel miring terpotong, dan setiap perubahan kotak butuh ekspor ulang);
+memutar halaman mendatar di ponsel (pemain harus memutar ponsel di tengah permainan); urutan baca kanan-ke-kiri di kode
+(panah di halaman 06 dan 07 menunjuk ke kanan, jadi urutannya harus bisa per halaman); membaca teks gambar dengan OCR
+(tulisan tangan, dan tidak bisa diandalkan untuk aturan D-79).
 ---
 
 ## Bagian 2 — Temuan kendali mutu internal
@@ -1646,3 +1720,12 @@ sengaja dirusak satu per satu (kesalahan "null" kucing dikembalikan persis; pers
 keduanya tertangkap dengan nama layar dan teksnya, lalu dikembalikan. **Dampak:** Setiap layar atau keadaan kosong baru
 ditambahkan ke daftar rute dan keadaan di uji ini pada tahap yang membuatnya.
 
+### T-21 · Label menu dipenggal, lalu keluar dari pintunya di ponsel 320 piksel
+**Tanggal:** 2026-10-14. **Temuan:** Dengan lima pintu menu (tahap 5), "Pengaturan" tidak muat di pintu selebar ±60
+piksel. Perbaikan pertama memakai tanda pemenggalan lunak, sehingga label tampil "Penga-turan"; label yang terpenggal
+ditolak. **Tindakan:** Label menjadi "Setelan", juga judul layarnya dan rujukannya di README dan pesan aplikasi (nama
+slot aset `menu-pengaturan` tetap). Uji semua layar (T-20) kini memeriksa setiap label menu di setiap layar: tidak ada
+tanda pemenggalan atau `hyphens: auto`, tidak ada kata yang terbelah dua baris, tidak terpotong, tidak keluar dari
+pintunya; ditambah kunjungan di lebar 320 piksel. **Pembuktian:** pemeriksaan baru langsung menemukan "Panduan kana" keluar
+dari pintunya di 320 piksel; menu di bawah 360 piksel dirapatkan (celah dan tepi lebih kecil, huruf 12 piksel), lalu
+lolos. **Dampak:** Label menu baru harus lolos uji ini di 320 dan 375 piksel.

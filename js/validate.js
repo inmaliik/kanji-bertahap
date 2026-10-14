@@ -60,7 +60,16 @@ const NPC_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const RESERVED_QUEST_ID = /^(REV-|all$)/i;
 const STROKES_PATH = /^[A-Za-z0-9_./-]+\.(svg|png|webp)$/;
 
-const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba", "rewards"];
+const ROOT_KEYS = ["schemaVersion", "contentRevision", "regions", "kanji", "kotoba", "rewards", "scenes"];
+const SCENE_KEYS = ["id", "trigger", "world", "title", "sentenceChapter", "panels"];
+const PANEL_KEYS = ["image", "box", "drawnText", "note", "figures", "lines"];
+const SCENE_LINE_KEYS = ["speaker", "text", "ja", "audio"];
+const SCENE_TRIGGER_LIST = ["world-opening", "world-closing"];
+const SCENE_NARRATOR = "narrator";
+const FILE_ID = /^[A-Za-z0-9_{}-]+$/;
+/** Longest subtitle and Japanese line that fit the subtitle box on a 375 px phone in three lines (D-124). */
+export const SCENE_TEXT_MAX = 120;
+export const SCENE_JA_MAX = 40;
 const REWARD_KEYS = ["id", "title", "text", "requires"];
 const REQUIRES_KEYS = ["regions", "world"];
 const REGION_KEYS = ["chapter", "title", "intro", "pin", "quests"];
@@ -273,6 +282,7 @@ export function validateContent(data) {
   if (usage) checkUsage(data, { kanji, kotoba, usage }, root, report);
   checkCats(data, kotoba, root, report);
   checkRewards(data, kotoba, root, report);
+  checkScenes(data, kotoba, root, report);
   checkPlaceholders(data, root, report);
 
   return report.result();
@@ -1447,6 +1457,219 @@ function checkRewards(data, kotoba, root, report) {
     }
   });
 }
+
+// ---------------------------------------------------------------------------
+// Story scenes (D-124)
+
+/**
+ * Optional. A scene plays at a fixed moment, so what the player is sure to have
+ * met by then is known: nothing of its world before the opening scene, every
+ * mission of its world before the closing one. Worlds open freely (D-117), so
+ * another world's missions are never sure. A kotoba (or its reading) of a
+ * mission not sure to be introduced is an error (D-79); its target kanji a
+ * warning. Japanese lines above the player's chapter are a warning.
+ */
+function checkScenes(data, kotoba, root, report) {
+  if (data.scenes === undefined) return;
+  const ctx = root.field("scenes");
+  if (!Array.isArray(data.scenes)) {
+    report.error(ctx, "EXPECTED_ARRAY", `Harus berupa daftar adegan [...], ditemukan ${show(data.scenes)}.`);
+    return;
+  }
+  const regions = Array.isArray(data.regions) ? data.regions.filter(isPlainObject) : [];
+  const missions = regions.flatMap((r) => (Array.isArray(r.quests) ? r.quests.filter(isPlainObject).map((q) => ({ quest: q, chapter: r.chapter })) : []));
+  const ids = new Set();
+  const slots = new Map();
+  data.scenes.forEach((scene, i) => {
+    const label = isPlainObject(scene) && typeof scene.id === "string" ? `Adegan ${scene.id}` : `Adegan #${i + 1}`;
+    const sctx = root.child(`scenes[${i}]`, label);
+    if (!isPlainObject(scene)) {
+      report.error(sctx, "SCENE_NOT_OBJECT", "Setiap adegan harus berupa objek { ... }.");
+      return;
+    }
+    checkKeys(scene, SCENE_KEYS, sctx, report);
+    const id = requireId(scene, "id", sctx, report);
+    if (id !== undefined) {
+      if (ids.has(id)) report.error(sctx.field("id"), "DUPLICATE_SCENE", `Adegan ${id} ditulis dua kali.`);
+      ids.add(id);
+    }
+    requireString(scene, "title", sctx, report);
+    if (!SCENE_TRIGGER_LIST.includes(scene.trigger)) {
+      report.error(sctx.field("trigger"), "INVALID_SCENE_TRIGGER", `Harus salah satu dari ${SCENE_TRIGGER_LIST.join(", ")}. Ditemukan ${show(scene.trigger)}.`);
+      return;
+    }
+    const world = WORLDS.find((w) => w.number === scene.world);
+    if (!world) {
+      report.error(sctx.field("world"), "INVALID_SCENE_WORLD", `Harus nomor dunia ${WORLDS.map((w) => w.number).join(" atau ")}. Ditemukan ${show(scene.world)}.`);
+      return;
+    }
+    const slot = `${scene.trigger}/${world.number}`;
+    if (slots.has(slot)) report.error(sctx.field("trigger"), "DUPLICATE_SCENE_TRIGGER", `Dunia ${world.number} sudah punya adegan ${scene.trigger}: ${slots.get(slot)}. Satu adegan per pemicu per dunia.`);
+    slots.set(slot, id);
+
+    // What is sure to be known when it plays.
+    const closing = scene.trigger === "world-closing";
+    const known = (chapter) => closing && chapter >= world.from && chapter <= world.to;
+    const ahead = missions.filter((m) => !known(m.chapter));
+    const highestKnown = closing ? world.to : 0;
+
+    const texts = [{ value: scene.title, ctx: sctx.field("title"), plain: scene.title }];
+    let hasJa = false;
+    if (!Array.isArray(scene.panels) || !scene.panels.length) {
+      report.error(sctx.field("panels"), "NO_SCENE_PANELS", "Adegan harus punya minimal satu panel.");
+      return;
+    }
+    // Text drawn in each image (D-125): the validator cannot read pictures, so the
+    // team's transcript is what is checked, and the subtitles are taken from it.
+    const pages = new Map(); // image → { ctx, transcripts: [], subtitles: [] }
+    scene.panels.forEach((panel, p) => {
+      const pctx = sctx.child(`panels[${p}]`, `panel ${p + 1}`);
+      if (!isPlainObject(panel)) {
+        report.error(pctx, "PANEL_NOT_OBJECT", "Setiap panel harus berupa objek { ... }.");
+        return;
+      }
+      checkKeys(panel, PANEL_KEYS, pctx, report);
+      const image = requireString(panel, "image", pctx, report);
+      if (image !== undefined && !FILE_ID.test(image)) report.error(pctx.field("image"), "INVALID_SCENE_FILE", `Nama berkas gambar halaman tanpa .png: huruf latin, angka, "-", "_". Ditemukan "${image}".`);
+      optionalString(panel, "note", pctx, report);
+      if (panel.box !== undefined && panel.box !== null) {
+        const b = panel.box;
+        const ok = isPlainObject(b) && ["x", "y", "w", "h"].every((k) => typeof b[k] === "number" && Number.isFinite(b[k])) &&
+          b.x >= 0 && b.y >= 0 && b.w > 0 && b.h > 0 && b.x + b.w <= 100.5 && b.y + b.h <= 100.5;
+        if (!ok) report.error(pctx.field("box"), "INVALID_SCENE_BOX", `Kotak panel ditulis x, y, lebar, tinggi dalam persen halaman, dan harus di dalam gambar (x + lebar dan y + tinggi paling besar 100). Ditemukan ${show(b)}.`);
+      }
+      const page = image === undefined ? null : pages.get(image) ?? pages.set(image, { ctx: pctx, transcripts: [], subtitles: [] }).get(image);
+      if (panel.drawnText !== undefined && panel.drawnText !== null) {
+        const drawn = optionalString(panel, "drawnText", pctx, report);
+        if (typeof drawn === "string") {
+          page?.transcripts.push({ value: drawn, ctx: pctx.field("drawnText") });
+          if (drawn) texts.push({ value: drawn, ctx: pctx.field("drawnText"), plain: drawn });
+        }
+      }
+      for (const [f, figure] of (Array.isArray(panel.figures) ? panel.figures : []).entries()) {
+        const fctx = pctx.child(`figures[${f}]`, `tokoh ${f + 1}`);
+        if (!isPlainObject(figure) || typeof figure.who !== "string" || !["kiri", "tengah", "kanan"].includes(figure.at)) {
+          report.error(fctx, "INVALID_SCENE_FIGURE", 'Tokoh di panel ditulis "pemain@kiri" atau "<id tokoh>@kanan"; posisinya kiri, tengah, atau kanan.');
+        }
+      }
+      if (!Array.isArray(panel.lines)) {
+        report.error(pctx.field("lines"), "EXPECTED_ARRAY", "Baris panel harus berupa daftar [...]; panel tanpa baris ditulis [].");
+        return;
+      }
+      panel.lines.forEach((line, l) => {
+        const lctx = pctx.child(`lines[${l}]`, `baris ${l + 1}`);
+        if (!isPlainObject(line)) {
+          report.error(lctx, "SCENE_LINE_NOT_OBJECT", "Setiap baris harus berupa objek { ... }.");
+          return;
+        }
+        checkKeys(line, SCENE_LINE_KEYS, lctx, report);
+        const speaker = requireString(line, "speaker", lctx, report);
+        if (speaker !== undefined && speaker !== PLAYER_SPEAKER && speaker !== SCENE_NARRATOR && !NPC_ID_PATTERN.test(speaker)) {
+          report.error(lctx.field("speaker"), "INVALID_SPEAKER", `Pembicara harus "pemain", "narator", atau ID tokoh dari data/characters.json. Ditemukan "${speaker}".`);
+        }
+        const text = requireString(line, "text", lctx, report);
+        if (text !== undefined) texts.push({ value: text, ctx: lctx.field("text"), plain: text });
+        if (text !== undefined) page?.subtitles.push(text);
+        if (text !== undefined && text.length > SCENE_TEXT_MAX) {
+          report.warn(lctx.field("text"), "SCENE_LINE_TOO_LONG", `Subtitle ${text.length} karakter; di ponsel paling banyak ${SCENE_TEXT_MAX} karakter (tiga baris). Pecah menjadi dua baris naskah.`);
+        }
+        if (line.ja !== undefined && line.ja !== null) {
+          const ja = optionalString(line, "ja", lctx, report);
+          if (ja) {
+            hasJa = true;
+            const parsed = parseRubyField(ja, lctx.field("ja"), report);
+            if (parsed) texts.push({ value: ja, ctx: lctx.field("ja"), plain: parsed.plain });
+            if (parsed && parsed.plain.length > SCENE_JA_MAX) {
+              report.warn(lctx.field("ja"), "SCENE_LINE_TOO_LONG", `Kalimat Jepang ${parsed.plain.length} karakter (tanpa furigana); paling banyak ${SCENE_JA_MAX}. Pecah menjadi dua baris naskah.`);
+            }
+          }
+        }
+        if (line.audio !== undefined && line.audio !== null) {
+          const audio = optionalString(line, "audio", lctx, report);
+          if (audio && !FILE_ID.test(audio)) {
+            report.error(lctx.field("audio"), "INVALID_SCENE_FILE", `Nama berkas suara tanpa .mp3: huruf latin, angka, "-", "_". Ditemukan "${audio}".`);
+          } else if (audio && speaker === PLAYER_SPEAKER && !audio.includes("{karakter}")) {
+            report.warn(
+              lctx.field("audio"),
+              "PLAYER_LINE_VOICED",
+              "Baris pemain tidak bersuara, karena satu rekaman tidak cocok untuk setiap karakter (D-72, D-97); berkas ini diabaikan. " +
+                "Untuk satu rekaman per karakter, tulis {karakter} di nama berkas, misalnya 03-2-{karakter}."
+            );
+          }
+        }
+      });
+    });
+
+    if (!scene.panels.some((panel) => isPlainObject(panel) && Array.isArray(panel.lines) && panel.lines.length)) {
+      report.error(sctx.field("panels"), "NO_SCENE_LINES", "Adegan harus punya minimal satu baris naskah.");
+    }
+    for (const [image, page] of pages) {
+      if (!page.transcripts.length) {
+        report.incomplete(
+          page.ctx.field("drawnText"),
+          "SCENE_DRAWN_TEXT_MISSING",
+          `Transkrip teks yang tergambar di gambar ${image} belum ada (kolom panel_text). Tulis setiap teks di gambar persis seperti tergambar, ` +
+            'dipisah " / ", atau "-" jika tidak ada teks. Validator tidak bisa membaca gambar, jadi transkrip inilah yang diperiksa (D-79, D-125).'
+        );
+        continue;
+      }
+      const subtitles = page.subtitles.join("\n").toLowerCase();
+      for (const t of page.transcripts) {
+        if (PLACEHOLDER_TEST.test(t.value)) continue;
+        const missing = splitDrawn(t.value).filter((piece) => !subtitles.includes(piece.toLowerCase()));
+        if (missing.length) {
+          report.warn(t.ctx, "SCENE_DRAWN_TEXT_NOT_SUBTITLED", `Teks di gambar ${image} tidak muncul di subtitle: ${missing.map((m) => `"${m}"`).join(", ")}. Subtitle memakai teks dari transkrip (D-125).`);
+        }
+      }
+    }
+
+    // Japanese above the player's chapter.
+    if (hasJa) {
+      const sc = scene.sentenceChapter;
+      if (sc === undefined || sc === null || sc === UNKNOWN_VALUE) {
+        report.incomplete(sctx.field("sentenceChapter"), "SENTENCE_CHAPTER_UNKNOWN", "Adegan ini punya kalimat Jepang; bab tertinggi yang dibutuhkannya belum diisi (kolom sentence_chapter di tab cerita).");
+      } else if (!Number.isInteger(sc) || sc < SCOPE_CHAPTER_MIN || sc > SENTENCE_CHAPTER_MAX) {
+        report.error(sctx.field("sentenceChapter"), "INVALID_CHAPTER", `Harus bilangan bulat 1–${SENTENCE_CHAPTER_MAX}. Ditemukan ${show(sc)}.`);
+      } else if (sc > highestKnown) {
+        report.warn(
+          sctx.field("sentenceChapter"),
+          "SCENE_JA_ABOVE_LEVEL",
+          closing
+            ? `Kalimat Jepang adegan ini membutuhkan bab ${sc}, di atas bab terakhir Dunia ${world.number} (${world.to}).`
+            : `Kalimat Jepang adegan pembuka membutuhkan bab ${sc}, padahal adegan ini diputar sebelum bab mana pun di Dunia ${world.number} dipelajari.`
+        );
+      }
+    }
+
+    // D-79.
+    for (const t of texts) {
+      if (typeof t.plain !== "string") continue;
+      for (const { quest } of ahead) {
+        const k = kotoba.get(quest.kotoba)?.entry;
+        if (!k) continue;
+        const found = [k.word, k.reading].filter((v) => typeof v === "string" && v).find((g) => t.plain.includes(g));
+        if (found) {
+          report.error(
+            t.ctx,
+            "SCENE_LEAKS_KOTOBA",
+            `Naskah memuat "${found}", kotoba (atau cara baca kotoba) quest ${quest.id}, yang belum pasti diperkenalkan saat adegan ` +
+              `ini diputar (${closing ? "Dunia lain" : "sebelum misi mana pun"}). Tulis tanpa kotoba itu (D-79).`
+          );
+          break;
+        }
+        const kanji = (Array.isArray(quest.targetKanji) ? quest.targetKanji : []).filter((ch) => typeof ch === "string" && t.plain.includes(ch));
+        if (kanji.length) {
+          report.warn(t.ctx, "SCENE_SHOWS_KANJI", `Naskah memuat kanji sasaran ${kanji.join(", ")} (quest ${quest.id}), yang belum pasti diperkenalkan saat adegan ini diputar.`);
+          break;
+        }
+      }
+    }
+  });
+}
+
+/** "Imutnya… / meow~" → ["Imutnya…", "meow~"] */
+const splitDrawn = (value) => value.split(" / ").map((p) => p.trim()).filter(Boolean);
+const PLACEHOLDER_TEST = /«[^»]*»/;
 
 function checkPlaceholders(data, root, report) {
   const walk = (value, path) => {

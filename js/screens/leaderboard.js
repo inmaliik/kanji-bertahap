@@ -17,7 +17,7 @@ export function leaderboardScreen(app) {
       "div",
       { class: "screen" },
       head,
-      h("p", {}, "Papan peringkat hanya ada dalam mode pameran, yang dinyalakan petugas di Pengaturan."),
+      h("p", {}, "Papan peringkat hanya ada dalam mode pameran, yang dinyalakan petugas di Setelan."),
       menuBar(app)
     );
   }

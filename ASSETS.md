@@ -26,14 +26,17 @@ ukuran, dan formatnya. Tugas Anda hanya menggantinya dengan gambar buatan tim.
 | `jalur` (opsional) | `assets/peta/jalur.png` | PNG | 64 × 64, ubin berulang | 1 : 1 | **transparan** | 10 KB | Peta: motif jalur antar lokasi |
 | `menu-index` | `assets/ui/menu-index.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu di peta dan layar lain di luar quest: tombol Index |
 | `menu-kucing` | `assets/ui/menu-kucing.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Kucing (koleksi kucing) |
+| `menu-cerita` | `assets/ui/menu-cerita.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Cerita (adegan cerita) |
 | `menu-kana` | `assets/ui/menu-kana.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Panduan kana |
-| `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Pengaturan |
+| `menu-pengaturan` | `assets/ui/menu-pengaturan.png` | PNG | 192 × 192 | 1 : 1 | **transparan** | 30 KB | Menu: tombol Setelan |
 | `karakter-hana`, `karakter-kazu` | `assets/karakter/hana.png`, `assets/karakter/kazu.png` | PNG | 1080 × 1080 | 1 : 1 | **transparan** | 150 KB | Pemilihan karakter; potret pembicara di percakapan |
 | potret (opsional) | `assets/karakter/<id>-potret.png`, misalnya `assets/karakter/hana-potret.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 60 KB | Menggantikan potongan otomatis di potret percakapan |
 | `adegan` | `assets/adegan/<ID percakapan>.png`, satu per percakapan, misalnya `assets/adegan/C-B01-01-pengantar.png` | PNG | 960 × 640 | 3 : 2 (mendatar) | tidak transparan | 150 KB | Di atas percakapan pengantar dan percakapan uji |
 | `kucing-tubuh` | `assets/kucing/tubuh/<id>-isi.png` dan `assets/kucing/tubuh/<id>-garis.png`, dua berkas per tubuh, misalnya `assets/kucing/tubuh/duduk-isi.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 40 KB | Kucing di koleksi, di peta, dan di momen penyelamatan (lihat [Kucing](#kucing-assetskucing-dan-datalayersjson)) |
 | `kucing-corak` | `assets/kucing/corak/<id>.png`, misalnya `assets/kucing/corak/belang.png` | PNG | 512 × 512 | 1 : 1 | **transparan** | 40 KB | Corak bulu, dipotong otomatis mengikuti tubuh |
 | `kucing-aksesori` | `assets/kucing/aksesori/<id>.png`, misalnya `assets/kucing/aksesori/pita.png` | PNG | 256 × 256 | 1 : 1 | **transparan** | 20 KB | Aksesori di kepala atau leher kucing |
+| `panel-cerita` | `assets/cerita/<ID adegan>/<panel_image>.png`, misalnya `assets/cerita/S-D1-pembuka/05.png` | PNG abu-abu 16 tingkat | 2048 × 1536 | 4 : 3 (mendatar) | tidak transparan | 250 KB per halaman; batas sebenarnya **±2,5 MB per adegan** | Pemutar adegan cerita: satu halaman, boleh berisi beberapa panel (lihat [Adegan cerita](#adegan-cerita-assetscerita-dan-assetssuara)) |
+| suara adegan | `assets/suara/<ID adegan>/<audio>.mp3`, misalnya `assets/suara/S-D1-pembuka/02-1.mp3` | **MP3** mono | ≤ 8 detik | | | 64 KB | Suara satu baris naskah |
 
 Slot karakter pemain dan tokoh percakapan ditambahkan di tahap berikutnya dan akan didaftarkan di tabel ini.
 
@@ -181,7 +184,7 @@ dengan huruf awal nama. Namanya masih penanda `«NAMA-…»` sampai tim mengisin
 
 - 192 × 192, transparan, tampil sekitar 40 × 40 piksel di layar. Buat bentuk sederhana yang tetap jelas pada
   ukuran kecil; detail halus akan hilang.
-- Keempat ikon (Index, Kucing, Panduan kana, Pengaturan) sebaiknya satu gaya.
+- Kelima ikon (Index, Kucing, Cerita, Panduan kana, Setelan) sebaiknya satu gaya.
 
 ## Kucing (`assets/kucing/` dan `data/layers.json`)
 
@@ -254,6 +257,82 @@ Pilihan kedua dipakai jika tim aset lebih suka mewarnai sendiri: lapisan isi lal
 
 Kombinasi setiap misi dan nama kucingnya ditulis tim konten di tab `quest` (README, Kolom spreadsheet), bukan oleh
 tim aset.
+
+## Adegan cerita (`assets/cerita/` dan `assets/suara/`)
+
+Adegan pembuka dan penutup dunia (D-124). Naskahnya ada di tab `cerita` dan `naskah` spreadsheet (README,
+[Menulis naskah adegan cerita](README.md#menulis-naskah-adegan-cerita)); nama setiap berkas di bawah diambil dari
+kolom `panel_image` dan `audio` di tab naskah.
+
+### Gambar halaman (ilustrator)
+
+Spesifikasi ini mengikuti bentuk yang sudah dikirim tim untuk prolog Dunia 1 (D-125), supaya tidak ada yang perlu
+digambar ulang.
+
+- **Berkas mentah tim:** PNG **2048 × 1536 (4 : 3, mendatar)**, satu berkas per halaman, latar transparan atau putih.
+  Satu halaman boleh berisi **satu panel atau beberapa panel** bergaya manga, dengan garis bingkai panel tergambar.
+  Berkas mentah disimpan tim (dan di `sumber/`, yang tidak masuk repo).
+- **Yang masuk aplikasi: PNG abu-abu 16 tingkat, ukuran penuh 2048 × 1536**, dibuat pengelola aplikasi dari berkas
+  mentah dengan `node tools/ekspor-halaman.mjs sumber/scene/scene5.png assets/cerita/S-D1-pembuka/05.png` (latar
+  transparan menjadi putih). Gambar garis tetap tajam saat pemutar zoom ke panel kecil (panel kanan halaman 05 ±3,6×),
+  karena tidak ada pengecilan dan tidak ada kompresi yang mengaburkan garis.
+- **Anggaran dihitung per adegan, bukan per halaman: ±2,5 MB** termasuk suara. Semua halaman mulai diunduh saat kartu
+  mulai adegan tampil. Perbandingan untuk 9 halaman prolog Dunia 1 (diukur 2026-10-14):
+
+  | Format | Ukuran | Total 9 halaman | Garis saat di-zoom |
+  |---|---|---|---|
+  | JPEG abu-abu q60 (sebelumnya) | 1600 × 1200 | 971 KB | kabur: diperkecil dan artefak JPEG |
+  | PNG abu-abu 256 tingkat | 2048 × 1536 | 1.115 KB | tajam |
+  | WebP lossless | 2048 × 1536 | 860 KB | tajam |
+  | WebP q90 | 2048 × 1536 | 618 KB | lossy: tidak persis sama dengan gambar tim |
+  | **PNG abu-abu 16 tingkat (dipakai)** | **2048 × 1536** | **576 KB** (26–99 KB per halaman) | **tajam** |
+
+  Dengan suara (±64 KB × 11 baris), prolog tetap di bawah 1,5 MB.
+- **Halaman berwarna** tidak cocok dengan alat ini (semuanya menjadi abu-abu). Jika tim mengirim halaman berwarna,
+  formatnya diputuskan saat itu dengan anggaran adegan yang sama.
+- **Rasio lain tetap tampil**: pemutar membaca rasio gambar sendiri dan menampilkannya utuh. Pemeriksa aset hanya
+  memberi catatan.
+- **Di ponsel tegak**, panggung adegan berbingkai 3 : 4. Halaman mendatar tampil utuh dulu (dengan ruang kosong di atas
+  dan bawah), lalu **zoom ke setiap panel** yang ditulis di naskah: kotak panel ditulis di kolom `panel_box` dalam persen
+  halaman (x, y, lebar, tinggi), seperti kotak potong potret karakter. Satu ketukan = satu panel (atau satu ucapan).
+  Urutan baca, kanan ke kiri atau kiri ke kanan, adalah urutan panel di naskah. Panel yang garis bingkainya miring
+  cukup diberi kotak yang memuat isinya; sudut panel tetangga yang ikut terlihat tidak apa-apa.
+- **Teks di dalam gambar** (balon, efek suara, tulisan tangan) boleh, **asal ada transkripnya** di kolom `panel_text`
+  tab naskah, persis seperti tergambar. Pemeriksa tidak bisa membaca gambar, jadi transkrip itulah yang diperiksa
+  terhadap aturan D-79, dan subtitle memakai teks dari transkrip itu. Balon yang dibiarkan kosong di gambar diisi oleh
+  subtitle.
+- Bagian bawah ±30% bingkai bisa tertutup tokoh yang ditumpuk kode (kolom `figures`). Untuk halaman yang tokohnya
+  sudah digambar tim, kolom itu dikosongkan.
+- **Karakter pemain.** Rancangan semula: karakter pemain tidak digambar di panel, karena kode menumpuk Hana atau Kazu
+  sesuai pilihan pemain. Prolog tim menggambar seorang tokoh perempuan berambut bob di beberapa halaman; apakah ia
+  karakter pemain, tokoh lain, atau Hana saja, **belum diputuskan tim** (BLOCKERS).
+- Kolom `panel_note` di tab naskah adalah brief untuk ilustrator dan tampil di kotak pengganti selama gambarnya belum ada.
+
+### Berkas suara (pengisi suara)
+
+- **MP3 mono, 64 kbps, paling lama 8 detik, maks 64 KB per berkas**, satu per baris naskah yang bersuara, di
+  `assets/suara/<ID adegan>/<audio>.mp3`. Nama berkas **persis** sama dengan kolom `audio`, misalnya `02-1.mp3`.
+- **Baris pemain tidak direkam** (kolom `audio`-nya kosong), kecuali tim memutuskan satu rekaman per karakter: nama
+  berkas di naskah memuat `{karakter}`, dan berkasnya `02-2-hana.mp3` serta `02-2-kazu.mp3`.
+- Rekam dengan volume yang sama untuk semua baris, tanpa jeda panjang di awal dan akhir, tanpa musik latar.
+- Aplikasi tidak pernah menunggu suara: berkas yang terlambat terunduh atau belum ada berarti baris itu tampil dengan
+  subtitle saja. Jadi berkas boleh diserahkan bertahap.
+
+### Batas per adegan
+
+**Paling banyak ±2,5 MB per adegan**: gambar ±1,2 MB (8 halaman × 150 KB) dan suara ±1 MB. Halaman yang dipakai
+beberapa panel dihitung sekali. Halaman pemeriksaan konten,
+bagian **Adegan cerita**, menghitung berkas yang sudah ada, berkas suara yang melebihi 64 KB, dan total ukuran setiap
+adegan. Saat diputar, aplikasi mengunduh panel berikutnya dan suara tiga baris ke depan di belakang layar; saat suara
+dimatikan, berkas suara tidak diunduh sama sekali.
+
+### Cara menyerahkan
+
+1. Beri nama berkas persis seperti kolom `panel_image` (`.png`) atau `audio` (`.mp3`) di tab naskah.
+2. Kirim ke pengelola aplikasi (misalnya lewat Google Drive), dikelompokkan per adegan, yang menaruhnya di
+   `assets/cerita/<ID adegan>/` dan `assets/suara/<ID adegan>/`.
+3. Periksa di halaman Pemeriksaan konten (bagian Adegan cerita dan pemeriksa aset), lalu tonton adegannya dari menu
+   **Cerita** (adegan yang sudah pernah diputar) atau dengan pemain baru.
 
 ## Mengembalikan placeholder
 

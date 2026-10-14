@@ -173,7 +173,7 @@ function levelBar(app) {
 }
 
 /** The world the map shows, remembered so that links back to the map return to it. */
-function shownWorld(app, sheetRegion, number) {
+export function shownWorld(app, sheetRegion, number) {
   const { model, progress } = app;
   const region = sheetRegion ? model.regions.find((r) => r.id === sheetRegion) : null;
   const wanted = region ? region.world : number;
@@ -290,7 +290,7 @@ export function mapScreen(app, { sheetRegion = null, world: worldNumber = null }
     worldInfo.complete ? h("p", { class: "notice notice--success" }, `✓ Dunia ${world.number} tamat.`) : null,
     app.notices.map((n) => h("p", { class: `notice notice--${n.kind}` }, n.text)),
     usage.warning
-      ? h("p", { class: "notice notice--warning", role: "alert" }, "⚠ Penyimpanan perangkat hampir penuh. Minta petugas mengekspor dan mengosongkan log di Pengaturan.")
+      ? h("p", { class: "notice notice--warning", role: "alert" }, "⚠ Penyimpanan perangkat hampir penuh. Minta petugas mengekspor dan mengosongkan log di Setelan.")
       : null,
     h(
       "div",

@@ -44,23 +44,26 @@ test("reading alignment follows okurigana and hides ruby on request", () => {
   assert.deepEqual(splitReadingNotation("た(べる)"), { kanjiPart: "た", okurigana: "べる" });
 });
 
-test("sample content passes; its warnings are the placeholders (conversations, cat names, reward), the unreachable default reward, the missing pin and one sentence ahead of its region", () => {
+test("sample content passes; its warnings are the placeholders (conversations, cat names, reward, story script), the unreachable default reward, the missing pin, the closing panel's missing transcript and one sentence ahead of its region", () => {
   const { errors, warnings, notes } = validateContent(loadSampleContent());
   assert.deepEqual(errors, []);
   assert.deepEqual(notes, []);
-  assert.deepEqual(codes(warnings).sort(), [
+  assert.deepEqual(codes(warnings).filter((c) => c !== "PLACEHOLDER_TEXT").sort(), [
     "PIN_MISSING",
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
     "PLACEHOLDER_CONVERSATION",
-    "PLACEHOLDER_TEXT", // «BELUM DIISI: nama kucing», twice (D-121)
-    "PLACEHOLDER_TEXT",
-    "PLACEHOLDER_TEXT", // «BELUM DIISI: judul hadiah» and its text (D-123)
-    "PLACEHOLDER_TEXT",
     "REWARD_UNREACHABLE", // the default milestone B01–B05 is not in the sample, which is B06 only
+    "SCENE_DRAWN_TEXT_MISSING", // the closing scene's panel is not drawn yet, so nobody can say what text is on it (D-125)
     "SENTENCE_AHEAD_OF_REGION",
   ]);
+  // «BELUM DIISI: …» left for the team: cat names (D-121), the reward (D-123), the story script (D-124).
+  const placeholders = warnings.filter((w) => w.code === "PLACEHOLDER_TEXT").map((w) => w.path);
+  assert.deepEqual(placeholders.filter((p) => !/\.cat\.name$|^rewards\[0\]\.(title|text)$|^scenes\[/.test(p)), [], "no other placeholder");
+  assert.equal(placeholders.filter((p) => p.endsWith(".cat.name")).length, 2);
+  assert.equal(placeholders.filter((p) => p.startsWith("rewards")).length, 2);
+  assert.ok(placeholders.filter((p) => p.startsWith("scenes")).length >= 10, "the draft script of the two scenes");
   assert.equal(warnings[0].code, "PLACEHOLDER_CONVERSATION", "placeholder warnings are listed first");
 });
 

@@ -1,0 +1,15 @@
+scene_id,panel_no,line_no,panel_image,panel_box,panel_text,panel_note,figures,speaker,text,ja,audio
+S-D1-pembuka,1,1,01,,«BELUM DIISI: transkrip teks yang tergambar di halaman 01 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 1»,,01-1
+S-D1-pembuka,2,1,02,,«BELUM DIISI: transkrip teks yang tergambar di halaman 02 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 2»,,02-1
+S-D1-pembuka,3,1,03,,«BELUM DIISI: transkrip teks yang tergambar di halaman 03 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 3»,,03-1
+S-D1-pembuka,4,1,04,,«BELUM DIISI: transkrip teks yang tergambar di halaman 04 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 4»,,04-1
+S-D1-pembuka,5,1,05,,«BELUM DIISI: transkrip teks yang tergambar di halaman 05 (atau - jika tidak ada)»,Halaman utuh dulu (tanpa baris),,,,,
+S-D1-pembuka,6,1,05,69 25 26.5 49.5,,Panel kanan halaman 05,,narator,«BELUM DIISI: teks panel kanan halaman 05»,,06-1
+S-D1-pembuka,7,1,05,23 25 47 49.5,,Panel tengah halaman 05,,narator,«BELUM DIISI: teks panel tengah halaman 05»,,07-1
+S-D1-pembuka,8,1,05,3.5 25 38 49.5,,Panel kiri halaman 05,,narator,«BELUM DIISI: teks panel kiri halaman 05»,,08-1
+S-D1-pembuka,9,1,06,,«BELUM DIISI: transkrip teks yang tergambar di halaman 06 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 9»,,09-1
+S-D1-pembuka,10,1,07,,«BELUM DIISI: transkrip teks yang tergambar di halaman 07 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 10»,,10-1
+S-D1-pembuka,11,1,08,,«BELUM DIISI: transkrip teks yang tergambar di halaman 08 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 11»,,11-1
+S-D1-pembuka,12,1,09,,«BELUM DIISI: transkrip teks yang tergambar di halaman 09 (atau - jika tidak ada)»,,,narator,«BELUM DIISI: teks panel 12»,,12-1
+S-D1-penutup,1,1,01,,,«BELUM DIISI: deskripsi panel untuk ilustrator»,pemain@kiri;lawan-bicara@kanan,lawan-bicara,«BELUM DIISI: ucapan tokoh lawan bicara»,,01-1
+S-D1-penutup,1,2,,,,,,pemain,«BELUM DIISI: ucapan pemain (tanpa suara)»,,

@@ -96,12 +96,13 @@ export function createProgress(now = new Date()) {
     consent: null, // { choice, version, at } — asked again when the consent text version changes
     createdAt: now.toISOString(),
     lastPlayed: null,
-    settings: { furiganaMode: DEFAULT_FURIGANA_MODE },
+    settings: { furiganaMode: DEFAULT_FURIGANA_MODE, sceneVoice: true }, // sceneVoice: voice in story scenes, per player (D-124)
     welcomeSeen: false, // the welcome screen with the disclaimer was shown (D-71)
     character: null, // id of the chosen player character (D-102)
     world: null, // number of the world the map showed last (D-117)
     rescuesShown: [], // missions whose cat rescue moment was shown; which cats are free is derived (D-121)
     rewards: {}, // reward id → { title, text, achievedAt, redeemedAt }: kept as earned, whatever the material says later (D-123)
+    scenesSeen: {}, // story scene id → when it was first seen; each scene plays by itself once (D-124)
     items: {}, // item id → streak, shared by every quest and review (D-61)
     quests: {}, // quest or review id → entry
   };
@@ -138,9 +139,11 @@ function normalizeProgress(progress) {
   progress.character ??= null;
   if (!Array.isArray(progress.rescuesShown)) progress.rescuesShown = [];
   if (!isPlainObject(progress.rewards)) progress.rewards = {};
+  if (!isPlainObject(progress.scenesSeen)) progress.scenesSeen = {};
   if (!Number.isInteger(progress.world)) progress.world = null;
   if (!isPlainObject(progress.settings)) progress.settings = {};
   if (!Object.values(FURIGANA_MODE).includes(progress.settings.furiganaMode)) progress.settings.furiganaMode = DEFAULT_FURIGANA_MODE;
+  if (typeof progress.settings.sceneVoice !== "boolean") progress.settings.sceneVoice = true;
   if (!isPlainObject(progress.items)) progress.items = {};
   for (const [id, entry] of Object.entries(progress.quests)) {
     if (!isPlainObject(entry)) delete progress.quests[id];

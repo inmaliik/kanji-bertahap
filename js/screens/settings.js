@@ -566,7 +566,7 @@ export function settingsScreen(app) {
       {},
       backLink("#/", "Peta"),
       menuBar(app, "settings"),
-      h("h1", { tabindex: "-1" }, "Pengaturan"),
+      h("h1", { tabindex: "-1" }, "Setelan"),
       isStorageAvailable()
         ? null
         : h("p", { class: "notice notice--warning" }, "⚠ Penyimpanan browser tidak tersedia. Progres dan log tidak akan tersimpan setelah halaman ditutup."),

@@ -130,3 +130,26 @@ test("the wilayah tab takes the pin as segment, x and y together (D-108)", async
   const half = convertCsvFilesToContent(withPin(",40,62.5"), "draft-0");
   assert.match(half.problems[0].message, /pin_segment, pin_x, dan pin_y bersamaan/);
 });
+
+test("ekspor-halaman: a transparent RGBA page becomes a white-backed 16-level grey PNG of the same size", async () => {
+  const { readPng, writeGreyPng } = await import(new URL("../tools/lib/png.mjs", import.meta.url));
+  const { deflateSync } = await import("node:zlib");
+  // A 5 × 2 RGBA source: transparent, black, grey, half-transparent black, white.
+  const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = (b) => { let c = 0xffffffff; for (const x of b) c = crcTable[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (t, d) => { const l = Buffer.alloc(4); l.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([l, td, c]); };
+  const px = [[0, 0, 0, 0], [0, 0, 0, 255], [128, 128, 128, 255], [0, 0, 0, 128], [255, 255, 255, 255]];
+  const raw = Buffer.concat([0, 1].map(() => Buffer.from([0, ...px.flat()])));
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(5, 0); ihdr.writeUInt32BE(2, 4); ihdr[8] = 8; ihdr[9] = 6;
+  const src = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+  const dir = mkdtempSync(join(tmpdir(), "halaman-"));
+  writeFileSync(join(dir, "in.png"), src);
+  const result = node(["tools/ekspor-halaman.mjs", join(dir, "in.png"), join(dir, "sub", "out.png")]);
+  assert.equal(result.status, 0, result.stderr);
+  const out = readPng(readFileSync(join(dir, "sub", "out.png")));
+  assert.deepEqual([out.width, out.height, out.depth], [5, 2, 4], "same size, 4 bits per pixel");
+  // transparent → white; grey 128 → level 8 of 15 (136); half-transparent black over white → level 7 (119).
+  assert.deepEqual([0, 1, 2, 3, 4].map((x) => out.pixel(x, 1)[0]), [255, 0, 136, 119, 255]);
+  const page = readPng(writeGreyPng(5, 2, (x) => [255, 0, 128, 128, 255][x], 8));
+  assert.deepEqual([0, 1, 2, 3, 4].map((x) => page.pixel(x, 1)[0]), [255, 0, 128, 128, 255], "8-bit round trip");
+});
